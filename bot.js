@@ -740,11 +740,12 @@ bot.cmds = {
 		help: cfg => "Configure server-specific settings",
 		usage: cfg =>  ["cfg prefix <newPrefix> - Change the bot's prefix",
 						"cfg roles <enable|disable> - Enable or disable automatically managed mentionable " + cfg.lang + " roles, so that users can mention " + cfg.lang + "s",
-						"cfg rename <newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term"],
+						"cfg rename <newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term",
+						"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names."],
 		permitted: (msg) => msg.member.permission.has("administrator"),
 		execute: function(msg, args, cfg) {
 			let out = "";
-			if(!args[0] || !["prefix","roles","rename"].includes(args[0])) {
+			if(!args[0] || !["prefix","roles","rename","log"].includes(args[0])) {
 				return bot.cmds.help.execute(msg, ["cfg"], cfg);
 			} else if(msg.channel instanceof Eris.PrivateChannel) {
 				out = "This command cannot be used in private messages.";
@@ -811,6 +812,21 @@ bot.cmds = {
 					out = "Entity name changed to " + cfg.lang;
 					fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
 				}
+			} else if(args[0] == "log") {
+				if(!args[1]) {
+					out = "Logging channel unset. Logging is now disabled.";
+					cfg.log = null;
+					fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+				} else {
+					let channel = resolveChannel(msg,args[1]);
+					if(!channel) {
+						out = "Channel not found.";
+					} else {
+						out = `Logging channel set to <#${channel.id}>`;
+						cfg.log = channel.id;
+						fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+					}
+				}
 			}
 			send(msg.channel, out);
 		}
@@ -831,6 +847,8 @@ function validateGuildCfg(guild) {
 		config[guild.id].rolesEnabled = false;
 	if(config[guild.id].lang == undefined)
 		config[guild.id].lang = "tulpa";
+	if(config[guild.id].log == undefined)
+		config[guild.id].log = null;
 	fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
 }
 
@@ -849,7 +867,7 @@ function checkTulpa(msg, cfg, tulpa, content) {
 				webhooks[msg.channel.id].token,
 				{
 					content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-					username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? " 🍰" : ""),
+					username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
 					avatarURL: tulpa.url
 				}
 			).catch(e => { if(e.code == 10015) { send(msg.channel, "Warning: Webhook missing. A new webhook must be added in this channel."); delete webhooks[msg.channel.id]}});
@@ -859,6 +877,9 @@ function checkTulpa(msg, cfg, tulpa, content) {
 		if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 			send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
 		recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
+		if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
+			send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
+		}
 		return true;
 	}
 }
@@ -873,16 +894,11 @@ async function sendAttachmentsWebhook(msg,cfg, tulpa, content) {
 		webhooks[msg.channel.id].token,
 		{
 			content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-			username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? " 🍰" : ""),
+			username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
 			avatarURL: tulpa.url,
 			file: files
 		}
 	).catch(e => { if(e.code == 10015) { send(msg.channel, "Warning: Webhook missing. A new webhook must be added in this channel."); delete webhooks[msg.channel.id]}});
-	if(!tulpa.posts) tulpa.posts = 0;
-	tulpa.posts++;
-	if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-		send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-	recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
 }
 
 function attach(url, name) {
@@ -912,6 +928,11 @@ function resolveUser(msg, text) {
 	let target = bot.users.get(/<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1]) || bot.users.get(text) || msg.channel.guild.members.find(m => m.username.toLowerCase() == text.toLowerCase() || (m.nick && m.nick.toLowerCase()) == text.toLowerCase() || text.toLowerCase() == `${m.username.toLowerCase()}#${m.discriminator}`);
 	if(target && target.user) target = target.user;
 	return target;
+}
+
+function resolveChannel(msg, text) {
+	let g = msg.channel.guild;
+	return g.channels.get(/<#(\d+)>/.test(text) && text.match(/<#(\d+)>/)[1]) || g.channels.get(text) || g.channels.find(m => m.name.toLowerCase() == text.toLowerCase());
 }
 
 function checkPermissions(cmd, msg, args) {
