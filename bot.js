@@ -58,7 +58,7 @@ bot.on('disconnect', function() {
 bot.on('error', console.error);
 
 bot.on('messageCreate', async function (msg) {
-	let cfg = msg.channel.guild && config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false};
+	let cfg = msg.channel.guild && config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false, lang: "tulpa"};
 	if (msg.content.startsWith(cfg.prefix)) {
 		var args = msg.content.substr(cfg.prefix.length).split(' ');
 		var cmd = args.shift();
@@ -67,7 +67,7 @@ bot.on('messageCreate', async function (msg) {
 			logger.info(`${msg.channel.guild ? msg.channel.guild.name + ": " : "private message: "}${msg.author.username} executed command ${msg.content}`);
 			return bot.cmds[cmd].execute(msg, args, cfg);
 		}
-	} else if(webhooks[msg.channel.id] && tulpae[msg.author.id]) {
+	} else if(tulpae[msg.author.id] && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/<:.+?:\d+?>/,"emote");
 		let cleanarr = clean.split('\n');
@@ -75,7 +75,7 @@ bot.on('messageCreate', async function (msg) {
 		let lines = msg.content.split('\n');
 		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
-				if(checkTulpa(msg, cfg, t, lines[i],cleanarr[i])) {
+				if(checkTulpa(msg, cfg, t, lines[i], cleanarr[i])) {
 					del = true;
 				}
 			});
@@ -85,10 +85,9 @@ bot.on('messageCreate', async function (msg) {
 			if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 				setTimeout(() => msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }}),100);
 			return fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
-		}
-		else {
+		} else {
 			for(let t of tulpae[msg.author.id]) {
-				if(checkTulpa(msg,cfg,t,msg.content,clean)) {
+				if(checkTulpa(msg, cfg, t, msg.content, clean)) {
 					del = true;
 					break;
 				}
@@ -199,165 +198,9 @@ bot.cmds = {
 	
 	//attach webhook(s) to channel(s)
 	hook: {
-		help: cfg => "Attach a webhook to a channel, allowing " + cfg.lang + "s to talk in it",
-		usage: cfg =>  ["hook - Attach a webhook to the current channel.",
-						"hook <channel mentions> - Attach webhooks to all the channels mentioned in the command.",
-						"hook all - Attach webhooks to all channels in the server."],
-		desc: cfg => "Requires the user and the bot to have 'Manage Webhooks' permission.",
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
-			let out = "";
-			if(msg.channel instanceof Eris.PrivateChannel) {
-				out = "This command cannot be used in private messages.";
-			} else if(!msg.member.permission.has("manageWebhooks")) {
-				out = "You don't have permission to manage webhooks.";
-			} else if(!msg.channel.guild.members.get(bot.user.id).permission.has("manageWebhooks")) {
-				out = "I don't have permission to manage webhooks.";
-			} else if(!args[0]) {
-				if(webhooks[msg.channel.id]) {
-					out = "A webhook already exists on this channel.";
-				} else {
-					msg.channel.createWebhook({ name: "Tupperhook" }).then(hook => {
-						webhooks[msg.channel.id] = hook;
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						send(msg.channel, "Hook created successfully.");
-					}).catch((e) => { console.error(e); send(msg.channel, "Something went wrong. Make sure the bot's permissions are correct and try again.") });
-					return;
-				}
-			} else if(args[0] == "all") {
-				out = "Creating webhooks on all channels. If the server has many channels, this may take a bit.";
-				let warned = false;
-				let channels = msg.channel.guild.channels.filter(ch => ch instanceof Eris.TextChannel && !webhooks[ch.id]);
-				if(!channels[0])
-					return send(msg.channel, "All channels already have webhooks.");
-				Promise.all(channels.map(ch => {
-					if(!ch.permissionsOf(bot.user.id).has('readMessages') && !warned) {
-						warned = true;
-						out += "\nWarning: I do not have permission to read messages in one or more of those channels. I'll create a webhook anyway, but " + cfg.lang + "-talk will not work in those channels.";
-					}
-					return ch.createWebhook({ name: "Tupperhook" }).then(hook => {
-						webhooks[ch.id] = hook;
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-					}).catch(console.error);
-				})).then(() => send(msg.channel, "Successfully hooked all channels.")).catch(e => { send(msg.channel, "Unable to add webhooks to all of the channels.")});
-			} else if(msg.channelMentions && msg.channelMentions[0]) {
-				let channels = msg.channelMentions.filter(id => !webhooks[id]).map(id => msg.channel.guild.channels.get(id));
-				if(!channels[0]) {
-					out = "Webhooks already exist in those channels.";
-				} else if(channels.length == 1) {
-					if(!channels[0].permissionsOf(bot.user.id).has('readMessages')) {
-						out += "\nWarning: I do not have permission to read messages in that channel. I'll create a webhook anyway, but " + cfg.lang + "-talk will not work in the channel until I am given permission.";
-					}
-					channels[0].createWebhook({ name: "Tupperhook" }).then(hook => {
-						webhooks[channels[0].id] = hook;
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						send(msg.channel, "Hook created successfully.");
-					}).catch((e) => { console.error(e); send(msg.channel, "Something went wrong. Make sure the bot's permissions are correct and try again.") });
-					return;
-				} else {
-					out = "Creating webhooks on given channels...";
-					let warned = false;
-					Promise.all(channels.map(ch => {
-						if(!ch.permissionsOf(bot.user.id).has('readMessages') && !warned) {
-							warned = true;
-							out += "\nWarning: I do not have permission to read messages in one or more of those channels. I'll create a webhook anyway, but " + cfg.lang + "-talk will not work in those channels.";
-						}
-						return ch.createWebhook({ name: "Tupperhook" }).then(hook => {
-							webhooks[ch.id] = hook;
-							fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						}).catch(console.error);
-					})).then(() => send(msg.channel, "Successfully hooked channels.")).catch(e => { send(msg.channel, "Unable to add webhooks to all of the channels.")});
-				}
-			} else {
-				out = "I don't understand that. Try `" + cfg.prefix + "help hook`?";
-			}
-			send(msg.channel, out);
-		}
-	},
-	
-	//view all webhooks in server (commented out because it reveals private channels to members if used in a public chat)
-	/*hooks: {
-		help: cfg => "Display all channels that have " + cfg.lang + " webhooks",
-		usage: cfg =>  ["hooks - Print a list of all channels that have webhooks"],
-		permitted: () => true,
-		execute: function(msg, args, cfg) {
-			let out = "";
-			if(msg.channel instanceof Eris.PrivateChannel) {
-				out = "This command cannot be used in private messages.";
-			} else {
-				let hooks = Object.keys(webhooks).filter(id => msg.channel.guild.channels.has(id)).map(id => `<#${id}>`);
-				if(!hooks[0]) {
-					out = "I have no " + cfg.lang + " webhooks in this server.";
-				} else {
-					out = "I have " + cfg.lang + " webhooks in these channels: " + hooks.join(' ');
-				}
-			}
-			send(msg.channel, out);
-		}
-	},*/
-	
-	//remove webhook(s) from channel(s)
-	unhook: {
-		help: cfg => "Remove previously added " + cfg.lang + " webhooks",
-		usage: cfg =>  ["unhook - Remove the webhook from the current channel, if any.",
-						"unhook <channel mentions> - Remove webhooks from the mentioned channels.",
-						"unhook all - Remove all " + cfg.lang + " webhooks in this guild."],
-		desc: cfg => "Requires the user and the bot to have 'Manage Webhooks' permission",
-		permitted: () => true,
-		execute: function(msg, args, cfg) {
-			let out = "";
-			if(msg.channel instanceof Eris.PrivateChannel) {
-				out = "This command cannot be used in private messages.";
-			} else if(!msg.channel.guild.members.get(bot.user.id).permission.has("manageWebhooks")) {
-				out = "I don't have permission to manage webhooks.";
-			} else if(!msg.member.permission.has("manageWebhooks")) {
-				out = "You don't have permission to do that.";
-			} else if(!args[0]) {
-				if(!webhooks[msg.channel.id]) {
-					out = "There is no webhook on this channel.";
-				} else {
-					bot.deleteWebhook(webhooks[msg.channel.id].id, webhooks[msg.channel.id].token).then(() => {
-						delete webhooks[msg.channel.id];
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						send(msg.channel, "Hook deleted successfully.");
-					}).catch((e) => { console.error(e); send(msg.channel, "Something went wrong deleting the webhook. Make sure the bot's permissions are correct and try again.") });
-					return;
-				}
-			} else if(args[0] == "all") {
-				out = "Deleting webhooks on all channels. If the server has many channels, this may take a bit.";
-				let channels = msg.channel.guild.channels.filter(ch => ch instanceof Eris.TextChannel && webhooks[ch.id]);
-				if(!channels[0])
-					return send(msg.channel, "No " + cfg.lang + " webhooks found.");
-				Promise.all(channels.filter(ch => ch instanceof Eris.TextChannel && webhooks[ch.id]).map(ch => {
-					return bot.deleteWebhook(webhooks[ch.id].id,webhooks[ch.id].token).then(() => {
-						delete webhooks[ch.id];
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-					}).catch(console.error);
-				})).then(() => send(msg.channel, "Successfully deleted webhooks.")).catch(e => { send(msg.channel, "Unable to delete all webhooks.")});
-			} else if(msg.channelMentions && msg.channelMentions[0]) {
-				let channels = msg.channelMentions.filter(id => webhooks[id]).map(id => msg.channel.guild.channels.get(id));
-				if(!channels[0]) {
-					out = "No webhooks found to delete.";
-				} else if(channels.length == 1) {
-					bot.deleteWebhook(webhooks[channels[0].id].id, webhooks[channels[0].id].token).then(() => {
-						delete webhooks[channels[0].id];
-						fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						send(msg.channel, "Hook deleted successfully.");
-					}).catch((e) => { console.error(e); send(msg.channel, "Something went wrong deleting the webhook. Make sure the bot's permissions are correct and try again.") });
-					return;
-				} else {
-					out = "Deleting webhooks on given channels...";
-					Promise.all(channels.map(ch => {
-						return bot.deleteWebhook(webhooks[ch.id].id,webhooks[ch.id].token).then(() => {
-							delete webhooks[ch.id];
-							fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
-						}).catch(console.error);
-					})).then(() => send(msg.channel, "Successfully deleted webhooks.")).catch(e => { send(msg.channel, "Unable to delete all webhooks.")});
-				}
-			} else {
-				out = "I don't understand that. Try `" + cfg.prefix + "help unhook`?";
-			}
-			send(msg.channel, out);
+			send(msg.channel, "This command no longer has a purpose. Webhooks have been changed to opt-out rather than opt-in: they are automatically generated for non-blacklisted channels when a user attempts to proxy in them.");
 		}
 	},
 	
@@ -391,19 +234,22 @@ bot.cmds = {
 					name: args[0],
 					url: 'https://i.imgur.com/ZpijZpg.png',
 					brackets: brackets,
-					roles: {},
 					posts: 0,
 					host: msg.author.id
 				};
 				tulpae[msg.author.id].push(tulpa);
-				Promise.all(Object.keys(config).filter(id => config[id].rolesEnabled && bot.guilds.has(id) && bot.guilds.get(id).members.has(msg.author.id)).map(id => bot.guilds.get(id)).map(g => {
-					return g.createRole({ name: tulpa.name, mentionable: true}).then(r => {
-						tulpa.roles[g.id] = r.id;
-						g.members.get(msg.author.id).addRole(r.id);
+				let guilds = Object.keys(config).filter(id => config[id].rolesEnabled && bot.guilds.has(id) && bot.guilds.get(id).members.has(msg.author.id)).map(id => bot.guilds.get(id));
+				if(guilds[0]) {
+					tulpa.roles = {};
+					Promise.all(guilds.map(g => {
+						return g.createRole({ name: tulpa.name, mentionable: true}).then(r => {
+							tulpa.roles[g.id] = r.id;
+							g.members.get(msg.author.id).addRole(r.id);
+						});
+					})).then(() => {
+						fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 					});
-				})).then(() => {
-					fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
-				});
+				}
 				out = proper(cfg.lang) + " registered successfully! To set this " + cfg.lang + "'s avatar use `" + cfg.prefix + "avatar`"; 
 			}
 			send(msg.channel, out);
@@ -431,7 +277,7 @@ bot.cmds = {
 				let arr = tulpae[msg.author.id];
 				let tul = arr.find(t => t.name.toLowerCase() == name.toLowerCase());
 				Object.keys(config).filter(t => config[t].rolesEnabled && bot.guilds.has(t)).map(t => bot.guilds.get(t)).forEach(g => {
-					if(tul.roles[g.id]) g.deleteRole(tul.roles[g.id]);
+					if(tul.roles && tul.roles[g.id]) g.deleteRole(tul.roles[g.id]);
 				})
 				arr.splice(arr.indexOf(tul), 1);
 				fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
@@ -749,11 +595,13 @@ bot.cmds = {
 		usage: cfg =>  ["cfg prefix <newPrefix> - Change the bot's prefix",
 						"cfg roles <enable|disable> - Enable or disable automatically managed mentionable " + cfg.lang + " roles, so that users can mention " + cfg.lang + "s",
 						"cfg rename <newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term",
-						"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names."],
+						"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.",
+						"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels."],
+		
 		permitted: (msg) => msg.member.permission.has("administrator"),
 		execute: function(msg, args, cfg) {
 			let out = "";
-			if(!args[0] || !["prefix","roles","rename","log"].includes(args[0])) {
+			if(!args[0] || !["prefix","roles","rename","log","blacklist"].includes(args[0])) {
 				return bot.cmds.help.execute(msg, ["cfg"], cfg);
 			} else if(msg.channel instanceof Eris.PrivateChannel) {
 				out = "This command cannot be used in private messages.";
@@ -780,6 +628,7 @@ bot.cmds = {
 								if(!mem.roles.find(r => guild.roles.get(r).name === tul.name))
 									return guild.createRole({name: tul.name, mentionable: true}).then(r => {
 										mem.addRole(r.id);
+										if(!tul.roles) tul.roles = {};
 										tul.roles[guild.id] = r.id;
 									});
 								return true;
@@ -799,9 +648,10 @@ bot.cmds = {
 						Object.keys(tulpae).filter(t => guild.members.has(t)).forEach(t => {
 							let mem = guild.members.get(t);
 							tulpae[t].forEach(tul => {
-								if(tul.roles[guild.id]) {
+								if(tul.roles && tul.roles[guild.id]) {
 									guild.deleteRole(tul.roles[guild.id]);
 									delete tul.roles[guild.id];
+									if(!Object.keys(tul.roles)[0]) delete tul.roles;
 								}
 							})
 						})
@@ -835,6 +685,50 @@ bot.cmds = {
 						fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
 					}
 				}
+			} else if(args[0] == "blacklist") {
+				if(!args[1]) {
+					if(cfg.blacklist) out = `Currently blacklisted channels: ${cfg.blacklist.map(id => "<#"+id+">").join(' ')}`;
+					else out = "No channels currently blacklisted."
+				} else if(args[1] == "add") {
+					if(!args[2]) {
+						out = "Must provide name/mention/id of channel to blacklist.";
+					} else {
+						let channels = args.slice(2).map(arg => resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch });
+						if(!channels.find(ch => ch != undefined)) {
+							out = `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+						} else if(channels.find(ch => ch == undefined)) {
+							out = `Could not find these channels: `;
+							for(let i = 0; i < channels.length; i++)
+								if(!channels[i]) out += args.slice(2)[i];
+						} else {
+							if(!cfg.blacklist) cfg.blacklist = [];
+							cfg.blacklist = cfg.blacklist.concat(channels);
+							out = `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
+							fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+						}
+					}
+				} else if(args[1] == "remove") {
+					if(!args[2]) {
+						out = "Must provide name/mention/id of channel to allow.";
+					} else {
+						let channels = args.slice(2).map(arg => resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch });
+						if(!channels.find(ch => ch != undefined)) {
+							out = `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+						} else if(channels.find(ch => ch == undefined)) {
+							out = `Could not find these channels: `;
+							for(let i = 0; i < channels.length; i++)
+								if(!channels[i]) out += args.slice(2)[i] + " ";
+						} else {
+							if(!cfg.blacklist) cfg.blacklist = [];
+							channels.forEach(ch => { if(cfg.blacklist.includes(ch)) cfg.blacklist.splice(cfg.blacklist.indexOf(ch),1) });
+							out = `Channel${channels.length > 1 ? "s" : ""} removed from blacklist.`;
+							if(!cfg.blacklist[0]) delete cfg.blacklist;
+							fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+						}
+					}
+				} else {
+					out = "Invalid argument: must be 'add' or 'remove'";
+				}
 			}
 			send(msg.channel, out);
 		}
@@ -866,46 +760,73 @@ function proper(text) {
 
 function checkTulpa(msg, cfg, tulpa, content, clean) {
 	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1])) {
-		if(msg.attachments[0]) {
-			sendAttachmentsWebhook(msg,cfg, tulpa, content);
-		} else {
-			bot.executeWebhook(
-				webhooks[msg.channel.id].id,
-				webhooks[msg.channel.id].token,
-				{
-					content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-					username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
-					avatarURL: tulpa.url
-				}
-			).catch(e => { if(e.code == 10015) { send(msg.channel, "Warning: Webhook missing. A new webhook must be added in this channel."); delete webhooks[msg.channel.id]}});
-		}
-		if(!tulpa.posts) tulpa.posts = 0;
-		tulpa.posts++;
-		if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-			send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-		recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
-		if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-			send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
-		}
+		fetchWebhook(msg.channel).then(hook => {
+			if(msg.attachments[0]) {
+				sendAttachmentsWebhook(msg, cfg, tulpa, content, hook);
+			} else {
+				let data = {
+						content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
+						username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
+						avatarURL: tulpa.url
+					};
+				bot.executeWebhook(hook.id,hook.token,data)
+				.catch(e => { if(e.code == 10015) {
+					delete webhooks[msg.channel.id];
+					fetchWebhook(msg.channel).then(hook => {
+						bot.executeWebhook(hook.id,hook.token,data);
+					}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
+				}});
+			}
+			if(!tulpa.posts) tulpa.posts = 0;
+			tulpa.posts++;
+			if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
+				send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
+			recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
+			if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
+				send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
+			}
+			
+		}).catch(e => {
+			send(msg.channel, e);
+		});
 		return true;
-	}
+	} else return false;
 }
 
-async function sendAttachmentsWebhook(msg,cfg, tulpa, content) {
+async function sendAttachmentsWebhook(msg, cfg, tulpa, content, hook) {
 	let files = [];
 	for(let i = 0; i < msg.attachments.length; i++) {
 		files.push({ file: await attach(msg.attachments[i].url), name: msg.attachments[i].filename });
 	}
-	bot.executeWebhook(
-		webhooks[msg.channel.id].id,
-		webhooks[msg.channel.id].token,
-		{
+	let data = {
 			content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
 			username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
 			avatarURL: tulpa.url,
 			file: files
+		};
+	bot.executeWebhook(hook.id,hook.token,data)
+	.catch(e => { if(e.code == 10015) {
+		delete webhooks[msg.channel.id];
+		fetchWebhook(msg.channel).then(hook => {
+			bot.executeWebhook(hook.id,hook.token,data);
+		}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
+	}});
+}
+
+function fetchWebhook(channel) {
+	return new Promise((resolve, reject) => {
+		if(webhooks[channel.id])
+			resolve(webhooks[channel.id]);
+		else if(!channel.permissionsOf(bot.user.id).has('manageWebhooks'))
+			reject("Proxy failed: Missing 'Manage Webhooks' permission in this channel.");
+		else {
+			channel.createWebhook({ name: "Tupperhook" }).then(hook => {
+				webhooks[channel.id] = { id: hook.id, token: hook.token };
+				resolve(webhooks[channel.id]);
+				fs.writeFile("./webhooks.json",JSON.stringify(webhooks,null,2), printError);
+			}).catch(e => { reject("Proxy failed with unknown reason: Error " + e.code); });
 		}
-	).catch(e => { if(e.code == 10015) { send(msg.channel, "Warning: Webhook missing. A new webhook must be added in this channel."); delete webhooks[msg.channel.id]}});
+	});
 }
 
 function attach(url, name) {
