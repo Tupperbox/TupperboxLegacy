@@ -31,5 +31,7 @@ Initially the bot will generate an empty `auth.json` file and likely throw an er
 {
 	"discord": "MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs",
 	"owner": "99326032288423936"
-}```
+}
+```
+
 (don't worry, that token is the one Discord publishes on its API docs)
