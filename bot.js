@@ -68,13 +68,18 @@ bot.on('messageCreate', async function (msg) {
 			return bot.cmds[cmd].execute(msg, args, cfg);
 		}
 	} else if(webhooks[msg.channel.id] && tulpae[msg.author.id]) {
-		let testContent = msg.content.trim();
+		let clean = msg.cleanContent || msg.content;
+		clean = clean.replace(/<:.+?:\d+?>/,"emote");
+		let cleanarr = clean.split('\n');
 		let del = false;
-		testContent.split('\n').forEach(content => {
+		let lines = msg.content.split('\n');
+		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
-				if(checkTulpa(msg, cfg, t, content)) del = true;
+				if(checkTulpa(msg, cfg, t, lines[i],cleanarr[i])) {
+					del = true;
+				}
 			});
-		});
+		}
 		
 		if(del) {
 			if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
@@ -82,9 +87,12 @@ bot.on('messageCreate', async function (msg) {
 			return fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 		}
 		else {
-			tulpae[msg.author.id].forEach(t => {
-				if(checkTulpa(msg,cfg,t,testContent)) del = true;
-			});
+			for(let t of tulpae[msg.author.id]) {
+				if(checkTulpa(msg,cfg,t,msg.content,clean)) {
+					del = true;
+					break;
+				}
+			};
 			if(del) {
 				if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 					setTimeout(() => msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }}),100);
@@ -856,9 +864,8 @@ function proper(text) {
 	return text.substring(0,1).toUpperCase() + text.substring(1);
 }
 
-function checkTulpa(msg, cfg, tulpa, content) {
-	if(content.startsWith(tulpa.brackets[0]) && content.endsWith(tulpa.brackets[1])) {
-		if(/^<a?:(\w+):(\d+)>$|^<#(\d+)>$|^<@!?(\d+)>$|^<@&(\d+)>$/.test(content)) return;
+function checkTulpa(msg, cfg, tulpa, content, clean) {
+	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1])) {
 		if(msg.attachments[0]) {
 			sendAttachmentsWebhook(msg,cfg, tulpa, content);
 		} else {
