@@ -67,7 +67,7 @@ bot.on('messageCreate', async function (msg) {
 			logger.info(`${msg.channel.guild ? msg.channel.guild.name + ": " : "private message: "}${msg.author.username} executed command ${msg.content}`);
 			return bot.cmds[cmd].execute(msg, args, cfg);
 		}
-	} else if(tulpae[msg.author.id] && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
+	} else if(tulpae[msg.author.id] && !(msg.channel instanceof Eris.PrivateChannel) && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/<:.+?:\d+?>/,"emote");
 		let cleanarr = clean.split('\n');
@@ -173,12 +173,12 @@ bot.cmds = {
 		permitted: (msg) => { return msg.author.id === auth.owner; },
 		execute: function(msg, args, cfg) {
 			if(msg.author.id != auth.owner) return;
-			bot.getMessage(feedbackID, msg.id).then(message => {
+			bot.getMessage(feedbackID, args[0]).then(message => {
 				let parts = message.content.split('\n');
 				if(parts[3] && parts[0].startsWith("User") && parts[1].startsWith("Server") && parts[2].startsWith("Channel") && parts[3].startsWith("Message")) {
 					let user = bot.users.get(parts[0].split(' ')[1]);
 					let server = bot.guilds.get(parts[1].split(' ')[1]);
-					let channel = server.channels.get(parts[2].split(' ')[1]);
+					let channel = server && server.channels.get(parts[2].split(' ')[1]);
 					let message = parts[3].split(' ').slice(1).join(' ');
 					let embed = { embed: {
 								title: "Reply to Feedback",
@@ -192,7 +192,7 @@ bot.cmds = {
 							}};
 					send(channel, embed);
 				}
-			});
+			}).catch(e => send(msg.channel, e.toString()));
 		}
 	},
 	
@@ -408,7 +408,7 @@ bot.cmds = {
 			args = getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
 			if(!args[0]) {
 				let tulps = Object.keys(tulpae)
-					.filter(id => msg.channel.guild.members.has(id))
+					.filter(id => id == msg.author.id || (msg.channel.guild && msg.channel.guild.members.has(id)))
 					.reduce((arr, tul) => arr.concat(tulpae[tul]), []);
 				if(!tulps[0])
 					return send(msg.channel, "No " + cfg.lang + "s have been registered on this server.");
@@ -431,7 +431,7 @@ bot.cmds = {
 						let bday = new Date(t.birthday);
 						bday.setFullYear(now.getFullYear());
 						if(bday < now) bday.setFullYear(now.getFullYear()+1);
-						return (bday.getTime() == now.getTime()) ? `${t.name}: Birthday today! ??` : `${t.name}: ${bday.toDateString()}`
+						return (bday.getTime() == now.getTime()) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${bday.toDateString()}`
 					}).join('\n');
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() === args[0].toLowerCase())) {
 				out = "You don't have a " + cfg.lang + " with that name registered.";
@@ -527,6 +527,8 @@ bot.cmds = {
 		usage: cfg =>  ["find <name> - Attempts to find a " + cfg.lang + " with exactly the given name, and if none are found, tries to find " + cfg.lang + "s with names containing the given name."],
 		permitted: (msg) => true,
 		execute: function(msg, args, cfg) {
+			if(msg.channel instanceof Eris.PrivateChannel)
+				return send(msg.channel, "This command cannot be used in private messages.");
 			if(!args[0])
 				return bot.cmds.help.execute(msg, ["find"], cfg);
 			let all = Object.keys(tulpae)
@@ -585,7 +587,7 @@ bot.cmds = {
 		permitted: (msg) => true,
 		execute: function(msg, args, cfg) {
 			if(!args[0]) return bot.cmds.help.execute(msg, ["feedback"], cfg);
-			bot.createMessage("431722290971934721", `User: ${msg.author.id} ${msg.author.username}#${msg.author.discriminator}\nServer: ${msg.channel.guild.id} ${msg.channel.guild.name}\nChannel: ${msg.channel.id} ${msg.channel.name}\nMessage: ${args.join(' ')}`);
+			bot.createMessage("431722290971934721", `User: ${msg.author.id} ${msg.author.username}#${msg.author.discriminator}\nServer: ${msg.channel.guild ? msg.channel.guild.id + " " + msg.channel.guild.name : "DM"}\nChannel: ${msg.channel.id} ${msg.channel.name}\nMessage: ${args.join(' ')}`);
 			send(msg.channel, "I've passed along your message, thank you.");
 		}
 	},
@@ -598,13 +600,13 @@ bot.cmds = {
 						"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.",
 						"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels."],
 		
-		permitted: (msg) => msg.member.permission.has("administrator"),
+		permitted: (msg) => (msg.member && msg.member.permission.has("administrator")),
 		execute: function(msg, args, cfg) {
 			let out = "";
-			if(!args[0] || !["prefix","roles","rename","log","blacklist"].includes(args[0])) {
-				return bot.cmds.help.execute(msg, ["cfg"], cfg);
-			} else if(msg.channel instanceof Eris.PrivateChannel) {
+			if(msg.channel instanceof Eris.PrivateChannel) {
 				out = "This command cannot be used in private messages.";
+			} else if(!args[0] || !["prefix","roles","rename","log","blacklist"].includes(args[0])) {
+				return bot.cmds.help.execute(msg, ["cfg"], cfg);
 			} else if(args[0] == "prefix") {
 				if(!args[1]) {
 					out = "Missing argument 'prefix'.";
