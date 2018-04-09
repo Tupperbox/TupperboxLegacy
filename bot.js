@@ -71,30 +71,34 @@ bot.on('messageCreate', async function (msg) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/<:.+?:\d+?>/,"emote");
 		let cleanarr = clean.split('\n');
-		let del = false;
 		let count = 0;
 		let lines = msg.content.split('\n');
 		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
-				if(checkTulpa(msg, cfg, t, lines[i], cleanarr[i])) {
+				if(checkTulpa(msg, cfg, t, lines[i], cleanarr[i], false)) {
 					count++;
 				}
 			});
 		}
-		del = count > 1;
+		let doSubstitution = count > 1;
 		
-		if(del) {
+		if(doSubstitution) {
+			for(let i = 0; i < lines.length; i++) {
+				tulpae[msg.author.id].forEach(t => {
+					checkTulpa(msg, cfg, t, lines[i], cleanarr[i])
+				});
+			}
 			if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 				setTimeout(() => msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }}),100);
 			return fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 		} else {
 			for(let t of tulpae[msg.author.id]) {
 				if(checkTulpa(msg, cfg, t, msg.content, clean)) {
-					del = true;
+					doSubstitution = true;
 					break;
 				}
 			};
-			if(del) {
+			if(doSubstitution) {
 				if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 					setTimeout(() => msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }}),100);
 				return fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
@@ -806,32 +810,33 @@ function proper(text) {
 	return text.substring(0,1).toUpperCase() + text.substring(1);
 }
 
-function checkTulpa(msg, cfg, tulpa, content, clean) {
+function checkTulpa(msg, cfg, tulpa, content, clean, doSubmit = true) {
 	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1])) {
-		fetchWebhook(msg.channel).then(hook => {
-			if(msg.attachments[0]) {
-				sendAttachmentsWebhook(msg, cfg, tulpa, content, hook);
-			} else {
-				let data = {
-						content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-						username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
-						avatarURL: tulpa.url
-					};
-				bot.executeWebhook(hook.id,hook.token,data)
-				.catch(e => { if(e.code == 10015) {
-					delete webhooks[msg.channel.id];
-					fetchWebhook(msg.channel).then(hook => {
-						bot.executeWebhook(hook.id,hook.token,data);
-					}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
-				}});
-			}
-			if(!tulpa.posts) tulpa.posts = 0;
-			tulpa.posts++;
-			if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-				send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-			recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
-			if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-				send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
+		if (doSubmit)
+			fetchWebhook(msg.channel).then(hook => {
+				if(msg.attachments[0]) {
+					sendAttachmentsWebhook(msg, cfg, tulpa, content, hook);
+				} else {
+					let data = {
+							content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
+							username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
+							avatarURL: tulpa.url
+						};
+					bot.executeWebhook(hook.id,hook.token,data)
+					.catch(e => { if(e.code == 10015) {
+						delete webhooks[msg.channel.id];
+						fetchWebhook(msg.channel).then(hook => {
+							bot.executeWebhook(hook.id,hook.token,data);
+						}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
+					}});
+				}
+				if(!tulpa.posts) tulpa.posts = 0;
+				tulpa.posts++;
+				if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
+					send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
+				recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
+				if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
+					send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
 			}
 			
 		}).catch(e => {
