@@ -132,7 +132,7 @@ bot.cmds = {
 			} else { //general help
 				output = { embed: {
 					title: "Tupperware | Help",
-					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, have someone with the Manage Webhooks permission use `" + cfg.prefix + "hook` to create webhooks in the channels you want your " + cfg.lang + "s to be able to talk using the bot. Without this step, " + cfg.lang + " messages **will not work.**\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
+					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, register a " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
 					timestamp: new Date().toJSON(),
 					color: 0x999999,
 					author: {
