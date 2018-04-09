@@ -59,7 +59,7 @@ bot.on('error', console.error);
 
 bot.on('messageCreate', async function (msg) {
 	let cfg = msg.channel.guild && config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false, lang: "tulpa"};
-	if (msg.content.startsWith(cfg.prefix)) {
+	if (msg.content.startsWith(cfg.prefix) && (!cfg.cmdblacklist || !cfg.cmdblacklist.includes(msg.channel.id))) {
 		var args = msg.content.substr(cfg.prefix.length).split(' ');
 		var cmd = args.shift();
 		
@@ -598,14 +598,15 @@ bot.cmds = {
 						"cfg roles <enable|disable> - Enable or disable automatically managed mentionable " + cfg.lang + " roles, so that users can mention " + cfg.lang + "s",
 						"cfg rename <newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term",
 						"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.",
-						"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels."],
+						"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.",
+						"cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels."],
 		
 		permitted: (msg) => (msg.member && msg.member.permission.has("administrator")),
 		execute: function(msg, args, cfg) {
 			let out = "";
 			if(msg.channel instanceof Eris.PrivateChannel) {
 				out = "This command cannot be used in private messages.";
-			} else if(!args[0] || !["prefix","roles","rename","log","blacklist"].includes(args[0])) {
+			} else if(!args[0] || !["prefix","roles","rename","log","blacklist","cmdblacklist"].includes(args[0])) {
 				return bot.cmds.help.execute(msg, ["cfg"], cfg);
 			} else if(args[0] == "prefix") {
 				if(!args[1]) {
@@ -731,11 +732,54 @@ bot.cmds = {
 				} else {
 					out = "Invalid argument: must be 'add' or 'remove'";
 				}
+			} else if(args[0] == "cmdblacklist") {
+				if(!args[1]) {
+					if(cfg.cmdblacklist) out = `Currently cmdblacklisted channels: ${cfg.cmdblacklist.map(id => "<#"+id+">").join(' ')}`;
+					else out = "No channels currently cmdblacklisted."
+				} else if(args[1] == "add") {
+					if(!args[2]) {
+						out = "Must provide name/mention/id of channel to cmdblacklist.";
+					} else {
+						let channels = args.slice(2).map(arg => resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch });
+						if(!channels.find(ch => ch != undefined)) {
+							out = `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+						} else if(channels.find(ch => ch == undefined)) {
+							out = `Could not find these channels: `;
+							for(let i = 0; i < channels.length; i++)
+								if(!channels[i]) out += args.slice(2)[i];
+						} else {
+							if(!cfg.cmdblacklist) cfg.cmdblacklist = [];
+							cfg.cmdblacklist = cfg.cmdblacklist.concat(channels);
+							out = `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
+							fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+						}
+					}
+				} else if(args[1] == "remove") {
+					if(!args[2]) {
+						out = "Must provide name/mention/id of channel to allow.";
+					} else {
+						let channels = args.slice(2).map(arg => resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch });
+						if(!channels.find(ch => ch != undefined)) {
+							out = `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+						} else if(channels.find(ch => ch == undefined)) {
+							out = `Could not find these channels: `;
+							for(let i = 0; i < channels.length; i++)
+								if(!channels[i]) out += args.slice(2)[i] + " ";
+						} else {
+							if(!cfg.cmdblacklist) cfg.cmdblacklist = [];
+							channels.forEach(ch => { if(cfg.cmdblacklist.includes(ch)) cfg.cmdblacklist.splice(cfg.cmdblacklist.indexOf(ch),1) });
+							out = `Channel${channels.length > 1 ? "s" : ""} removed from cmdblacklist.`;
+							if(!cfg.cmdblacklist[0]) delete cfg.cmdblacklist;
+							fs.writeFile("./servercfg.json",JSON.stringify(config,null,2), printError);
+						}
+					}
+				} else {
+					out = "Invalid argument: must be 'add' or 'remove'";
+				}
 			}
 			send(msg.channel, out);
 		}
-	},
-	
+	}
 };
 
 function updateStatus() {
