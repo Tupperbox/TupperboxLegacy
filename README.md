@@ -3,8 +3,6 @@ A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> 
 
 # Commands
 - tul!help  -  Print help message, or get help for a specific command
-- tul!hook  -  Attach a webhook to a channel, allowing tulpas to talk in it
-- tul!unhook  -  Remove previously added tulpa webhooks
 - tul!register  -  Register a new tulpa
 - tul!remove  -  Unregister a tulpa
 - tul!list  -  Get a detailed list of yours or another user's registered tulpas

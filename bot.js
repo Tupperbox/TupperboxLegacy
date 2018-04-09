@@ -138,7 +138,7 @@ bot.cmds = {
 			} else { //general help
 				output = { embed: {
 					title: "Tupperware | Help",
-					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, have someone with the Manage Webhooks permission use `" + cfg.prefix + "hook` to create webhooks in the channels you want your " + cfg.lang + "s to be able to talk using the bot. Without this step, " + cfg.lang + " messages **will not work.**\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
+					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, register a " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
 					timestamp: new Date().toJSON(),
 					color: 0x999999,
 					author: {
@@ -224,8 +224,8 @@ bot.cmds = {
 				return bot.cmds.help.execute(msg, ["register"], cfg);
 			} else if(!args[1]) {
 				out = "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
-			} else if(args[0].length < 2 || args[0].length > 29) {
-				out = "Name must be between 2 and 29 characters.";
+			} else if(args[0].length < 2 || args[0].length > 28) {
+				out = "Name must be between 2 and 28 characters.";
 			} else if(brackets.length < 2) {
 				out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters (except `''`).\nThis determines how the bot detects if it should replace a message.";
 			} else if(!brackets[0] && !brackets[1]) {
@@ -336,8 +336,8 @@ bot.cmds = {
 				return bot.cmds.help.execute(msg, ["rename"], cfg);
 			} else if(!args[1]) {
 				out = "Missing argument 'newname'.";
-			} else if(args[1].length < 2 || args[1].length > 29) {
-				out = "New name must be between 2 and 29 characters.";
+			} else if(args[1].length < 2 || args[1].length > 28) {
+				out = "New name must be between 2 and 28 characters.";
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
 				out = "You don't have a " + cfg.lang + " with that name registered.";
 			} else if(tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[1].toLowerCase())) {
@@ -503,8 +503,8 @@ bot.cmds = {
 				delete tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).tag;
 				fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 				out = "Tag cleared."
-			} else if (args.slice(1).join(' ').length + tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name.length > 28) {
-				out = "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 29 characters.";
+			} else if (args.slice(1).join(' ').length + tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name.length > 27) {
+				out = "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
 			} else {
 				tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).tag = args.slice(1).join(' ');
 				fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
@@ -812,51 +812,49 @@ function proper(text) {
 
 function checkTulpa(msg, cfg, tulpa, content, clean, doSubmit = true) {
 	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1])) {
+
 		if (doSubmit)
-			fetchWebhook(msg.channel).then(hook => {
-				if(msg.attachments[0]) {
-					sendAttachmentsWebhook(msg, cfg, tulpa, content, hook);
-				} else {
-					let data = {
-							content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-							username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
-							avatarURL: tulpa.url
-						};
-					bot.executeWebhook(hook.id,hook.token,data)
-					.catch(e => { if(e.code == 10015) {
-						delete webhooks[msg.channel.id];
-						fetchWebhook(msg.channel).then(hook => {
-							bot.executeWebhook(hook.id,hook.token,data);
-						}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
-					}});
-				}
-				if(!tulpa.posts) tulpa.posts = 0;
-				tulpa.posts++;
-				if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-					send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-				recent[msg.channel.id] = { userID: msg.author.id, tulpa: tulpa };
-				if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-					send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
-			}
+		  fetchWebhook(msg.channel).then(hook => {
+			  let data = {
+  					content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
+  					username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
+  					avatarURL: tulpa.url
+  				};
+  			if(recent[msg.channel.id] && msg.author.id != recent[msg.channel.id].userID && data.username == recent[msg.channel.id].name)
+  				data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
+  			if(msg.attachments[0]) {
+  				sendAttachmentsWebhook(msg, cfg, data, content, hook);
+  			} else {
+  				bot.executeWebhook(hook.id,hook.token,data)
+  				.catch(e => { if(e.code == 10015) {
+  					delete webhooks[msg.channel.id];
+  					fetchWebhook(msg.channel).then(hook => {
+  						bot.executeWebhook(hook.id,hook.token,data);
+  					}).catch(e => send(msg.channel, "Webhook deleted and error creating new one. Check my permissions?"));;
+  				}});
+  			}
+  			if(!tulpa.posts) tulpa.posts = 0;
+  			tulpa.posts++;
+  			if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
+  				send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
+  			recent[msg.channel.id] = { userID: msg.author.id, name: data.username, tulpa: tulpa };
+  			if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
+  				send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
+  			}
 			
-		}).catch(e => {
-			send(msg.channel, e);
-		});
+  		}).catch(e => {
+  			send(msg.channel, e);
+  		});
 		return true;
 	} else return false;
 }
 
-async function sendAttachmentsWebhook(msg, cfg, tulpa, content, hook) {
+async function sendAttachmentsWebhook(msg, cfg, data, content, hook) {
 	let files = [];
 	for(let i = 0; i < msg.attachments.length; i++) {
 		files.push({ file: await attach(msg.attachments[i].url), name: msg.attachments[i].filename });
 	}
-	let data = {
-			content: content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length),
-			username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
-			avatarURL: tulpa.url,
-			file: files
-		};
+	data.file = files;
 	bot.executeWebhook(hook.id,hook.token,data)
 	.catch(e => { if(e.code == 10015) {
 		delete webhooks[msg.channel.id];
