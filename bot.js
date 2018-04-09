@@ -72,14 +72,16 @@ bot.on('messageCreate', async function (msg) {
 		clean = clean.replace(/<:.+?:\d+?>/,"emote");
 		let cleanarr = clean.split('\n');
 		let del = false;
+		let count = 0;
 		let lines = msg.content.split('\n');
 		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
 				if(checkTulpa(msg, cfg, t, lines[i], cleanarr[i])) {
-					del = true;
+					count++;
 				}
 			});
 		}
+		del = count > 1;
 		
 		if(del) {
 			if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
