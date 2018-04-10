@@ -48,6 +48,7 @@ bot.on('ready', () => {
 
 bot.on('guildCreate', validateGuildCfg);
 
+
 bot.on('disconnect', function() {
 	logger.warn('Bot disconnected! Attempting to reconnect.');
 	disconnects++;
@@ -69,7 +70,7 @@ bot.on('messageCreate', async function (msg) {
 		}
 	} else if(tulpae[msg.author.id] && !(msg.channel instanceof Eris.PrivateChannel) && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
 		let clean = msg.cleanContent || msg.content;
-		clean = clean.replace(/<:.+?:\d+?>/,"emote");
+		clean = clean.replace(/(<:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
 		let cleanarr = clean.split('\n');
 		let count = 0;
 		let lines = msg.content.split('\n');
@@ -370,7 +371,9 @@ bot.cmds = {
 			} else {
 				request(args[1], { method: 'HEAD' }, (err, res) => {
 					if(err || !res.headers['content-type'] || !res.headers['content-type'].startsWith('image')) return send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");
-					if(Number(res.headers['content-length']) > 1000000) return send(msg.channel, "That image is too large and Discord will not accept it. Please use an image under 1mb.");
+					if(Number(res.headers['content-length']) > 1000000) {
+						return send(msg.channel, "That image is too large and Discord will not accept it. Please use an image under 1mb.");
+					}
 					tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = args[1];
 					fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 					send(msg.channel, "Avatar changed successfully.");
