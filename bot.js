@@ -59,6 +59,7 @@ bot.on('disconnect', function() {
 bot.on('error', console.error);
 
 bot.on('messageCreate', async function (msg) {
+	if(msg.author.bot) return;
 	let cfg = msg.channel.guild && config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false, lang: "tulpa"};
 	if (msg.content.startsWith(cfg.prefix) && (!cfg.cmdblacklist || !cfg.cmdblacklist.includes(msg.channel.id))) {
 		var args = msg.content.substr(cfg.prefix.length).split(' ');
