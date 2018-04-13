@@ -586,7 +586,7 @@ bot.cmds = {
 		usage: cfg =>  ["invite - sends the bot's oauth2 URL in this channel"],
 		permitted: (msg) => true,
 		execute: function(msg, args, cfg) {
-			send(msg.channel, "https://discordapp.com/api/oauth2/authorize?client_id=431544605209788416&permissions=805314560&scope=bot");
+			send(msg.channel, `https://discordapp.com/api/oauth2/authorize?client_id=${auth.inviteCode}&permissions=805314560&scope=bot`);
 		}
 	},
 	
@@ -791,6 +791,10 @@ bot.cmds = {
 		}
 	}
 };
+
+if (!auth.inviteCode) {
+	delete bot.cmds.invite;
+}
 
 function updateStatus() {
 	bot.editStatus({ name: `tul!help | ${Object.values(tulpae).reduce((acc,val) => acc + val.length, 0)} registered`});
