@@ -33,3 +33,13 @@ Initially the bot will generate an empty `auth.json` file and likely throw an er
 ```
 
 (don't worry, that token is the one Discord publishes on its API docs)
+
+## Invite Links
+
+By default, the bot will not allow use of the `invite` command.  To enable it, fill in the inviteCode parameter in the auth.json file (add it as it won't show up on its own) with your bot's Client ID (**NOT** the Client Secret!)
+
+For example: {
+	"discord": "MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs",
+	"owner": "99326032288423936",
+	"inviteCode" : "12345678901234"
+}
