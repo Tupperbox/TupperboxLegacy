@@ -258,7 +258,7 @@ bot.cmds = {
 						fs.writeFile("./tulpae.json",JSON.stringify(tulpae,null,2), printError);
 					});
 				}
-				out = proper(cfg.lang) + " registered successfully! To set this " + cfg.lang + "'s avatar use `" + cfg.prefix + "avatar`"; 
+				out = proper(cfg.lang) + " registered successfully!\nName: " + tulpa.name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your tulpa's info."; 
 			}
 			send(msg.channel, out);
 		}
