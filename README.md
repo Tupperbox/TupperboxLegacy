@@ -17,10 +17,10 @@ A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> 
 - tul!invite  -  Get the bot's invite URL
 - tul!feedback  -  Send a message to the developer, who may reply through the bot
 - tul!cfg  -  Configure server-specific settings
-  - tul!cfg prefix <newPrefix> - Change the bot's prefix
+  - tul!cfg prefix \<newPrefix> - Change the bot's prefix
   - tul!cfg roles <enable|disable> - Enable or disable automatically managed mentionable tulpa roles, so that users can mention tulpas
-  - tul!cfg rename <newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term
-  - tul!cfg log <channel> - Enable the bot to send a log of all tulpa messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.
+  - tul!cfg rename \<newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term
+  - tul!cfg log \<channel> - Enable the bot to send a log of all tulpa messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.
   - tul!cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.
   - tul!cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels.
 
