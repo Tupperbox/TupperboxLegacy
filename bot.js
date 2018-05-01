@@ -319,8 +319,22 @@ bot.cmds = {
 					},
 					fields: []
 				}};
+				let len = 200;
+				let page = 1;
 				tulpae[target.id].forEach(t => {
-					out.embed.fields.push(generateTulpaField(t));
+					let field = generateTulpaField(t);
+					len += field.name.length;
+					len += field.value.length;
+					if(len < 5000) {
+						out.embed.fields.push(field);
+					} else {
+						out.embed.title += ` (page ${page})`;
+						send(msg.channel, out);
+						len = 200;
+						page++;
+						out.embed.title = `${target.username}#${target.discriminator}'s registered ${cfg.lang}s (page ${page})`;
+						out.embed.fields = [field];
+					}
 				});
 			}
 			send(msg.channel, out);
@@ -492,9 +506,10 @@ bot.cmds = {
 	},
 	
 	tag: {
-		help: cfg => "Remove or change a " + cfg.lang + "'s tag (displayed next to their name)",
-		usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag"],
-		desc: cfg => "A " + cfg.lang + "'s tag is shown next to their name when speaking. This is basically a formalized way to designate different hosts and types of " + cfg.lang + ".",
+		help: cfg => "Remove or change a " + cfg.lang + "'s or your user tag (displayed next to name when proxying)",
+		usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag",
+									 "tag all [tag] - like above, but sets the tag globally for your user account"],
+		desc: cfg => "A " + cfg.lang + "'s tag is shown next to their name when speaking. If a global tag is set, it will automatically be applied to newly created " + cfg.lang + "s on your user account.",
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
 			let out = "";
@@ -519,9 +534,9 @@ bot.cmds = {
 	},
 		
 	
-	showhost: {
+	showuser: {
 		help: cfg => "Show the user that registered the " + cfg.lang + " that last spoke",
-		usage: cfg =>  ["showhost - Finds the user that registered the " + cfg.lang + " that last sent a message in this channel"],
+		usage: cfg =>  ["showuser - Finds the user that registered the " + cfg.lang + " that last sent a message in this channel"],
 		permitted: (msg) => true,
 		execute: function(msg, args, cfg) {
 			if(!recent[msg.channel.id]) send(msg.channel, "No " + cfg.lang + "s have spoken in this channel since I last started up, sorry.");
@@ -792,6 +807,11 @@ bot.cmds = {
 	}
 };
 
+bot.cmds.showhost = {
+	permitted: true,
+	execute: bot.cmds.showuser.execute
+};
+
 if (!auth.inviteCode) {
 	delete bot.cmds.invite;
 }
@@ -819,7 +839,7 @@ function proper(text) {
 }
 
 function checkTulpa(msg, cfg, tulpa, content, clean, doSubmit = true) {
-	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1])) {
+	if(clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1]) && ((clean.length == (tulpa.brackets[0].length + tulpa.brackets[1].length) && msg.attachments[0]) || clean.length > (tulpa.brackets[0].length + tulpa.brackets[1].length))) {
 
 		if (doSubmit)
 		  fetchWebhook(msg.channel).then(hook => {
