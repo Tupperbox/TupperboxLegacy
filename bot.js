@@ -282,7 +282,6 @@ bot.cmds = {
 				out = "Could not find " + cfg.lang + " with that name registered under your account.";
 			} else {
 				out = proper(cfg.lang) + " unregistered.";
-				save = true;
 				let arr = tulpae[msg.author.id];
 				let tul = arr.find(t => t.name.toLowerCase() == name.toLowerCase());
 				Object.keys(config).filter(t => config[t].rolesEnabled && bot.guilds.has(t)).map(t => bot.guilds.get(t)).forEach(g => {
