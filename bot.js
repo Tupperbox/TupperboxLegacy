@@ -506,10 +506,10 @@ bot.cmds = {
 	},
 	
 	tag: {
-		help: cfg => "Remove or change a " + cfg.lang + "'s or your user tag (displayed next to name when proxying)",
-		usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag",
-									 "tag all [tag] - like above, but sets the tag globally for your user account"],
-		desc: cfg => "A " + cfg.lang + "'s tag is shown next to their name when speaking. If a global tag is set, it will automatically be applied to newly created " + cfg.lang + "s on your user account.",
+		help: cfg => "Remove or change a " + cfg.lang + "'s tag (displayed next to name when proxying)",
+		usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag"],
+									 //"tag all [tag] - like above, but sets the tag globally for your user account"],
+		desc: cfg => "A " + cfg.lang + "'s tag is shown next to their name when speaking.",
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
 			let out = "";
