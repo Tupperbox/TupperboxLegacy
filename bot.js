@@ -96,7 +96,7 @@ bot.on('messageCreate', async function (msg) {
 			Promise.all(replace)
 			.then(() => {
 				if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-					setTimeout(() => msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }}),100);
+					msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
 				save("tulpae",tulpae);
 			}).catch(e => send(msg.channel, e));
 		}
@@ -107,6 +107,7 @@ function replaceMessage(msg, cfg, tulpa, content) {
   return new Promise((resolve,reject) => {
 		fetchWebhook(msg.channel).then(hook => {
 			let data = {
+				wait: true,
 				content: content,
 				username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
 				avatarURL: tulpa.url
