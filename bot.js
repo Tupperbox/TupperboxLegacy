@@ -78,22 +78,24 @@ bot.on('messageCreate', async function (msg) {
 		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
 				if(checkTulpa(msg, t, cleanarr[i])) {
-					replace.push(replaceMessage(msg, cfg, t, lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)));
+					replace.push([msg,cfg,t,lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
 				}
 			});
 		}
 		
+		if(replace.length < 2) replace = [];
+		
 		if(!replace[0]) {
 			for(let t of tulpae[msg.author.id]) {
 				if(checkTulpa(msg, t, clean)) {
-					replace.push(replaceMessage(msg, cfg, t, msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)));
+					replace.push([msg, cfg, t, msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
 					break;
 				}
 			}
 		}
 			
 		if(replace[0]) {
-			Promise.all(replace)
+			Promise.all(replace.map(r => replaceMessage(...r)))
 			.then(() => {
 				if(msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
 					msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
