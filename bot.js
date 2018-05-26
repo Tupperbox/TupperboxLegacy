@@ -132,7 +132,7 @@ function replaceMessage(msg, cfg, tulpa, content) {
 					}
 				}).then(() => {
 					if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-						send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content.substring(tulpa.brackets[0].length, content.length-tulpa.brackets[1].length)}`);
+						send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content)}`);
 					}
 					if(!tulpa.posts) tulpa.posts = 0;
 					tulpa.posts++;
