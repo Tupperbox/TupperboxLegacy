@@ -105,47 +105,49 @@ bot.on('messageCreate', async function (msg) {
 	}
 });
 
-function replaceMessage(msg, cfg, tulpa, content) {
-  return new Promise((resolve,reject) => {
-		fetchWebhook(msg.channel).then(hook => {
-			let data = {
-				wait: true,
-				content: content,
-				username: tulpa.name + (tulpa.tag ? ` ${tulpa.tag}` : "") + (checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""),
-				avatarURL: tulpa.url
-			};
-			
-			if(recent[msg.channel.id] && msg.author.id != recent[msg.channel.id].userID && data.username == recent[msg.channel.id].name)
-				data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
-			
-			if(msg.attachments[0]) {
-				sendAttachmentsWebhook(msg, cfg, data, content, hook).then(resolve).catch(reject);
-			} else {
-				bot.executeWebhook(hook.id,hook.token,data)
-				.catch(e => { 
-					console.log(e);
-					if(e.code == 10015) {
-						delete webhooks[msg.channel.id];
-						return fetchWebhook(msg.channel).then(hook => {
-							return bot.executeWebhook(hook.id,hook.token,data);
-						}).catch(e => reject("Webhook deleted and error creating new one. Check my permissions?"));
-					}
-				}).then(() => {
-					if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-						send(msg.channel.guild.channels.get(cfg.log), `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
-					}
-					if(!tulpa.posts) tulpa.posts = 0;
-					tulpa.posts++;
-					if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages'))
-						send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-					recent[msg.channel.id] = { userID: msg.author.id, name: data.username, tulpa: tulpa };
-					resolve();
-				}).catch(reject);
-			}
-		}).catch(e => {
-			reject(e);
-		});
-	});
+async function replaceMessage(msg, cfg, tulpa, content) {
+	const hook = await fetchWebhook(msg.channel);
+	const data = {
+		wait: true,
+		content: content,
+		username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""} ${checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`,
+		avatarURL: tulpa.url,
+	};
+
+	if(recent[msg.channel.id] && msg.author.id !== recent[msg.channel.id].userID && data.username === recent[msg.channel.id].name) {
+		data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
+	}
+
+	if(msg.attachments[0]) {
+		return sendAttachmentsWebhook(msg, cfg, data, content, hook);
+	}
+
+	try {
+		await bot.executeWebhook(hook.id,hook.token,data);
+	} catch (e) {
+		console.log(e);
+		if(e.code === 10015) {
+			delete webhooks[msg.channel.id];
+			const hook = await fetchWebhook(msg.channel);
+			return bot.executeWebhook(hook.id,hook.token,data);
+		}
+	}
+
+	if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
+		send(msg.channel.guild.channels.get(cfg.log),
+		    `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+	}
+
+	if(!tulpa.posts) tulpa.posts = 0;
+	tulpa.posts++;
+	if(!recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has('manageMessages')) {
+		send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and ${cfg.lang} webhook message will show.`);
+	}
+	recent[msg.channel.id] = {
+		userID: msg.author.id,
+		name: data.username,
+		tulpa: tulpa,
+	};
 }
 
 function checkTulpa(msg, tulpa, clean) {
