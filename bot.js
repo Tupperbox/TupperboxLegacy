@@ -1,7 +1,7 @@
 //dependencies
 const Eris = require("eris");
 const logger = require("winston");
-const request = require("request");
+const request = require("snekfetch");
 const fs = require("fs");
 const validUrl = require("valid-url");
 const util = require("util");
@@ -17,6 +17,7 @@ const config = require("./servercfg.json");
 const webhooks = require("./webhooks.json");
 
 const recent = {};
+
 const feedbackID = "431722290971934721";
 
 const zwsp = String.fromCharCode(8203); //zero-width space for embed formatting
@@ -56,6 +57,7 @@ bot.on("disconnect", function() {
 });
 
 bot.on("error", console.error);
+
 
 bot.on("messageCreate", async function (msg) {
 	if(msg.author.bot) return;
@@ -99,7 +101,7 @@ bot.on("messageCreate", async function (msg) {
 					if(msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 						msg.delete().catch(e => { if(e.code == 50013) { send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
 					save("tulpae",tulpae);
-				}).catch(e => send(msg.channel, e));
+				}).catch(e => send(msg.channel, e.toString()));
 		}
 	}
 });
@@ -118,7 +120,7 @@ async function replaceMessage(msg, cfg, tulpa, content) {
 	}
 
 	if(msg.attachments[0]) {
-		return sendAttachmentsWebhook(msg, cfg, data, content, hook);
+		return sendAttachmentsWebhook(msg, cfg, data, content, hook, tulpa);
 	}
 
 	try {
@@ -208,9 +210,8 @@ function fetchWebhook(channel) {
 
 function attach(url, name) {
 	return new Promise(function(resolve, reject) {
-		request({url:url,encoding:null}, (err, res, data) => {
-			console.log(`${url}: ${data.length}`);
-			resolve(data);
+		request.get(url).then(res => {
+			resolve(res.raw);
 		});
 	});
 }
@@ -287,12 +288,12 @@ bot.cmds = {
 		permitted: (msg) => { return msg.author.id === auth.owner; },
 		execute: function(msg, args, cfg) {
 			if(msg.author.id != auth.owner) return;
-			bot.getMessage(feedbackID, args[0]).then(message => {
+			bot.getMessage(feedbackID, args[0]).then(async message => {
 				let parts = message.content.split("\n");
 				if(parts[3] && parts[0].startsWith("User") && parts[1].startsWith("Server") && parts[2].startsWith("Channel") && parts[3].startsWith("Message")) {
 					let user = bot.users.get(parts[0].split(" ")[1]);
 					let server = bot.guilds.get(parts[1].split(" ")[1]);
-					let channel = server && server.channels.get(parts[2].split(" ")[1]);
+					let channel = server && server.channels.get(parts[2].split(" ")[1]) || await bot.getDMChannel(user.id);
 					let message = parts[3].split(" ").slice(1).join(" ");
 					let embed = { embed: {
 						title: "Reply to Feedback",
@@ -431,17 +432,24 @@ bot.cmds = {
 					let field = generateTulpaField(t);
 					len += field.name.length;
 					len += field.value.length;
-					if(len < 5000) {
+					if(len < 5000 && out.embed.fields.length < 6) {
 						out.embed.fields.push(field);
 					} else {
 						out.embed.title += ` (page ${page})`;
 						send(msg.channel, out);
 						len = 200;
 						page++;
-						out.embed.title = `${target.username}#${target.discriminator}'s registered ${cfg.lang}s (page ${page})`;
-						out.embed.fields = [field];
+						out = { embed: {
+							title: `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`,
+							author: {
+								name: target.username,
+								icon_url: target.avatarURL
+							},
+							fields: [field]
+						}};
 					}
 				});
+				if(page > 1) out.embed.title += ` (page ${page})`;
 			}
 			send(msg.channel, out);
 		}
@@ -490,15 +498,15 @@ bot.cmds = {
 			} else if(!validUrl.isWebUri(args[1])) {
 				out = "Malformed url.";
 			} else {
-				request(args[1], { method: "HEAD" }, (err, res) => {
-					if(err || !res.headers["content-type"] || !res.headers["content-type"].startsWith("image")) return send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");
+				request.head(args[1]).then(res => {
+					if(!res.headers["content-type"] || !res.headers["content-type"].startsWith("image")) return send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");
 					if(Number(res.headers["content-length"]) > 1000000) {
 						return send(msg.channel, "That image is too large and Discord will not accept it. Please use an image under 1mb.");
 					}
 					tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = args[1];
 					save("tulpae",tulpae);
 					send(msg.channel, "Avatar changed successfully.");
-				});
+				}).catch(err => send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example)."));
 				return;
 			}
 			send(msg.channel, out);
@@ -517,7 +525,7 @@ bot.cmds = {
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
 				out = "You don't have a " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
-				out = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc;
+				out = "Current description: " + tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc;
 			} else {
 				tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc = args.slice(1).join(" ").slice(0,500);
 				save("tulpae",tulpae);
@@ -753,7 +761,9 @@ bot.cmds = {
 					let guild = msg.channel.guild;
 					if(cfg.rolesEnabled)
 						out = proper(cfg.lang) + " roles already enabled on this server.";
-					else {
+					else if(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => tulpae[t].length).reduce((acc,val) => acc+val, 0) + guild.roles.size > 245) {
+						out = "Discord has a hard limit of 250 roles in a server, so I am unable to enable auto roles.";
+					} else {
 						cfg.rolesEnabled = true;
 						Promise.all(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => {
 							let mem = guild.members.get(t);
