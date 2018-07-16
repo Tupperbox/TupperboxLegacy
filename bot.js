@@ -529,7 +529,7 @@ bot.cmds = {
 				out = "New name must be between 2 and 28 characters.";
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
 				out = "You don't have a " + cfg.lang + " with that name registered.";
-			} else if(tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[1].toLowerCase())) {
+			} else if(tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[1])) {
 				out = "You already have a " + cfg.lang + " with that new name.";
 			} else {
 				tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name = args[1];
