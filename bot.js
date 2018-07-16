@@ -58,6 +58,40 @@ bot.on("disconnect", function() {
 
 bot.on("error", console.error);
 
+const pages = {};
+
+let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9"];
+bot.on("messageReactionAdd", function(message, emoji, userID) {
+	if(!pages[message.id] || pages[message.id].user != userID || !buttons.includes(emoji.name)) return;
+	let data = pages[message.id];
+	switch(emoji.name) {
+		case "\u23ea": // first page
+			data.index = 0;
+		break;
+		
+		case "\u2b05": // previous page
+			data.index--;
+			if(data.index < 0) data.index = data.pages.length - 1;
+		break;
+		
+		case "\u27a1": // next page
+			data.index++;
+			if(data.index >= data.pages.length) data.index = 0;
+		break;
+		
+		case "\u23e9": // last page
+			data.index = data.pages.length-1;
+		break;
+		
+		case "\u23f9": // stop
+			delete pages[message.id];
+			return bot.deleteMessage(message.channel.id, message.id);
+		break;
+	}
+	bot.editMessage(message.channel.id, message.id, data.pages[data.index]);
+	bot.removeMessageReaction(message.channel.id, message.id, emoji.name, userID);
+});
+
 
 bot.on("messageCreate", async function (msg) {
 	if(msg.author.bot) return;
@@ -405,7 +439,7 @@ bot.cmds = {
 		help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 		usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author."],
 		permitted: () => true,
-		execute: function(msg, args, cfg) {
+		execute: async function(msg, args, cfg) {
 			let out = "";
 			let target;
 			if(args[0]) {
@@ -418,7 +452,8 @@ bot.cmds = {
 			} else if(!tulpae[target.id]) {
 				out = (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 			} else {
-				out = { embed: {
+				let embeds = [];
+				let current = { embed: {
 					title: `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`,
 					author: {
 						name: target.username,
@@ -432,14 +467,14 @@ bot.cmds = {
 					let field = generateTulpaField(t);
 					len += field.name.length;
 					len += field.value.length;
-					if(len < 5000 && out.embed.fields.length < 6) {
-						out.embed.fields.push(field);
+					if(len < 5000 && current.embed.fields.length < 5) {
+						current.embed.fields.push(field);
 					} else {
-						out.embed.title += ` (page ${page})`;
-						send(msg.channel, out);
+						current.embed.title += ` (page ${page})`;
+						embeds.push(current);
 						len = 200;
 						page++;
-						out = { embed: {
+						current = { embed: {
 							title: `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`,
 							author: {
 								name: target.username,
@@ -449,7 +484,31 @@ bot.cmds = {
 						}};
 					}
 				});
-				if(page > 1) out.embed.title += ` (page ${page})`;
+				embeds.push(current);
+				out = embeds[0];
+				if(page > 1) {
+					current.embed.title += ` (page ${page})`;
+					if(!msg.channel.permissionsOf(bot.user.id).has("addReactions")) {
+							for(let e of embeds) {
+								await send(msg.channel, e);
+							}
+							return send(msg.channel, "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the list command is used.")
+					}
+					return send(msg.channel, out).then(m => {
+						
+						buttons.forEach(b => bot.addMessageReaction(msg.channel.id,m.id,b));
+						pages[m.id] = {
+							user: msg.author.id,
+							pages: embeds,
+							index: 0
+						};
+						setTimeout(() => {
+							bot.deleteMessage(msg.channel.id,m.id); 
+							delete pages[m.id];
+						}, 300000); //5 minutes
+					});
+				}
+				
 			}
 			send(msg.channel, out);
 		}
@@ -990,13 +1049,8 @@ function printError(err) {
 	if(err) return console.error(err);
 }
 
-function send(channel, message, file, typing) {
-	if(typing) {
-		return channel.sendTyping().then(() => {
-			setTimeout(() => channel.createMessage(message,file), Math.min(6*message.length+750,4000));
-		});
-	}
-	channel.createMessage(message, file);
+function send(channel, message, file) {
+	return channel.createMessage(message, file);
 }
 
 function getMatches(string, regex) {
