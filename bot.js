@@ -48,6 +48,11 @@ bot.on("ready", () => {
 
 bot.on("guildCreate", validateGuildCfg);
 
+bot.on("guildDelete", guild => {
+	console.log("Removed from guild " + guild.id + ", deleting config data!");
+	delete config[guild.id];
+});
+
 
 bot.on("disconnect", function() {
 	logger.warn("Bot disconnected! Attempting to reconnect.");
