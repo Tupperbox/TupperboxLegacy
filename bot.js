@@ -113,7 +113,7 @@ bot.on("messageCreate", async function (msg) {
 		for(let i = 0; i < lines.length; i++) {
 			tulpae[msg.author.id].forEach(t => {
 				if(checkTulpa(msg, t, cleanarr[i])) {
-					replace.push([msg,cfg,t,lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
+					replace.push([msg,cfg,t,t.showbrackets ? lines[i] : lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
 				}
 			});
 		}
@@ -123,7 +123,7 @@ bot.on("messageCreate", async function (msg) {
 		if(!replace[0]) {
 			for(let t of tulpae[msg.author.id]) {
 				if(checkTulpa(msg, t, clean)) {
-					replace.push([msg, cfg, t, msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
+					replace.push([msg, cfg, t, t.showbrackets ? msg.content : msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
 					break;
 				}
 			}
@@ -503,7 +503,8 @@ bot.cmds = {
 							index: 0
 						};
 						setTimeout(() => {
-							bot.deleteMessage(msg.channel.id,m.id); 
+							if(!pages[m.id]) return;
+							bot.removeMessageReactions(msg.channel.id,m.id); 
 							delete pages[m.id];
 						}, 300000); //5 minutes
 					});
@@ -529,7 +530,7 @@ bot.cmds = {
 				out = "New name must be between 2 and 28 characters.";
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
 				out = "You don't have a " + cfg.lang + " with that name registered.";
-			} else if(tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[1])) {
+			} else if(tulpae[msg.author.id].find(t => t.name == args[1])) {
 				out = "You already have a " + cfg.lang + " with that new name.";
 			} else {
 				tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name = args[1];
@@ -673,6 +674,27 @@ bot.cmds = {
 					save("tulpae",tulpae);
 					out = "Brackets updated successfully.";
 				}
+			}
+			send(msg.channel, out);
+		}
+	},
+	
+	togglebrackets: {
+		help: cfg => "Toggles whether the brackets are included or stripped in proxied messages for the given " + cfg.lang,
+		usage: cfg =>  ["togglebrackets <name> - toggles showing brackets on or off for the given " + cfg.lang],
+		permitted: () => true,
+		execute: function(msg, args, cfg) {
+			let out = "";
+			args = getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
+			if(!args[0]) {
+				return bot.cmds.help.execute(msg, ["togglebrackets"], cfg);
+			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
+				out = "You don't have a " + cfg.lang + " with that name registered.";
+			} else {
+				let tup = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase());
+				if(!tup.showbrackets) tup.showbrackets = false;
+				tup.showbrackets = !tup.showbrackets;
+				out = `Now ${tup.showbrackets ? "showing" : "hiding"} brackets in proxied messages for ${tup.name}.`;
 			}
 			send(msg.channel, out);
 		}
@@ -1065,5 +1087,3 @@ function getMatches(string, regex) {
 process.on("unhandledRejection", console.log);
 
 bot.connect();
-
-
