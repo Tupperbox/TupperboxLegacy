@@ -442,10 +442,57 @@ bot.cmds = {
 	
 	list: {
 		help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
-		usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author."],
+		usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
 		permitted: () => true,
-		execute: async function(msg, args, cfg) {
+		execute: function(msg, args, cfg) {
 			let out = "";
+			if(args[0] == "all" || args[0] == "*") { //short list of all tuppers
+				let tups = msg.channel.guild.members.filter(m => tulpae[m.id] && tulpae[m.id].length > 0).map(m => tulpae[m.id]);
+
+				let embeds = [];
+				let current = { embed: {
+					title: `${tups.reduce((acc,val) => acc+val.length,0)} total registered ${cfg.lang}s in this server`,
+					author: {
+						name: msg.channel.guild.name,
+						icon_url: msg.channel.guild.iconURL
+					},
+					fields: []
+				}};
+				let len = 200;
+				let page = 1;
+				tups.forEach(t => {
+					let user = bot.users.get(t[0].host);
+					let field = {
+						name: `${user.username}#${user.discriminator}`,
+						value: t.map(tul => tul.name).join(', ')
+					};
+					len += field.name.length;
+					len += field.value.length;
+					if(len < 5000 && current.embed.fields.length < 5) {
+						current.embed.fields.push(field);
+					} else {
+						embeds.push(current);
+						len = 200;
+						page++;
+						current = { embed: {
+							title: `${tups.reduce((acc,val) => acc+val.length,0)} total registered ${cfg.lang}s in this server`,
+							author: {
+								name: msg.channel.guild.name,
+								icon_url: msg.channel.guild.iconURL
+							},
+							fields: []
+						}};
+					}
+				});
+				embeds.push(current);
+				out = embeds[0];
+				if(page > 1) {
+					for(let i = 0; i < embeds.length; i++)
+						embeds[i].embed.title += ` (page ${i+1}/${embeds.length})`
+					return paginate(msg, embeds);
+				}
+				return send(msg.channel, out);
+			}
 			let target;
 			if(args[0]) {
 				target = resolveUser(msg, args.join(" "));
@@ -492,27 +539,9 @@ bot.cmds = {
 				embeds.push(current);
 				out = embeds[0];
 				if(page > 1) {
-					current.embed.title += ` (page ${page})`;
-					if(!msg.channel.permissionsOf(bot.user.id).has("addReactions")) {
-							for(let e of embeds) {
-								await send(msg.channel, e);
-							}
-							return send(msg.channel, "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the list command is used.")
-					}
-					return send(msg.channel, out).then(m => {
-						
-						buttons.forEach(b => bot.addMessageReaction(msg.channel.id,m.id,b));
-						pages[m.id] = {
-							user: msg.author.id,
-							pages: embeds,
-							index: 0
-						};
-						setTimeout(() => {
-							if(!pages[m.id]) return;
-							bot.removeMessageReactions(msg.channel.id,m.id); 
-							delete pages[m.id];
-						}, 300000); //5 minutes
-					});
+					for(let i = 0; i < embeds.length; i++)
+						embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${tulpae[target.id].length} total)`
+					return paginate(msg, embeds);
 				}
 				
 			}
@@ -1048,6 +1077,28 @@ function generateTulpaField(tulpa) {
 		name: tulpa.name,
 		value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${tulpa.brackets[0]}text${tulpa.brackets[1]}\nAvatar URL: ${tulpa.url}${tulpa.birthday ? ("\nBirthday: "+new Date(tulpa.birthday).toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.desc ? ("\n"+tulpa.desc) : ""}`
 	};
+}
+
+async function paginate(msg, data) {
+	if(!msg.channel.permissionsOf(bot.user.id).has("addReactions")) {
+			for(let e of data) {
+				await send(msg.channel, e);
+			}
+			return send(msg.channel, "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the command is used.")
+	}
+	return send(msg.channel, data[0]).then(m => {
+		buttons.forEach(b => bot.addMessageReaction(msg.channel.id,m.id,b));
+		pages[m.id] = {
+			user: msg.author.id,
+			pages: data,
+			index: 0
+		};
+		setTimeout(() => {
+			if(!pages[m.id]) return;
+			bot.removeMessageReactions(msg.channel.id,m.id); 
+			delete pages[m.id];
+		}, 300000); //5 minutes
+	});
 }
 
 function checkTulpaBirthday(tulpa) {
