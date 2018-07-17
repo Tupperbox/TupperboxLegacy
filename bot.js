@@ -367,7 +367,7 @@ bot.cmds = {
 		execute: function(msg, args, cfg) {
 			args = getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
 			let out = "";
-			let brackets = args.slice(1).join(" ").split("text");
+			let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["register"], cfg);
 			} else if(!args[1]) {
@@ -375,7 +375,7 @@ bot.cmds = {
 			} else if(args[0].length < 2 || args[0].length > 28) {
 				out = "Name must be between 2 and 28 characters.";
 			} else if(brackets.length < 2) {
-				out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters (except `''`).\nThis determines how the bot detects if it should replace a message.";
+				out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
 			} else if(!brackets[0] && !brackets[1]) {
 				out = "Need something surrounding 'text'.";
 			} else if(tulpae[msg.author.id] && tulpae[msg.author.id].find(t => t.name === args[0])) {
@@ -522,7 +522,6 @@ bot.cmds = {
 					if(len < 5000 && current.embed.fields.length < 5) {
 						current.embed.fields.push(field);
 					} else {
-						current.embed.title += ` (page ${page})`;
 						embeds.push(current);
 						len = 200;
 						page++;
@@ -698,9 +697,9 @@ bot.cmds = {
 				let brackets = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).brackets;
 				out = `Brackets for ${args[0]}: ${brackets[0]}text${brackets[1]}`;
 			} else {
-				let brackets = args.slice(1).join(" ").split("text");
+				let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
 				if(brackets.length < 2) {
-					out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters (except `''`).\nThis determines how the bot detects if it should replace a message.";
+					out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
 				} else if(!brackets[0] && !brackets[1]) {
 					out = "Need something surrounding 'text'.";
 				} else {
