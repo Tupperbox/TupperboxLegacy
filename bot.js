@@ -44,6 +44,7 @@ bot.on("ready", () => {
 	updateStatus();
 	setInterval(updateStatus, 1800000);
 	bot.guilds.forEach(validateGuildCfg);
+	validateRoles();
 });
 
 bot.on("guildCreate", validateGuildCfg);
@@ -53,6 +54,23 @@ bot.on("guildDelete", guild => {
 	delete config[guild.id];
 });
 
+bot.on("guildMemberAdd", (guild, member) => {
+	if(tulpae[member.id] && config[guild.id].rolesEnabled) {
+		tulpae[member.id].forEach(tul => {
+			bot.createRole(guild.id,{name:tul.name,mentionable:true}).then(role => member.addRole(role.id));
+		});
+	}
+});
+
+bot.on("guildMemberRemove", (guild, member) => {
+	if(tulpae[member.id] && config[guild.id].rolesEnabled) {
+		tulpae[member.id].filter(t => t.roles && t.roles[guild.id]).forEach(tul => {
+			bot.deleteRole(guild.id,tul.roles[guild.id]);
+			delete tul.roles[guild.id];
+			if(Object.keys(tul.roles).length == 0) delete tul.roles;
+		});
+	}
+});
 
 bot.on("disconnect", function() {
 	logger.warn("Bot disconnected! Attempting to reconnect.");
@@ -129,6 +147,8 @@ bot.on("messageCreate", async function (msg) {
 			if(!found && current) 
 				replace[replace.length-1][3] += "\n"+lines[i];
 		}
+		
+		if(replace.length < 2) replace = [];
 		
 		if(!replace[0]) {
 			for(let t of tulpae[msg.author.id]) {
@@ -372,7 +392,9 @@ bot.cmds = {
 		execute: function(msg, args, cfg) {
 			args = getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
 			let out = "";
-			let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
+			let brackets;
+			if(args[0])
+				brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["register"], cfg);
 			} else if(!args[1]) {
@@ -401,6 +423,11 @@ bot.cmds = {
 				if(guilds[0]) {
 					tulpa.roles = {};
 					Promise.all(guilds.map(g => {
+						if(g.roles.size >= 249) {
+							console.log("Maximum roles reached in guild",g.id);
+							disableRoles(g);
+							return true;
+						}
 						return g.createRole({ name: tulpa.name, mentionable: true}).then(r => {
 							tulpa.roles[g.id] = r.id;
 							g.members.get(msg.author.id).addRole(r.id);
@@ -435,9 +462,12 @@ bot.cmds = {
 				out = proper(cfg.lang) + " unregistered.";
 				let arr = tulpae[msg.author.id];
 				let tul = arr.find(t => t.name.toLowerCase() == name.toLowerCase());
-				Object.keys(config).filter(t => config[t].rolesEnabled && bot.guilds.has(t)).map(t => bot.guilds.get(t)).forEach(g => {
-					if(tul.roles && tul.roles[g.id]) g.deleteRole(tul.roles[g.id]);
-				});
+				if(tul.roles) {
+					Object.keys(tul.roles).filter(id => config[id].rolesEnabled).forEach(id => {
+						if(bot.guilds.get(id).roles.has(tul.roles[id]))
+							bot.deleteRole(id,tul.roles[id]);
+					});
+				}
 				arr.splice(arr.indexOf(tul), 1);
 				save("tulpae",tulpae);
 			}
@@ -500,7 +530,8 @@ bot.cmds = {
 			}
 			let target;
 			if(args[0]) {
-				target = resolveUser(msg, args.join(" "));
+				if(msg.channel instanceof Eris.PrivateChannel) return send(msg.channel,"Cannot search for members in a DM.");
+				else target = resolveUser(msg, args.join(" "));
 			} else {
 				target = msg.author;
 			}
@@ -883,22 +914,7 @@ bot.cmds = {
 					else if(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => tulpae[t].length).reduce((acc,val) => acc+val, 0) + guild.roles.size > 245) {
 						out = "Discord has a hard limit of 250 roles in a server, so I am unable to enable auto roles.";
 					} else {
-						cfg.rolesEnabled = true;
-						Promise.all(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => {
-							let mem = guild.members.get(t);
-							return Promise.all(tulpae[t].map(tul => {
-								if(!mem.roles.find(r => guild.roles.get(r).name === tul.name))
-									return guild.createRole({name: tul.name, mentionable: true}).then(r => {
-										mem.addRole(r.id);
-										if(!tul.roles) tul.roles = {};
-										tul.roles[guild.id] = r.id;
-									});
-								return true;
-							}));
-						})).then(() => {
-							save("tulpae",tulpae);
-						});
-						save("servercfg",config);
+						enableRoles(guild);
 						out = proper(cfg.lang) + " roles enabled. Adding the roles may take some time.";
 					}
 				} else if(args[1] === "disable") {
@@ -906,19 +922,7 @@ bot.cmds = {
 					if(!cfg.rolesEnabled)
 						out = proper(cfg.lang) + " roles already disabled on this server.";
 					else {
-						cfg.rolesEnabled = false;
-						Object.keys(tulpae).filter(t => guild.members.has(t)).forEach(t => {
-							let mem = guild.members.get(t);
-							tulpae[t].forEach(tul => {
-								if(tul.roles && tul.roles[guild.id]) {
-									guild.deleteRole(tul.roles[guild.id]);
-									delete tul.roles[guild.id];
-									if(!Object.keys(tul.roles)[0]) delete tul.roles;
-								}
-							});
-						});
-						save("tulpae",tulpae);
-						save("servercfg",config);
+						disableRoles(guild);
 						out = proper(cfg.lang) + " roles disabled. Deleting the roles may take some time.";
 					}
 				} else {
@@ -1068,6 +1072,101 @@ function validateGuildCfg(guild) {
 	save("servercfg",config);
 }
 
+function validateRoles() {
+	let tuppers = Object.values(tulpae).reduce((acc, val) => acc.concat(val),[]).filter(t => t.roles);
+	let changes = 0;
+	console.log("preliminary check of roles for guilds the bot is no longer in");
+	tuppers.forEach(t => {
+		Object.keys(t.roles).forEach(gid => {
+			if(!bot.guilds.has(gid)) {
+				console.log("Tupper",t.name,"of host",t.host,"has role for nonexistant guild",gid)
+				changes++;
+				delete t.roles[gid];
+			}
+		});
+	});
+	console.log("entering guild loop!");
+	bot.guilds.forEach(guild => {
+		let cfg = config[guild.id];
+		let roled = tuppers.filter(t => t.roles[guild.id]);
+		roled.forEach(t => {
+			if(!guild.members.has(t.host) || !guild.roles.has(t.roles[guild.id])) {
+				console.log("Member",t.host,"role should be deleted in guild",guild.name)
+				changes++;
+				if(guild.roles.has(t.roles[guild.id]) && guild.members.get(bot.user.id).permission.has("manageRoles")) guild.deleteRole(t.roles[guild.id]);
+				delete t.roles[guild.id];
+			}
+		});
+		if(cfg.rolesEnabled) {
+			guild.members.filter(m => tulpae[m.id]).forEach(m => {
+				tulpae[m.id].forEach(t => {
+					if(!t.roles || !t.roles[guild.id]) {
+						console.log("Member",m.username,"tulpa",t.name,"missing role in",guild.name);
+						changes++;
+						if(guild.members.get(bot.user.id).permission.has("manageRoles"))
+							guild.createRole({name:t.name,mentionable:true}).then(role => {
+								if(!t.roles) t.roles = {};
+								t.roles[guild.id] = role.id;
+								m.addRole(role.id);
+							});
+					}
+				});
+			});
+		} else {
+			guild.members.filter(m => tulpae[m.id]).forEach(m => {
+				tulpae[m.id].filter(t => t.roles).forEach(t => {
+					if(t.roles[guild.id]) {
+						console.log("Member",m.username,"tulpa",t.name,"has illegal role entry in",guild.name);
+						changes++;
+						if(guild.roles.has(t.roles[guild.id]) && guild.members.get(bot.user.id).permission.has("manageRoles")) guild.deleteRole(t.roles[guild.id]);
+						delete t.roles[guild.id];
+					}
+				});
+			});
+		}
+	});
+	tuppers.forEach(tul => {
+		if(Object.keys(tul.roles).length == 0) delete tul.roles;
+	});
+	console.log("Changes:",changes);
+	save("tulpae",tulpae);
+}
+
+function disableRoles(guild) {
+	config[guild.id].rolesEnabled = false;
+	Object.keys(tulpae).filter(t => guild.members.has(t)).forEach(t => {
+		let mem = guild.members.get(t);
+		tulpae[t].forEach(tul => {
+			if(tul.roles && tul.roles[guild.id]) {
+				guild.deleteRole(tul.roles[guild.id]);
+				delete tul.roles[guild.id];
+				if(!Object.keys(tul.roles)[0]) delete tul.roles;
+			}
+		});
+	});
+	save("tulpae",tulpae);
+	save("servercfg",config);
+}
+
+function enableRoles(guild) {
+	config[guild.id].rolesEnabled = true;
+	Promise.all(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => {
+		let mem = guild.members.get(t);
+		return Promise.all(tulpae[t].map(tul => {
+			if(!mem.roles.find(r => guild.roles.get(r).name === tul.name))
+				return guild.createRole({name: tul.name, mentionable: true}).then(r => {
+					mem.addRole(r.id);
+					if(!tul.roles) tul.roles = {};
+					tul.roles[guild.id] = r.id;
+				});
+			return true;
+		}));
+	})).then(() => {
+		save("tulpae",tulpae);
+	});
+	save("servercfg",config);
+}
+
 function proper(text) {
 	return text.substring(0,1).toUpperCase() + text.substring(1);
 }
@@ -1088,7 +1187,7 @@ function generateTulpaField(tulpa) {
 }
 
 async function paginate(msg, data) {
-	if(!msg.channel.permissionsOf(bot.user.id).has("addReactions")) {
+	if(!(msg.channel instanceof Eris.PrivateChannel) && !msg.channel.permissionsOf(bot.user.id).has("addReactions")) {
 			for(let e of data) {
 				await send(msg.channel, e);
 			}
@@ -1103,7 +1202,8 @@ async function paginate(msg, data) {
 		};
 		setTimeout(() => {
 			if(!pages[m.id]) return;
-			bot.removeMessageReactions(msg.channel.id,m.id); 
+			if(!(msg.channel instanceof Eris.PrivateChannel))
+				bot.removeMessageReactions(msg.channel.id,m.id); 
 			delete pages[m.id];
 		}, 300000); //5 minutes
 	});
