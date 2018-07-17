@@ -110,15 +110,20 @@ bot.on("messageCreate", async function (msg) {
 		let cleanarr = clean.split("\n");
 		let lines = msg.content.split("\n");
 		let replace = [];
+		let current = null;
 		for(let i = 0; i < lines.length; i++) {
+			let found = false;
 			tulpae[msg.author.id].forEach(t => {
 				if(checkTulpa(msg, t, cleanarr[i])) {
+					if(t.brackets[1].length == 0) current = t;
+					else current = null;
+					found = true;
 					replace.push([msg,cfg,t,t.showbrackets ? lines[i] : lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
 				}
 			});
+			if(!found && current) 
+				replace[replace.length-1][3] += "\n"+lines[i];
 		}
-		
-		if(replace.length < 2) replace = [];
 		
 		if(!replace[0]) {
 			for(let t of tulpae[msg.author.id]) {
