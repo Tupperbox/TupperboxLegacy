@@ -286,7 +286,7 @@ bot.cmds = {
 			} else { //general help
 				output = { embed: {
 					title: "Tupperware | Help",
-					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, register a " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
+					description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + zwsp + "\n",
 					timestamp: new Date().toJSON(),
 					color: 0x999999,
 					author: {
@@ -362,7 +362,7 @@ bot.cmds = {
 	register: {
 		help: cfg => "Register a new " + cfg.lang + "",
 		usage: cfg =>  ["register <name> <brackets> - Register a new " + cfg.lang + ".\n\t<name> - the " + cfg.lang + "'s name, for multi-word names surround this argument in `''`\n\t<brackets> - the word 'text' surrounded by any characters on one or both sides"],
-		desc: cfg => "Example use: `register Test >text<` - registers a " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `''`.",
+		desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `''`.",
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
 			args = getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
@@ -413,7 +413,7 @@ bot.cmds = {
 	
 	//unregister tulpa
 	remove: {
-		help: cfg => "Unregister a " + cfg.lang + "",
+		help: cfg => "Unregister " + article(cfg) + " " + cfg.lang + "",
 		usage: cfg =>  ["remove <name> - Unregister the named " + cfg.lang + " from your list"],
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
@@ -549,7 +549,7 @@ bot.cmds = {
 	},
 	
 	rename: {
-		help: cfg => "Change a " + cfg.lang + "'s name",
+		help: cfg => "Change " + article(cfg) + " " + cfg.lang + "'s name",
 		usage: cfg =>  ["rename <name> <newname> - Set a new name for the " + cfg.lang + ""],
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
@@ -562,9 +562,9 @@ bot.cmds = {
 			} else if(args[1].length < 2 || args[1].length > 28) {
 				out = "New name must be between 2 and 28 characters.";
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(tulpae[msg.author.id].find(t => t.name == args[1])) {
-				out = "You already have a " + cfg.lang + " with that new name.";
+				out = "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
 			} else {
 				tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name = args[1];
 				save("tulpae",tulpae);
@@ -575,7 +575,7 @@ bot.cmds = {
 	},
 	
 	avatar: {
-		help: cfg => "View or change a " + cfg.lang + "'s avatar",
+		help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s avatar",
 		usage: cfg =>  ["avatar <name> [url] - if url is specified, change the " + cfg.lang + "'s avatar, if not, simply echo the current one"],
 		permitted: () => true,
 		desc: cfg => "The specified URL must be a direct link to an image - that is, the URL should end in .jpg or .png or another common image filetype. Also, it can't be over 1mb in size, as Discord doesn't accept images over this size as webhook avatars.",
@@ -585,7 +585,7 @@ bot.cmds = {
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["avatar"], cfg);
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
 				out = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url;
 			} else if(!validUrl.isWebUri(args[1])) {
@@ -607,7 +607,7 @@ bot.cmds = {
 	},
 	
 	describe: {
-		help: cfg => "View or change a " + cfg.lang + "'s description",
+		help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s description",
 		usage: cfg =>  ["describe <name> [desc] - if desc is specified, change the " + cfg.lang + "'s describe, if not, simply echo the current one"],
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
@@ -616,7 +616,7 @@ bot.cmds = {
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["describe"], cfg);
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
 				out = "Current description: " + tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc;
 			} else {
@@ -630,7 +630,7 @@ bot.cmds = {
 		
 	
 	birthday: {
-		help: cfg => "View or change a " + cfg.lang + "'s birthday, or see upcoming birthdays",
+		help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s birthday, or see upcoming birthdays",
 		usage: cfg =>  ["birthday [name] [date] -\n\tIf name and date are specified, set the named " + cfg.lang + "'s birthday to the date.\n\tIf name only is specified, show the " + cfg.lang + "'s birthday.\n\tIf neither are given, show the next 5 birthdays on the server."],
 		desc: cfg => "Date must be given in format MM/DD/YY",
 		permitted: () => true,
@@ -665,7 +665,7 @@ bot.cmds = {
 							return (bday.getTime() == now.getTime()) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${bday.toDateString()}`;
 						}).join("\n");
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() === args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
 				let bday = tulpae[msg.author.id].find(t => t.name.toLowerCase() === args[0].toLowerCase()).birthday;
 				out = bday ? new Date(bday).toDateString() : "No birthday currently set for " + args[0];
@@ -682,7 +682,7 @@ bot.cmds = {
 	},
 	
 	brackets: {
-		help: cfg => "View or change a " + cfg.lang + "'s brackets",
+		help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s brackets",
 		usage: cfg =>  ["brackets <name> [brackets] - if brackets are given, change the " + cfg.lang + "'s brackets, if not, simply echo the current one"],
 		desc: cfg => "Brackets must be the word 'text' surrounded by any symbols or letters, i.e. `[text]` or `>>text`",
 		permitted: () => true,
@@ -692,7 +692,7 @@ bot.cmds = {
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["brackets"], cfg);
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
 				let brackets = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).brackets;
 				out = `Brackets for ${args[0]}: ${brackets[0]}text${brackets[1]}`;
@@ -722,7 +722,7 @@ bot.cmds = {
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["togglebrackets"], cfg);
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else {
 				let tup = tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase());
 				if(!tup.showbrackets) tup.showbrackets = false;
@@ -734,9 +734,9 @@ bot.cmds = {
 	},
 	
 	tag: {
-		help: cfg => "Remove or change a " + cfg.lang + "'s tag (displayed next to name when proxying)",
+		help: cfg => "Remove or change " + article(cfg) + " " + cfg.lang + "'s tag (displayed next to name when proxying)",
 		usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag"],
-		desc: cfg => "A " + cfg.lang + "'s tag is shown next to their name when speaking.",
+		desc: cfg => proper(article(cfg)) + " " + cfg.lang + "'s tag is shown next to their name when speaking.",
 		permitted: () => true,
 		execute: function(msg, args, cfg) {
 			let out = "";
@@ -744,7 +744,7 @@ bot.cmds = {
 			if(!args[0]) {
 				return bot.cmds.help.execute(msg, ["tag"], cfg);
 			} else if(!tulpae[msg.author.id] || !tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
-				out = "You don't have a " + cfg.lang + " with that name registered.";
+				out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 			} else if(!args[1]) {
 				delete tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).tag;
 				save("tulpae",tulpae);
@@ -776,7 +776,7 @@ bot.cmds = {
 	
 	find: {
 		help: cfg => "Find and display info about " + cfg.lang + "s by name",
-		usage: cfg =>  ["find <name> - Attempts to find a " + cfg.lang + " with exactly the given name, and if none are found, tries to find " + cfg.lang + "s with names containing the given name."],
+		usage: cfg =>  ["find <name> - Attempts to find " + article(cfg) + " " + cfg.lang + " with exactly the given name, and if none are found, tries to find " + cfg.lang + "s with names containing the given name."],
 		permitted: (msg) => true,
 		execute: function(msg, args, cfg) {
 			if(msg.channel instanceof Eris.PrivateChannel)
@@ -794,7 +794,7 @@ bot.cmds = {
 			if(!tul[0])
 				tul = all.filter(t => t.name.toLowerCase().includes(search));
 			if(!tul[0])
-				send(msg.channel, "Couldn't find a " + cfg.lang + " with that name.");
+				send(msg.channel, "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.");
 			else {
 				if(tul.length == 1) {
 					let t = tul[0];
@@ -1065,6 +1065,10 @@ function validateGuildCfg(guild) {
 
 function proper(text) {
 	return text.substring(0,1).toUpperCase() + text.substring(1);
+}
+let vowels = ["a","e","i","o","u"];
+function article(cfg) {
+	return vowels.includes(cfg.lang.slice(0,1)) ? "an" : "a";
 }
 
 function save(name, obj) {
