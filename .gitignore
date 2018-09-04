@@ -70,4 +70,5 @@ servercfg.json
 tulpae.json
 webhooks.json
 *dev.js*
+backups
 package-lock.json
