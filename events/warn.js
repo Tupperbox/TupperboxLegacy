@@ -1,3 +1,3 @@
 module.exports = bot => {
-  bot.on("warn", console.log);
+	bot.on("warn", console.log);
 };

@@ -1,3 +1,3 @@
 module.exports = bot => {
-  bot.on("guildCreate", guild => bot.validateGuildCfg(guild));
+	bot.on("guildCreate", guild => bot.validateGuildCfg(guild));
 };
