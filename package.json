@@ -1,6 +1,6 @@
 {
   "name": "tupperware",
-  "version": "0.7.0",
+  "version": "1.5.0",
   "description": "tupperware bot for discord tulpa hooks",
   "main": "bot.js",
   "scripts": {
@@ -9,17 +9,14 @@
   "author": "Keter",
   "license": "ISC",
   "dependencies": {
-    "bufferutil": "^3.0.3",
-    "eris": "^0.8.5",
+    "bufferutil": "^4.0.0",
+    "eris": "^0.9.0",
     "erlpack": "github:abalabahaha/erlpack",
     "eventemitter3": "^3.0.1",
-    "moment": "^2.21.0",
-    "node-opus": "^0.2.7",
+    "node-opus": "^0.3.1",
     "pako": "^1.0.6",
-    "request": "^2.85.0",
     "snekfetch": "^4.0.4",
     "sodium-native": "^2.1.4",
-    "uws": "^9.14.0",
     "valid-url": "^1.0.9",
     "winston": "^3.0.0-rc3",
     "zlib-sync": "^0.1.4"
