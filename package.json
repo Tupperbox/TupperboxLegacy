@@ -9,16 +9,15 @@
   "author": "Keter",
   "license": "ISC",
   "dependencies": {
-    "bufferutil": "^4.0.0",
+    "bufferutil": "^4.0.1",
     "eris": "^0.9.0",
     "erlpack": "github:abalabahaha/erlpack",
-    "eventemitter3": "^3.0.1",
-    "node-opus": "^0.3.1",
-    "pako": "^1.0.6",
-    "snekfetch": "^4.0.4",
-    "sodium-native": "^2.1.4",
+    "eventemitter3": "^3.1.0",
+    "got": "^9.6.0",
+    "pako": "^1.0.8",
+    "sodium-native": "^2.2.5",
     "valid-url": "^1.0.9",
-    "winston": "^3.0.0-rc3",
+    "winston": "^3.2.0",
     "zlib-sync": "^0.1.4"
   }
 }

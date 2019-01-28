@@ -1,5 +1,5 @@
 const validUrl = require("valid-url");
-const request = require("snekfetch");
+const request = require("got");
 const {article,proper} = require("../modules/lang");
 
 module.exports = {

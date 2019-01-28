@@ -14,8 +14,10 @@ module.exports = {
 		} else if(!args[1]) {
 			out = "Current description: " + bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc;
 		} else {
-			bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc = args.slice(1).join(" ").slice(0,500);
-			out = "Description updated successfully.";
+			let desc = args.slice(1).join(" ");
+			if(desc.length > 700) out = "Description updated, but was truncated due to Discord embed limits.";
+			else out = "Description updated successfully.";
+			bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).desc = desc.slice(0,700);
 		}
 		bot.send(msg.channel, out);
 	}

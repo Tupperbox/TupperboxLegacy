@@ -11,7 +11,7 @@ module.exports = bot => {
 			}
 		} else if(bot.tulpae[msg.author.id] && !(msg.channel.type == 1) && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
 			let clean = msg.cleanContent || msg.content;
-			clean = clean.replace(/(<:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
+			clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
 			let cleanarr = clean.split("\n");
 			let lines = msg.content.split("\n");
 			let replace = [];

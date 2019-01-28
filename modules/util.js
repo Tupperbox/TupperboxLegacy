@@ -1,4 +1,4 @@
-const request = require("snekfetch");
+const request = require("got");
 const auth = require("../auth.json");
 
 module.exports = bot => {
@@ -110,9 +110,7 @@ module.exports = bot => {
 
 	bot.attach = (url, name) => {
 		return new Promise(function(resolve, reject) {
-			request.get(url).then(res => {
-				resolve(res.raw);
-			});
+			request(url, {encoding: null}).then(res => resolve(res.body));
 		});
 	};
   
