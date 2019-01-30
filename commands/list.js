@@ -1,3 +1,5 @@
+const announcement = "Tupper avatar broken? Discord changed some things, please re-set it with the avatar command!\n";
+
 module.exports = {
 	help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 	usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
@@ -15,14 +17,15 @@ module.exports = {
 					icon_url: msg.channel.guild.iconURL
 				},
 				fields: []
-			}};
+			}, content: announcement};
 			let page = 1;
 			tups.forEach(t => {
 				let user = bot.users.get(t[0].host);
 				let field = {
-					name: `${user.username}#${user.discriminator}`,
+					name: `${user.username}#${user.discriminator} (${t.length} registered)`,
 					value: t.map(tul => tul.name).join(", ")
 				};
+				if(field.value.length > 1000) field.value = field.value.slice(0,1000) + "...";
 				if(current.embed.fields.length < 5) {
 					current.embed.fields.push(field);
 				} else {
@@ -35,13 +38,13 @@ module.exports = {
 							icon_url: msg.channel.guild.iconURL
 						},
 						fields: []
-					}};
+					}, content: announcement};
 				}
 			});
 			embeds.push(current);
 			out = embeds[0];
 			if(page > 1) {
-				for(let i = 0; i < embeds.length; i++)
+				for(let i = 0; i < embeds.length; i++) 
 					embeds[i].embed.title += ` (page ${i+1}/${embeds.length})`;
 				return bot.paginate(msg, embeds);
 			}
@@ -67,7 +70,7 @@ module.exports = {
 					icon_url: target.avatarURL
 				},
 				fields: []
-			}};
+			}, content: announcement};
 			let page = 1;
 			bot.tulpae[target.id].forEach(t => {
 				let field = bot.generateTulpaField(t);
@@ -83,7 +86,7 @@ module.exports = {
 							icon_url: target.avatarURL
 						},
 						fields: [field]
-					}};
+					}, content: announcement};
 				}
 			});
 			embeds.push(current);

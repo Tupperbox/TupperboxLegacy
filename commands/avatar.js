@@ -1,5 +1,6 @@
 const validUrl = require("valid-url");
 const request = require("got");
+const probe = require('probe-image-size');
 const {article,proper} = require("../modules/lang");
 
 module.exports = {
@@ -24,8 +25,11 @@ module.exports = {
 				if(Number(res.headers["content-length"]) > 1000000) {
 					return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image under 1mb.");
 				}
-				bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = args[1];
-				bot.send(msg.channel, "Avatar changed successfully.");
+				probe(args[1]).then(result => {
+					if(Math.min(result.width,result.height) >= 1024) return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image where width or height is less than 1024 pixels.");
+					bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = args[1];
+					bot.send(msg.channel, "Avatar changed successfully.");
+				}).catch(err => bot.send(msg.channel, "Something went wrong when checking the image. Please try again."));
 			}).catch(err => bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example)."));
 			return;
 		}

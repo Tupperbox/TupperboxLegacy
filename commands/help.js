@@ -1,4 +1,5 @@
 const {article} = require("../modules/lang");
+const announcement = "Tupper avatar broken? Discord changed some things, please re-set it with the avatar command!\n";
 
 module.exports = {
 	help: cfg => "Print this message, or get help for a specific command",
@@ -21,7 +22,7 @@ module.exports = {
 					footer: {
 						text: "If something is wrapped in <> or [], do not include the brackets when using the command. They indicate whether that part of the command is required <> or optional []."
 					}
-				}};
+				}, content: announcement};
 				for(let u of bot.cmds[args[0]].usage(cfg))
 					output.embed.description += `${cfg.prefix + u}\n`;
 				if(bot.cmds[args[0]].desc)
@@ -40,7 +41,7 @@ module.exports = {
 				footer: {
 					text: "By Keter#1730"
 				}
-			}};
+			}, content: announcement};
 			for(let cmd of Object.keys(bot.cmds)) {
 				if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
 					output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
