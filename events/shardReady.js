@@ -1,3 +1,3 @@
-module.exports = bot => {
-	bot.on("shardReady", id => console.log(`Shard ${id} ready!`));
+module.exports = (id,bot) => {
+	console.log(`Shard ${id} ready!`);
 };

@@ -7,10 +7,11 @@ module.exports = {
 		for(let arg of args.slice(1)) {
 			let path = `../${args[0]}s/${arg}`
 			let fullPath = require.resolve(path);
-			delete require.cache[fullPath];
 			if(args[0] == "command") {
+				delete require.cache[fullPath];
 				bot.cmds[arg] = require(path);
 			} else if(args[0] == "module") {
+				delete require.cache[fullPath];
 				switch(arg) {
 					case "util":
 						require("../modules/util")(bot);
@@ -19,6 +20,10 @@ module.exports = {
 						bot.logger = require("../modules/logger");
 						break;
 				}
+			} else if(args[0] == "event") {
+				bot.off(args[1], require(path));
+				delete require.cache[fullPath];
+				bot.on(args[1], require(path));
 			}
 			bot.send(msg.channel, `${arg} reloaded`);
 		}

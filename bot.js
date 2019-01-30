@@ -42,15 +42,18 @@ const init = async () => {
   
   bot.logger = require("./modules/logger");
   
+  console.log("COMMANDS:");
   files = await promisify(fs.readdir)("./commands");
   files.forEach(file => {
+    console.log(`\t${file}`);
     bot.cmds[file.slice(0,-3)] = require("./commands/"+file);
   });
   
+  console.log("\nEVENTS:");
   files = await promisify(fs.readdir)("./events");
   files.forEach(file => {
-    console.log(file);
-    require("./events/"+file)(bot);
+    console.log(`\t${file}`);
+    bot.on(file.slice(0,-3), (...args) => require("./events/"+file)(...args,bot));
   });
 
   if (!auth.inviteCode) {
