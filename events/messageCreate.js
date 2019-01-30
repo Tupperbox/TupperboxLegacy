@@ -2,7 +2,7 @@ module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
 	let cfg = msg.channel.guild && bot.config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false, lang: "tulpa"};
 	if (msg.content.startsWith(cfg.prefix) && (!cfg.cmdblacklist || !cfg.cmdblacklist.includes(msg.channel.id))) {
-		var args = msg.content.substr(cfg.prefix.length).split(" ");
+		var args = msg.content.substr(cfg.prefix.length).trim().split(" ");
 		var cmd = args.shift();
 		if(bot.cmds[cmd] && bot.checkPermissions(cmd,msg,args)) {
 			bot.logger.info(`${msg.channel.guild ? msg.channel.guild.id + "###" : "DM###"}${msg.author.id}###${msg.content}`);

@@ -6,7 +6,7 @@ module.exports = {
 	desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `''`.",
 	permitted: () => true,
 	execute: (bot, msg, args, cfg) => {
-		args = bot.getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
+		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		let out = "";
 		let brackets;
 		if(args[0])

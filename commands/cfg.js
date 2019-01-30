@@ -19,34 +19,11 @@ module.exports = {
 			if(!args[1]) {
 				out = "Missing argument 'prefix'.";
 			} else {
-				cfg.prefix = args[1];
-				out = "Prefix changed to " + args[1];
+				cfg.prefix = args.slice(1).join(' ');
+				out = "Prefix changed to " + cfg.prefix;
 			}
 		} else if(args[0] == "roles") {
 			out = "This feature has been disabled indefinitely.";
-			/*if(!msg.channel.guild.members.get(bot.user.id).permission.has("manageRoles")) {
-					out = "I don't have permission to manage roles.";
-				} else if(args[1] === "enable") {
-					let guild = msg.channel.guild;
-					if(cfg.rolesEnabled)
-						out = proper(cfg.lang) + " roles already enabled on this server.";
-					else if(Object.keys(bot.tulpae).filter(t => guild.members.has(t)).map(t => bot.tulpae[t].length).reduce((acc,val) => acc+val, 0) + guild.roles.size > 245) {
-						out = "Discord has a hard limit of 250 roles in a server, so I am unable to enable auto roles.";
-					} else {
-						bot.enableRoles(guild);
-						out = proper(cfg.lang) + " roles enabled. Adding the roles may take some time.";
-					}
-				} else if(args[1] === "disable") {
-					let guild = msg.channel.guild;
-					if(!cfg.rolesEnabled)
-						out = proper(cfg.lang) + " roles already disabled on this server.";
-					else {
-						bot.disableRoles(guild);
-						out = proper(cfg.lang) + " roles disabled. Deleting the roles may take some time.";
-					}
-				} else {
-					out = "Missing argument 'enable|disable'.";
-				}*/
 		} else if(args[0] == "rename") {
 			if(!args[1]) {
 				out = "Missing argument 'newname'";

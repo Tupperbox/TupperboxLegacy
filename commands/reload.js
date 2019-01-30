@@ -21,9 +21,9 @@ module.exports = {
 					break;
 				}
 			} else if(args[0] == "event") {
-				bot.off(args[1], require(path));
+				bot.removeAllListeners(args[1]);
 				delete require.cache[fullPath];
-				bot.on(args[1], require(path));
+				bot.on(args[1], (...a) => require(path)(...a,bot));
 			}
 			bot.send(msg.channel, `${arg} reloaded`);
 		}

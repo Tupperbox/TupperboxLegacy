@@ -7,7 +7,7 @@ module.exports = {
 	permitted: () => true,
 	execute: (bot, msg, args, cfg) => {
 		let out = "";
-		args = bot.getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
+		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		if(!args[0]) {
 			let tulps = Object.keys(bot.tulpae)
 				.filter(id => id == msg.author.id || (msg.channel.guild && msg.channel.guild.members.has(id)))

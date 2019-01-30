@@ -7,7 +7,7 @@ module.exports = {
 	permitted: () => true,
 	execute: (bot, msg, args, cfg) => {
 		let out = "";
-		args = bot.getMatches(msg.content,/['](.*?)[']|(\S+)/gi).slice(1);
+		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["brackets"], cfg);
 		} else if(!bot.tulpae[msg.author.id] || !bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
