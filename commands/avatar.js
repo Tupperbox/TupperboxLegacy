@@ -15,19 +15,20 @@ module.exports = {
 			return bot.cmds.help.execute(bot, msg, ["avatar"], cfg);
 		} else if(!bot.tulpae[msg.author.id] || !bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		} else if(!args[1]) {
+		} else if(!args[1] && !msg.attachments[0]) {
 			out = bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url;
-		} else if(!validUrl.isWebUri(args[1])) {
+		} else if(!validUrl.isWebUri(args[1]) && !msg.attachments[0]) {
 			out = "Malformed url.";
 		} else {
-			request.head(args[1]).then(res => {
+			let url = args[1] || msg.attachments[0].url;
+			request.head(url).then(res => {
 				if(!res.headers["content-type"] || !res.headers["content-type"].startsWith("image")) return bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");
 				if(Number(res.headers["content-length"]) > 1000000) {
 					return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image under 1mb.");
 				}
-				probe(args[1]).then(result => {
+				probe(url).then(result => {
 					if(Math.min(result.width,result.height) >= 1024) return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image where width or height is less than 1024 pixels.");
-					bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = args[1];
+					bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).url = url;
 					bot.send(msg.channel, "Avatar changed successfully.");
 				}).catch(err => bot.send(msg.channel, "Something went wrong when checking the image. Please try again."));
 			}).catch(err => bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example)."));
