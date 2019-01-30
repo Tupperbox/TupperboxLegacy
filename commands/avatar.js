@@ -1,6 +1,6 @@
 const validUrl = require("valid-url");
 const request = require("got");
-const probe = require('probe-image-size');
+const probe = require("probe-image-size");
 const {article,proper} = require("../modules/lang");
 
 module.exports = {
