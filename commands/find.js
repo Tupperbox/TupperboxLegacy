@@ -9,6 +9,7 @@ module.exports = {
 			return bot.send(msg.channel, "This command cannot be used in private messages.");
 		if(!args[0])
 			return bot.cmds.help.execute(bot, msg, ["find"], cfg);
+		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		let all = Object.keys(bot.tulpae)
 			.filter(id => msg.channel.guild.members.has(id))
 			.reduce((arr, tul) => arr.concat(bot.tulpae[tul]), []);
