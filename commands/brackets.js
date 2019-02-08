@@ -23,7 +23,7 @@ module.exports = {
 			} else if(!brackets[0] && !brackets[1]) {
 				out = "Need something surrounding 'text'.";
 			} else {
-				await bot.db.updateTulpa(msg.author.id,args[0],'brackets',brackets);
+				await bot.db.updateTulpa(msg.author.id,args[0],"brackets",brackets);
 				out = "Brackets updated successfully.";
 			}
 		}

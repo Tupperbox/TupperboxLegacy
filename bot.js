@@ -1,10 +1,10 @@
-require('dotenv').config();
+require("dotenv").config();
 const fs = require("fs");
 const Eris = require("eris");
 
 const init = async () => {
 	try { 
-		require('./auth.json');
+		require("./auth.json");
 		throw new Error("outdated");
 	} catch(e) { 
 		if(e.message == "outdated") throw new Error("auth.json is outdated, please use the .env file instead! See the github page for more info");
@@ -24,7 +24,7 @@ const init = async () => {
 		messageLimit: 0,
 	});
 
-	bot.db = require('./modules/db');
+	bot.db = require("./modules/db");
 	await bot.db.init();
 
 	bot.recent = {};

@@ -14,7 +14,7 @@ module.exports = {
 			`, [[msg.author.id].concat(msg.channel.guild ? msg.channel.guild.members.map(m => m.id) : [])])).rows;
 			if(!tulps[0])
 				return bot.send(msg.channel, "No " + cfg.lang + "s on this server have birthdays set.");
-			return bot.send(msg.channel, "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + tulps.map(t => (bot.checkTulpaBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString('en-US',{timeZone:'UTC'})}`)).join("\n"));
+			return bot.send(msg.channel, "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + tulps.map(t => (bot.checkTulpaBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString("en-US",{timeZone:"UTC"})}`)).join("\n"));
 		}
 		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
 		if(!tulpa) {
@@ -25,7 +25,7 @@ module.exports = {
 			out = "I can't understand that date. Please enter in the form MM/DD/YYYY with no spaces.";
 		} else {
 			let date = new Date(args[1]);
-			await bot.db.updateTulpa(msg.author.id,args[0],'birthday',date);
+			await bot.db.updateTulpa(msg.author.id,args[0],"birthday",date);
 			out = `${proper(cfg.lang)} '${args[0]}' birthday set to ${date.toDateString()}.`;
 		}
 		bot.send(msg.channel, out);

@@ -8,7 +8,7 @@ module.exports = {
 		let out = "";
 		if(args[0] == "all" || args[0] == "*") { //short list of all tuppers
 			if(!msg.channel.guild) return bot.send(msg.channel, "Cannot retrieve short form full list in DMs.");
-			let tups = (await bot.db.query('SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY user_id, position', [msg.channel.guild.members.map(m => m.id)])).rows;
+			let tups = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY user_id, position", [msg.channel.guild.members.map(m => m.id)])).rows;
 			let all = {};
 			tups.forEach(t => {
 				if(!all[t.user_id]) all[t.user_id] = [];
@@ -65,7 +65,7 @@ module.exports = {
 		if(!target) {
 			return bot.send(msg.channel,"User not found.");
 		}
-		let tulpae = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1 ORDER BY position', [target.id])).rows;
+		let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
 		if(!tulpae[0]) {
 			out = (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 		} else {

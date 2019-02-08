@@ -31,7 +31,7 @@ module.exports = {
 		} else { //general help
 			output = { embed: {
 				title: "Tupperware | Help",
-				description: "I am Tupperware, a bot made to give " + cfg.lang + "s a voice using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
+				description: "I am Tupperware, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
 				timestamp: new Date().toJSON(),
 				color: 0x999999,
 				author: {

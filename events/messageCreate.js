@@ -4,7 +4,7 @@ module.exports = async (msg,bot) => {
 	let guild = msg.channel.guild;
 	if(guild) cfg = await bot.db.getCfg(guild.id);
 	if(!cfg) cfg = { prefix: "tul!", lang: "tulpa"};
-	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has('manageGuild')))) {
+	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
 		let cmd = bot.cmds[args.shift()];
@@ -15,7 +15,7 @@ module.exports = async (msg,bot) => {
 		}
 		return;
 	}
-	let tulpae = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1', [msg.author.id])).rows;
+	let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1", [msg.author.id])).rows;
 	if(tulpae[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");

@@ -20,8 +20,8 @@ module.exports = {
 			if(!args[1]) {
 				out = "Missing argument 'prefix'.";
 			} else {
-				let prefix = args.slice(1).join(' ');
-				bot.db.updateCfg(gid,'prefix',prefix);
+				let prefix = args.slice(1).join(" ");
+				bot.db.updateCfg(gid,"prefix",prefix);
 				out = "Prefix changed to " + prefix;
 			}
 		} else if(args[0] == "roles") {
@@ -31,20 +31,20 @@ module.exports = {
 				out = "Missing argument 'newname'";
 			} else {
 				let lang = args.slice(1).join(" ");
-				bot.db.updateCfg(gid,'lang',lang);
+				bot.db.updateCfg(gid,"lang",lang);
 				out = "Entity name changed to " + lang;
 			}
 		} else if(args[0] == "log") {
 			if(!args[1]) {
 				out = "Logging channel unset. Logging is now disabled.";
-				bot.db.updateCfg(gid,'log_channel',null);
+				bot.db.updateCfg(gid,"log_channel",null);
 			} else {
 				let channel = bot.resolveChannel(msg,args[1]);
 				if(!channel) {
 					out = "Channel not found.";
 				} else {
 					out = `Logging channel set to <#${channel.id}>`;
-					bot.db.updateCfg(gid,'log_channel',channel.id);
+					bot.db.updateCfg(gid,"log_channel",channel.id);
 				}
 			}
 		} else if(args[0] == "blacklist") {

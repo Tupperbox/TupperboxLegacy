@@ -1,5 +1,5 @@
 module.exports = {
-	permitted: (msg) => { return msg.author.id === bot.owner; },
+	permitted: (msg) => { return msg.author.id === process.env.DISCORD_OWNERID; },
 	execute: async (bot, msg, args, cfg) => {
 		if(msg.author.id != bot.owner) return;
 		for(let arg of args.slice(1)) {

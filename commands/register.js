@@ -14,7 +14,7 @@ module.exports = {
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["register"], cfg);
 		}
-		let tulpa = (await bot.db.query('SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)',[msg.author.id,args[0],brackets || []])).rows[0];
+		let tulpa = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,args[0],brackets || []])).rows[0];
 		if(!args[1]) {
 			out = "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
 		} else if(args[0].length < 2 || args[0].length > 28) {

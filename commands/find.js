@@ -11,7 +11,7 @@ module.exports = {
 		if(!args[0])
 			return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 		let search = args.join(" ").toLowerCase();
-		let tul = (await bot.db.query(`SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)`,[msg.channel.guild.members.map(m => m.id),search])).rows;
+		let tul = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[msg.channel.guild.members.map(m => m.id),search])).rows;
 		if(!tul[0])
 			bot.send(msg.channel, "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name in this server.");
 		else {

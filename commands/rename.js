@@ -22,7 +22,7 @@ module.exports = {
 		} else if(newTulpa) {
 			out = "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
 		} else {
-			await bot.db.updateTulpa(msg.author.id,args[0],'name',args[1]);
+			await bot.db.updateTulpa(msg.author.id,args[0],"name",args[1]);
 			out = proper(cfg.lang) + " renamed successfully.";
 		}
 		bot.send(msg.channel, out);

@@ -19,7 +19,7 @@ module.exports = {
 			let desc = args.slice(1).join(" ");
 			if(desc.length > 700) out = "Description updated, but was truncated due to Discord embed limits.";
 			else out = "Description updated successfully.";
-			await bot.db.updateTulpa(msg.author.id,args[0],'description',desc.slice(0,700));
+			await bot.db.updateTulpa(msg.author.id,args[0],"description",desc.slice(0,700));
 		}
 		bot.send(msg.channel, out);
 	}

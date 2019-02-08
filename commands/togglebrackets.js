@@ -14,7 +14,7 @@ module.exports = {
 		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else {
-			bot.db.updateTulpa(msg.author.id,args[0],'show_brackets',!tulpa.show_brackets);
+			bot.db.updateTulpa(msg.author.id,args[0],"show_brackets",!tulpa.show_brackets);
 			out = `Now ${tulpa.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${tulpa.name}.`;
 		}
 		bot.send(msg.channel, out);

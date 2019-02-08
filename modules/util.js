@@ -26,7 +26,7 @@ module.exports = bot => {
 		} catch (e) {
 			console.log(e);
 			if(e.code === 10015) {
-				await bot.db.query('DELETE FROM Webhooks WHERE channel_id = $1', [msg.channel.id]);
+				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
 				return bot.executeWebhook(hook.id,hook.token,data);
 			}
@@ -37,7 +37,7 @@ module.exports = bot => {
 				`Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
-		bot.db.updateTulpa(tulpa.user_id,tulpa.name,'posts',tulpa.posts+1);
+		bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
 			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and ${cfg.lang} webhook message will show.`);
 		}
@@ -63,7 +63,7 @@ module.exports = bot => {
 				.catch(async e => { 
 					console.log(e);
 					if(e.code == 10015) {
-						await bot.db.query('DELETE FROM Webhooks WHERE channel_id = $1', [msg.channel.id]);
+						await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 						return bot.fetchWebhook(msg.channel).then(hook => {
 							return bot.executeWebhook(hook.id,hook.token,data);
 						}).catch(e => reject("Webhook deleted and error creating new one. Check my permissions?"));
@@ -78,7 +78,7 @@ module.exports = bot => {
 						else if(logchannel.permissionsOf(bot.user.id).has("sendMessages"))
 							bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 					}
-					bot.db.updateTulpa(tulpa.user_id,tulpa.name,'posts',tulpa.posts+1);
+					bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
 					if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 						bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
 					bot.recent[msg.channel.id] = { user_id: msg.author.id, name: data.username, tulpa: tulpa };
@@ -88,7 +88,7 @@ module.exports = bot => {
 	};
 
 	bot.fetchWebhook = async channel => {
-		let q = await bot.db.query('SELECT * FROM Webhooks WHERE channel_id = $1', [channel.id]);
+		let q = await bot.db.query("SELECT * FROM Webhooks WHERE channel_id = $1", [channel.id]);
 		if(q.rows[0])
 			return q.rows[0];
 		else if(!channel.permissionsOf(bot.user.id).has("manageWebhooks"))
@@ -96,7 +96,7 @@ module.exports = bot => {
 		else {
 			return channel.createWebhook({ name: "Tupperhook" }).then(hook => {
 				let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
-				bot.db.query('INSERT INTO Webhooks VALUES ($1,$2,$3)', [hook.id,channel.id,hook.token]);
+				bot.db.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [hook.id,channel.id,hook.token]);
 				return wbhk;
 			}).catch(e => { console.log(e); throw "Proxy failed with unknown reason: " + e.message; });
 		}
@@ -107,7 +107,7 @@ module.exports = bot => {
 	};
   
 	bot.updateStatus = async () => {
-		bot.editStatus({ name: `tul!help | ${(await bot.db.query('SELECT COUNT(*) FROM Members')).rows[0].count} registered`});
+		bot.editStatus({ name: `tul!help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
 	};
 
 	bot.generateTulpaField = tulpa => {

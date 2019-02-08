@@ -30,10 +30,10 @@ module.exports = {
 				}
 				probe(url).then(async result => {
 					if(Math.min(result.width,result.height) >= 1024) return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image where width or height is less than 1024 pixels.");
-					await bot.db.updateTulpa(msg.author.id,args[0],'avatar_url',url);
+					await bot.db.updateTulpa(msg.author.id,args[0],"avatar_url",url);
 					bot.send(msg.channel, "Avatar changed successfully.");
-				}).catch(err => { console.error(err); bot.send(msg.channel, "Something went wrong when checking the image. Please try again.")});
-			}).catch(err => { console.error(err); bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).")});
+				}).catch(err => { console.error(err); bot.send(msg.channel, "Something went wrong when checking the image. Please try again.");});
+			}).catch(err => { console.error(err); bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");});
 			return;
 		}
 		bot.send(msg.channel, out);

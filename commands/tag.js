@@ -15,12 +15,12 @@ module.exports = {
 		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else if(!args[1]) {
-			await bot.db.updateTulpa(msg.author.id,args[0],'tag',null);
+			await bot.db.updateTulpa(msg.author.id,args[0],"tag",null);
 			out = "Tag cleared.";
 		} else if (args.slice(1).join(" ").length + tulpa.name.length > 27) {
 			out = "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
 		} else {
-			await bot.db.updateTulpa(msg.author.id,args[0],'tag',args.slice(1).join(" "));
+			await bot.db.updateTulpa(msg.author.id,args[0],"tag",args.slice(1).join(" "));
 			out = "Tag updated successfully.";
 		}
 		bot.send(msg.channel, out);

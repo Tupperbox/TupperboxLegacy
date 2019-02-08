@@ -1,5 +1,5 @@
 module.exports = {
-	permitted: (msg) => { return msg.author.id === bot.owner; },
+	permitted: (msg) => { return msg.author.id === process.env.DISCORD_OWNERID; },
 	execute: (bot, msg, args, cfg) => {
 		if(msg.author.id != bot.owner) return;
 		let message = msg.content.substr(7);
@@ -9,6 +9,6 @@ module.exports = {
 		} catch(e) {
 			out = e.toString();
 		}
-		bot.send(msg.channel, require('util').inspect(out).slice(0,2000));
+		bot.send(msg.channel, require("util").inspect(out).slice(0,2000));
 	}
 };
