@@ -1,53 +1,47 @@
 # Tupperware
-A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> for proxying user messages through webhooks to emulate tulpas/systems users having their own user accounts.
+A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> for proxying user messages through webhooks, originally created to emulate tulpas/systems users having their own user accounts.
 
 # Commands
-- tul!help  -  Print this message, or get help for a specific command
-- tul!register  -  Register a new tulpa
-- tul!remove  -  Unregister a tulpa
-- tul!list  -  Get a detailed list of yours or another user's registered tulpas
-- tul!rename  -  Change a tulpa's name
-- tul!avatar  -  View or change a tulpa's avatar
-- tul!describe  -  View or change a tulpa's description
-- tul!birthday  -  View or change a tulpa's birthday, or see upcoming birthdays
-- tul!brackets  -  View or change a tulpa's brackets
-- tul!tag  -  Remove or change a tulpa's or your user tag (displayed next to name when proxying)
-- tul!showuser  -  Show the user that registered the tulpa that last spoke
-- tul!find  -  Find and display info about tulpas by name
-- tul!invite  -  Get the bot's invite URL
-- tul!feedback  -  Send a message to the developer, who may reply through the bot
+- tul!avatar  -  View or change a member's avatar
+- tul!birthday  -  View or change a member's birthday, or see upcoming birthdays
+- tul!brackets  -  View or change a member's brackets
 - tul!cfg  -  Configure server-specific settings
   - tul!cfg prefix \<newPrefix> - Change the bot's prefix
-  - tul!cfg roles <enable|disable> - Enable or disable automatically managed mentionable tulpa roles, so that users can mention tulpas
-  - tul!cfg rename \<newname> - Change all instances of the default name 'tulpa' in bot replies in this server to the specified term
-  - tul!cfg log \<channel> - Enable the bot to send a log of all tulpa messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.
+  - tul!cfg rename \<newname> - Change all instances of the default name 'member' in bot replies in this server to the specified term
+  - tul!cfg log \<channel> - Enable the bot to send a log of all member messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.
   - tul!cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.
   - tul!cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels.
+- tul!describe  -  View or change a member's description
+- tul!feedback  -  Get a link to the support server
+- tul!find  -  Find and display info about members by name
+- tul!help  -  Print this message, or get help for a specific command
+- tul!invite  -  Get the bot's invite URL
+- tul!list  -  Get a detailed list of yours or another user's registered members
+- tul!register  -  Register a new member
+- tul!remove  -  Unregister a member
+- tul!rename  -  Change a member's name
+- tul!showuser  -  Show the user that registered the member that last spoke
+- tul!tag  -  Remove or change a member's or your user tag (displayed next to name when proxying)
+- tul!togglebrackets - Toggle whether the brackets used to proxy also show up in the resulting message for the given member.
 
 # Installation
 This bot runs off of Node.js. You can download it from https://nodejs.org/en/download/
 
-Once node is installed, run `npm install` from the bot directory to install the bot's dependencies. If the dependencies all install successfully (note: you may have to run `npm -g install windows-build-tools` first) then you can now run the bot by running `node bot`.
+Once node is installed, run `npm install` from the bot directory to install the bot's dependencies. If the dependencies all install successfully (note: you may have to run `npm -g install windows-build-tools` first if on Windows) then you can now run the bot by running `node bot`.
+
+Additionally, the bot now requires PostgreSQL to run. You can download it from https://www.postgresql.org/download/
 
 # Running
-Initially the bot will generate an empty `auth.json` file and likely throw an error. You need to put the bot's token and your userID in this auth.json file for the bot to work properly. Format should look like this:
-```json
-{
-	"discord": "MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs",
-	"owner": "99326032288423936"
-}
+The bot expects a file in the same directory named `.env` with some data to get it started. Format should look like this:
 ```
-
-(don't worry, that token is the one Discord publishes on its API docs)
-
-## Invite Links
-
-By default, the bot will not allow use of the `invite` command.  To enable it, fill in the inviteCode parameter in the auth.json file (add it as it won't show up on its own) with your bot's Client ID (**NOT** the Client Secret!)
-
-```json
-For example: {
-	"discord": "MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs",
-	"owner": "99326032288423936",
-	"inviteCode" : "12345678901234"
-}
+DISCORD_TOKEN=MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs
+DISCORD_OWNERID=99326032288423936
+DISCORD_INVITE=431544605209788416 (note: remove this line if you don't want the bot to have an invite command)
+PGUSER=???
+PGHOST=???
+PGDATABASE=???
+PGPASSWORD=???
+PGPORT=3456
 ```
+(don't worry, that token is a fake)
+The PG-prefixed variables should be filled in with the connection info to your PostgreSQL database set up during installation. You need a **database**, a **user** with associated **password** with full write access to that database, and the **host IP** of the machine running the server (localhost if it's the same machine).
