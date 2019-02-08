@@ -1,9 +1,7 @@
-const auth = require("../auth.json");
-
 module.exports = {
-	permitted: (msg) => { return msg.author.id === auth.owner; },
-	execute: (bot, msg, args, cfg) => {
-		if(msg.author.id != auth.owner) return;
+	permitted: (msg) => { return msg.author.id === bot.owner; },
+	execute: async (bot, msg, args, cfg) => {
+		if(msg.author.id != bot.owner) return;
 		for(let arg of args.slice(1)) {
 			let path = `../${args[0]}s/${arg}`;
 			let fullPath = require.resolve(path);
@@ -18,6 +16,10 @@ module.exports = {
 					break;
 				case "logger":
 					bot.logger = require("../modules/logger");
+					break;
+				case "db":
+					await bot.db.end();
+					bot.db = require("../modules/db");
 					break;
 				}
 			} else if(args[0] == "event") {

@@ -1,5 +1,5 @@
 const {article} = require("../modules/lang");
-const announcement = "Tupper avatar broken? Discord changed some things, please re-set it with the avatar command!\n";
+const announcement = "";
 
 module.exports = {
 	help: cfg => "Print this message, or get help for a specific command",

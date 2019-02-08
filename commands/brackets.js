@@ -5,16 +5,17 @@ module.exports = {
 	usage: cfg =>  ["brackets <name> [brackets] - if brackets are given, change the " + cfg.lang + "'s brackets, if not, simply echo the current one"],
 	desc: cfg => "Brackets must be the word 'text' surrounded by any symbols or letters, i.e. `[text]` or `>>text`",
 	permitted: () => true,
-	execute: (bot, msg, args, cfg) => {
+	groupArgs: true,
+	execute: async (bot, msg, args, cfg) => {
 		let out = "";
-		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["brackets"], cfg);
-		} else if(!bot.tulpae[msg.author.id] || !bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
+		}
+		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
+		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else if(!args[1]) {
-			let brackets = bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).brackets;
-			out = `Brackets for ${args[0]}: ${brackets[0]}text${brackets[1]}`;
+			out = `Brackets for ${args[0]}: ${tulpa.brackets[0]}text${tulpa.brackets[1]}`;
 		} else {
 			let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
 			if(brackets.length < 2) {
@@ -22,7 +23,7 @@ module.exports = {
 			} else if(!brackets[0] && !brackets[1]) {
 				out = "Need something surrounding 'text'.";
 			} else {
-				bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).brackets = brackets;
+				await bot.db.updateTulpa(msg.author.id,args[0],'brackets',brackets);
 				out = "Brackets updated successfully.";
 			}
 		}

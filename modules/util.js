@@ -1,21 +1,17 @@
 const request = require("got");
-const auth = require("../auth.json");
 
-module.exports = bot => {
-	let tulpae = bot.tulpae;
-	let config = bot.config;
-	let webhooks = bot.webhooks;
-  
+module.exports = bot => {  
+
 	bot.replaceMessage = async (msg, cfg, tulpa, content) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		const data = {
 			wait: true,
 			content: content,
 			username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""} ${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`,
-			avatarURL: tulpa.url,
+			avatarURL: tulpa.avatar_url,
 		};
 
-		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id].userID && data.username === bot.recent[msg.channel.id].name) {
+		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id].user_id && data.username === bot.recent[msg.channel.id].name) {
 			data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
 		}
 		let c = data.username.toLowerCase().indexOf("clyde");
@@ -30,7 +26,7 @@ module.exports = bot => {
 		} catch (e) {
 			console.log(e);
 			if(e.code === 10015) {
-				delete webhooks[msg.channel.id];
+				await bot.db.query('DELETE FROM Webhooks WHERE channel_id = $1', [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
 				return bot.executeWebhook(hook.id,hook.token,data);
 			}
@@ -41,13 +37,12 @@ module.exports = bot => {
 				`Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
-		if(!tulpa.posts) tulpa.posts = 0;
-		tulpa.posts++;
+		bot.db.updateTulpa(tulpa.user_id,tulpa.name,'posts',tulpa.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
 			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and ${cfg.lang} webhook message will show.`);
 		}
 		bot.recent[msg.channel.id] = {
-			userID: msg.author.id,
+			user_id: msg.author.id,
 			name: data.username,
 			tulpa: tulpa,
 		};
@@ -65,10 +60,10 @@ module.exports = bot => {
 		data.file = files;
 		return new Promise((resolve, reject) => {
 			bot.executeWebhook(hook.id,hook.token,data)
-				.catch(e => { 
+				.catch(async e => { 
 					console.log(e);
 					if(e.code == 10015) {
-						delete webhooks[msg.channel.id];
+						await bot.db.query('DELETE FROM Webhooks WHERE channel_id = $1', [msg.channel.id]);
 						return bot.fetchWebhook(msg.channel).then(hook => {
 							return bot.executeWebhook(hook.id,hook.token,data);
 						}).catch(e => reject("Webhook deleted and error creating new one. Check my permissions?"));
@@ -83,191 +78,42 @@ module.exports = bot => {
 						else if(logchannel.permissionsOf(bot.user.id).has("sendMessages"))
 							bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 					}
-					if(!tulpa.posts) tulpa.posts = 0;
-					tulpa.posts++;
+					bot.db.updateTulpa(tulpa.user_id,tulpa.name,'posts',tulpa.posts+1);
 					if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 						bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-					bot.recent[msg.channel.id] = { userID: msg.author.id, name: data.username, tulpa: tulpa };
+					bot.recent[msg.channel.id] = { user_id: msg.author.id, name: data.username, tulpa: tulpa };
 					resolve();
 				}).catch(reject);
 		});
 	};
 
-	bot.fetchWebhook = channel => {
-		return new Promise((resolve, reject) => {
-			if(webhooks[channel.id])
-				resolve(webhooks[channel.id]);
-			else if(!channel.permissionsOf(bot.user.id).has("manageWebhooks"))
-				reject("Proxy failed: Missing 'Manage Webhooks' permission in this channel.");
-			else {
-				channel.createWebhook({ name: "Tupperhook" }).then(hook => {
-					webhooks[channel.id] = { id: hook.id, token: hook.token };
-					resolve(webhooks[channel.id]);
-				}).catch(e => { console.log(e); reject("Proxy failed with unknown reason: " + e.message); });
-			}
-		});
+	bot.fetchWebhook = async channel => {
+		let q = await bot.db.query('SELECT * FROM Webhooks WHERE channel_id = $1', [channel.id]);
+		if(q.rows[0])
+			return q.rows[0];
+		else if(!channel.permissionsOf(bot.user.id).has("manageWebhooks"))
+			throw "Proxy failed: Missing 'Manage Webhooks' permission in this channel.";
+		else {
+			return channel.createWebhook({ name: "Tupperhook" }).then(hook => {
+				let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
+				bot.db.query('INSERT INTO Webhooks VALUES ($1,$2,$3)', [hook.id,channel.id,hook.token]);
+				return wbhk;
+			}).catch(e => { console.log(e); throw "Proxy failed with unknown reason: " + e.message; });
+		}
 	};
 
-	bot.attach = (url, name) => {
-		return new Promise(function(resolve, reject) {
-			request(url, {encoding: null}).then(res => resolve(res.body));
-		});
+	bot.attach = async (url) => {
+		return (await request(url, {encoding: null})).body;
 	};
   
-	bot.updateStatus = () => {
-		bot.editStatus({ name: `tul!help | ${Object.values(tulpae).reduce((acc,val) => acc + val.length, 0)} registered`});
-	};
-
-	bot.validateGuildCfg = guild => {
-		if(!config[guild.id])
-			config[guild.id] = {};
-		if(config[guild.id].prefix == undefined)
-			config[guild.id].prefix = "tul!";
-		if(config[guild.id].rolesEnabled == undefined)
-			config[guild.id].rolesEnabled = false;
-		if(config[guild.id].lang == undefined)
-			config[guild.id].lang = "tulpa";
-		if(config[guild.id].log == undefined)
-			config[guild.id].log = null;
-	};
-
-	bot.validateRoles = async () => {
-		let tuppers = Object.values(tulpae).reduce((acc, val) => acc.concat(val),[]).filter(t => t.roles);
-		let changes = 0;
-		console.log("preliminary check of roles for guilds the bot is no longer in");
-		tuppers.forEach(t => {
-			Object.keys(t.roles).forEach(gid => {
-				if(!bot.guilds.has(gid)) {
-					console.log("Tupper",t.name,"of host",t.host,"has role for nonexistant guild",gid);
-					changes++;
-					delete t.roles[gid];
-				}
-			});
-		});
-		console.log("entering guild loop!");
-		bot.guilds.forEach(guild => {
-			let cfg = config[guild.id];
-			let roled = tuppers.filter(t => t.roles && t.roles[guild.id]);
-			roled.forEach(t => {
-				if(!guild.members.has(t.host) || !guild.roles.has(t.roles[guild.id])) {
-					console.log("Member",t.host,"role should be deleted in guild",guild.name);
-					changes++;
-					if(guild.roles.has(t.roles[guild.id]) && guild.members.get(bot.user.id).permission.has("manageRoles")) guild.deleteRole(t.roles[guild.id]);
-					delete t.roles[guild.id];
-				}
-			});
-			if(cfg.rolesEnabled) {
-				guild.members.filter(m => tulpae[m.id]).forEach(m => {
-					tulpae[m.id].forEach(t => {
-						if(!t.roles || !t.roles[guild.id]) {
-							console.log("Member",m.username,"tulpa",t.name,"missing role in",guild.name);
-							if(guild.members.get(bot.user.id).permission.has("manageRoles")) {
-								if(guild.roles.size > 245) {
-									if(cfg.rolesEnabled)
-										bot.disableRoles(guild);
-									return console.log("Server has too many roles, canceling.");
-								} else {
-									changes++;
-									guild.createRole({name:t.name,mentionable:true}).then(role => {
-										if(!t.roles) t.roles = {};
-										t.roles[guild.id] = role.id;
-										m.addRole(role.id);
-									});
-								}
-							}
-						}
-					});
-				});
-			} else {
-				guild.members.filter(m => tulpae[m.id]).forEach(m => {
-					tulpae[m.id].filter(t => t.roles).forEach(t => {
-						if(t.roles[guild.id]) {
-							console.log("Member",m.username,"tulpa",t.name,"has illegal role entry in",guild.name);
-							changes++;
-							if(guild.roles.has(t.roles[guild.id]) && guild.members.get(bot.user.id).permission.has("manageRoles")) guild.deleteRole(t.roles[guild.id]);
-							delete t.roles[guild.id];
-						}
-					});
-				});
-			}
-		});
-		tuppers.forEach(tul => {
-			if(tul.roles && Object.keys(tul.roles).length == 0) delete tul.roles;
-		});
-		console.log("Changes:",changes);
-	};
-
-	bot.disableRoles = guild => {
-		config[guild.id].rolesEnabled = false;
-		Object.keys(tulpae).filter(t => guild.members.has(t)).forEach(t => {
-			let mem = guild.members.get(t);
-			tulpae[t].forEach(tul => {
-				if(tul.roles && tul.roles[guild.id]) {
-					guild.deleteRole(tul.roles[guild.id]);
-					delete tul.roles[guild.id];
-					if(!Object.keys(tul.roles)[0]) delete tul.roles;
-				}
-			});
-		});
-	};
-
-	bot.enableRoles = guild => {
-		config[guild.id].rolesEnabled = true;
-		Promise.all(Object.keys(tulpae).filter(t => guild.members.has(t)).map(t => {
-			let mem = guild.members.get(t);
-			return Promise.all(tulpae[t].map(tul => {
-				if(!mem.roles.find(r => guild.roles.get(r).name === tul.name))
-					return guild.createRole({name: tul.name, mentionable: true}).then(r => {
-						mem.addRole(r.id);
-						if(!tul.roles) tul.roles = {};
-						tul.roles[guild.id] = r.id;
-					});
-				return true;
-			}));
-		})).then(() => {
-		});
-	};
-  
-	bot.saveAll = () => {
-		console.log("Saving...");
-		require("fs").writeFile("./tulpae.json",JSON.stringify(bot.tulpae,null,2), (err) => {
-			if(err) return console.error(err);
-			console.log("Tulpae saved.");
-			require("fs").writeFile("./servercfg.json",JSON.stringify(bot.config,null,2), (err) => {
-				if(err) return console.error(err);
-				console.log("Server config saved.");
-				require("fs").writeFile("./webhooks.json",JSON.stringify(bot.webhooks,null,2), (err) => {
-					if(err) return console.error(err);
-					console.log("Webhooks saved.\nAll done!");
-				});
-			});
-		});
-	};
-  
-	bot.backupAll = () => {
-		console.log("Backing up...");
-		let now = Date.now();
-		let tp = `./backups/tulpae-${now}.json`;
-		let cp = `./backups/servercfg-${now}.json`;
-		let wp = `./backups/webhooks-${now}.json`;
-		require("fs").writeFile(tp,JSON.stringify(bot.tulpae,null,2), (err) => {
-			if(err) return console.error(err);
-			console.log(`Tulpae saved to ${tp}`);
-			require("fs").writeFile(cp,JSON.stringify(bot.config,null,2), (err) => {
-				if(err) return console.error(err);
-				console.log(`Server config saved to ${cp}`);
-				require("fs").writeFile(wp,JSON.stringify(bot.webhooks,null,2), (err) => {
-					if(err) return console.error(err);
-					console.log(`Webhooks saved to ${wp}\nAll done!`);
-				});
-			});
-		});
+	bot.updateStatus = async () => {
+		bot.editStatus({ name: `tul!help | ${(await bot.db.query('SELECT COUNT(*) FROM Members')).rows[0].count} registered`});
 	};
 
 	bot.generateTulpaField = tulpa => {
 		return {
 			name: tulpa.name,
-			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${tulpa.brackets[0]}text${tulpa.brackets[1]}\nAvatar URL: ${tulpa.url}${tulpa.birthday ? ("\nBirthday: "+new Date(tulpa.birthday).toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.desc ? ("\n"+tulpa.desc) : ""}`
+			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${tulpa.brackets[0]}text${tulpa.brackets[1]}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
 	};
 
@@ -297,9 +143,8 @@ module.exports = bot => {
 
 	bot.checkTulpaBirthday = tulpa => {
 		if(!tulpa.birthday) return false;
-		let day = new Date(tulpa.birthday);
 		let now = new Date();
-		return day.getDate() == now.getDate() && day.getMonth() == now.getMonth();
+		return tulpa.birthday.getUTCDate() == now.getUTCDate() && tulpa.birthday.getUTCMonth() == now.getUTCMonth();
 	};
 
 	bot.resolveUser = (msg, text) => {
@@ -314,7 +159,7 @@ module.exports = bot => {
 	};
 
 	bot.checkPermissions = (cmd, msg, args) => {
-		return (msg.author.id === auth.owner) || (bot.cmds[cmd].permitted(msg,args));
+		return (msg.author.id === bot.owner) || (cmd.permitted(msg,args));
 	};
 
 	bot.printError = err => {

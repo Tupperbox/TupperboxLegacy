@@ -1,17 +1,22 @@
-const announcement = "Tupper avatar broken? Discord changed some things, please re-set it with the avatar command!\n";
+const announcement = "";
 
 module.exports = {
 	help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 	usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
 	permitted: () => true,
-	execute: (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg) => {
 		let out = "";
 		if(args[0] == "all" || args[0] == "*") { //short list of all tuppers
-			let tups = msg.channel.guild.members.filter(m => bot.tulpae[m.id] && bot.tulpae[m.id].length > 0).map(m => bot.tulpae[m.id]);
-
+			if(!msg.channel.guild) return bot.send(msg.channel, "Cannot retrieve short form full list in DMs.");
+			let tups = (await bot.db.query('SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY user_id, position', [msg.channel.guild.members.map(m => m.id)])).rows;
+			let all = {};
+			tups.forEach(t => {
+				if(!all[t.user_id]) all[t.user_id] = [];
+				all[t.user_id].push(t);
+			});
 			let embeds = [];
 			let current = { embed: {
-				title: `${tups.reduce((acc,val) => acc+val.length,0)} total registered ${cfg.lang}s in this server`,
+				title: `${tups.length} total registered ${cfg.lang}s in this server`,
 				author: {
 					name: msg.channel.guild.name,
 					icon_url: msg.channel.guild.iconURL
@@ -19,11 +24,11 @@ module.exports = {
 				fields: []
 			}, content: announcement};
 			let page = 1;
-			tups.forEach(t => {
-				let user = bot.users.get(t[0].host);
+			Object.keys(all).forEach(id => {
+				let user = bot.users.get(id);
 				let field = {
-					name: `${user.username}#${user.discriminator} (${t.length} registered)`,
-					value: t.map(tul => tul.name).join(", ")
+					name: `${user.username}#${user.discriminator} (${all[id].length} registered)`,
+					value: all[id].map(tul => tul.name).join(", ")
 				};
 				if(field.value.length > 1000) field.value = field.value.slice(0,1000) + "...";
 				if(current.embed.fields.length < 5) {
@@ -32,7 +37,7 @@ module.exports = {
 					embeds.push(current);
 					page++;
 					current = { embed: {
-						title: `${tups.reduce((acc,val) => acc+val.length,0)} total registered ${cfg.lang}s in this server`,
+						title: `${tups.length} total registered ${cfg.lang}s in this server`,
 						author: {
 							name: msg.channel.guild.name,
 							icon_url: msg.channel.guild.iconURL
@@ -58,8 +63,10 @@ module.exports = {
 			target = msg.author;
 		}
 		if(!target) {
-			out = "User not found.";
-		} else if(!bot.tulpae[target.id]) {
+			return bot.send(msg.channel,"User not found.");
+		}
+		let tulpae = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1 ORDER BY position', [target.id])).rows;
+		if(!tulpae[0]) {
 			out = (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 		} else {
 			let embeds = [];
@@ -72,7 +79,7 @@ module.exports = {
 				fields: []
 			}, content: announcement};
 			let page = 1;
-			bot.tulpae[target.id].forEach(t => {
+			tulpae.forEach(t => {
 				let field = bot.generateTulpaField(t);
 				if(current.embed.fields.length < 5) {
 					current.embed.fields.push(field);
@@ -93,7 +100,7 @@ module.exports = {
 			out = embeds[0];
 			if(page > 1) {
 				for(let i = 0; i < embeds.length; i++)
-					embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${bot.tulpae[target.id].length} total)`;
+					embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${tulpae.length} total)`;
 				return bot.paginate(msg, embeds);
 			}
 				

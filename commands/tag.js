@@ -5,20 +5,22 @@ module.exports = {
 	usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag"],
 	desc: cfg => proper(article(cfg)) + " " + cfg.lang + "'s tag is shown next to their name when speaking.",
 	permitted: () => true,
-	execute: (bot, msg, args, cfg) => {
+	groupArgs: true,
+	execute: async (bot, msg, args, cfg) => {
 		let out = "";
-		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["tag"], cfg);
-		} else if(!bot.tulpae[msg.author.id] || !bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
+		} 
+		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
+		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else if(!args[1]) {
-			delete bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).tag;
+			await bot.db.updateTulpa(msg.author.id,args[0],'tag',null);
 			out = "Tag cleared.";
-		} else if (args.slice(1).join(" ").length + bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).name.length > 27) {
+		} else if (args.slice(1).join(" ").length + tulpa.name.length > 27) {
 			out = "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
 		} else {
-			bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase()).tag = args.slice(1).join(" ");
+			await bot.db.updateTulpa(msg.author.id,args[0],'tag',args.slice(1).join(" "));
 			out = "Tag updated successfully.";
 		}
 		bot.send(msg.channel, out);

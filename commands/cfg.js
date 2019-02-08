@@ -9,8 +9,9 @@ module.exports = {
 		"cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels."],
 		
 	permitted: (msg) => (msg.member && msg.member.permission.has("administrator")),
-	execute: (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg) => {
 		let out = "";
+		let gid = msg.channel.guild.id;
 		if(msg.channel.type == 1) {
 			out = "This command cannot be used in private messages.";
 		} else if(!args[0] || !["prefix","roles","rename","log","blacklist","cmdblacklist"].includes(args[0])) {
@@ -19,8 +20,9 @@ module.exports = {
 			if(!args[1]) {
 				out = "Missing argument 'prefix'.";
 			} else {
-				cfg.prefix = args.slice(1).join(' ');
-				out = "Prefix changed to " + cfg.prefix;
+				let prefix = args.slice(1).join(' ');
+				bot.db.updateCfg(gid,'prefix',prefix);
+				out = "Prefix changed to " + prefix;
 			}
 		} else if(args[0] == "roles") {
 			out = "This feature has been disabled indefinitely.";
@@ -28,25 +30,27 @@ module.exports = {
 			if(!args[1]) {
 				out = "Missing argument 'newname'";
 			} else {
-				cfg.lang = args.slice(1).join(" ");
-				out = "Entity name changed to " + cfg.lang;
+				let lang = args.slice(1).join(" ");
+				bot.db.updateCfg(gid,'lang',lang);
+				out = "Entity name changed to " + lang;
 			}
 		} else if(args[0] == "log") {
 			if(!args[1]) {
 				out = "Logging channel unset. Logging is now disabled.";
-				cfg.log = null;
+				bot.db.updateCfg(gid,'log_channel',null);
 			} else {
 				let channel = bot.resolveChannel(msg,args[1]);
 				if(!channel) {
 					out = "Channel not found.";
 				} else {
 					out = `Logging channel set to <#${channel.id}>`;
-					cfg.log = channel.id;
+					bot.db.updateCfg(gid,'log_channel',channel.id);
 				}
 			}
 		} else if(args[0] == "blacklist") {
 			if(!args[1]) {
-				if(cfg.blacklist) out = `Currently blacklisted channels: ${cfg.blacklist.map(id => "<#"+id+">").join(" ")}`;
+				let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_proxies);
+				if(blacklist[0]) out = `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
 				else out = "No channels currently blacklisted.";
 			} else if(args[1] == "add") {
 				if(!args[2]) {
@@ -60,8 +64,7 @@ module.exports = {
 						for(let i = 0; i < channels.length; i++)
 							if(!channels[i]) out += args.slice(2)[i];
 					} else {
-						if(!cfg.blacklist) cfg.blacklist = [];
-						cfg.blacklist = cfg.blacklist.concat(channels);
+						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,true,null);
 						out = `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
 					}
 				}
@@ -77,10 +80,8 @@ module.exports = {
 						for(let i = 0; i < channels.length; i++)
 							if(!channels[i]) out += args.slice(2)[i] + " ";
 					} else {
-						if(!cfg.blacklist) cfg.blacklist = [];
-						channels.forEach(ch => { if(cfg.blacklist.includes(ch)) cfg.blacklist.splice(cfg.blacklist.indexOf(ch),1); });
+						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,false,null);
 						out = `Channel${channels.length > 1 ? "s" : ""} removed from blacklist.`;
-						if(!cfg.blacklist[0]) delete cfg.blacklist;
 					}
 				}
 			} else {
@@ -88,7 +89,8 @@ module.exports = {
 			}
 		} else if(args[0] == "cmdblacklist") {
 			if(!args[1]) {
-				if(cfg.cmdblacklist) out = `Currently cmdblacklisted channels: ${cfg.cmdblacklist.map(id => "<#"+id+">").join(" ")}`;
+				let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_commands);
+				if(blacklist[0]) out = `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
 				else out = "No channels currently cmdblacklisted.";
 			} else if(args[1] == "add") {
 				if(!args[2]) {
@@ -102,8 +104,7 @@ module.exports = {
 						for(let i = 0; i < channels.length; i++)
 							if(!channels[i]) out += args.slice(2)[i];
 					} else {
-						if(!cfg.cmdblacklist) cfg.cmdblacklist = [];
-						cfg.cmdblacklist = cfg.cmdblacklist.concat(channels);
+						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,true);
 						out = `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
 					}
 				}
@@ -119,16 +120,15 @@ module.exports = {
 						for(let i = 0; i < channels.length; i++)
 							if(!channels[i]) out += args.slice(2)[i] + " ";
 					} else {
-						if(!cfg.cmdblacklist) cfg.cmdblacklist = [];
-						channels.forEach(ch => { if(cfg.cmdblacklist.includes(ch)) cfg.cmdblacklist.splice(cfg.cmdblacklist.indexOf(ch),1); });
+						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,false);
 						out = `Channel${channels.length > 1 ? "s" : ""} removed from cmdblacklist.`;
-						if(!cfg.cmdblacklist[0]) delete cfg.cmdblacklist;
 					}
 				}
 			} else {
 				out = "Invalid argument: must be 'add' or 'remove'";
 			}
 		}
+
 		bot.send(msg.channel, out);
 	}
 };

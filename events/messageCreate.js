@@ -1,14 +1,22 @@
 module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
-	let cfg = msg.channel.guild && bot.config[msg.channel.guild.id] || { prefix: "tul!", rolesEnabled: false, lang: "tulpa"};
-	if (msg.content.startsWith(cfg.prefix) && (!cfg.cmdblacklist || !cfg.cmdblacklist.includes(msg.channel.id))) {
-		var args = msg.content.substr(cfg.prefix.length).trim().split(" ");
-		var cmd = args.shift();
-		if(bot.cmds[cmd] && bot.checkPermissions(cmd,msg,args)) {
-			bot.logger.info(`${msg.channel.guild ? msg.channel.guild.id + "###" : "DM###"}${msg.author.id}###${msg.content}`);
-			return bot.cmds[cmd].execute(bot, msg, args, cfg);
+	let cfg;
+	let guild = msg.channel.guild;
+	if(guild) cfg = await bot.db.getCfg(guild.id);
+	if(!cfg) cfg = { prefix: "tul!", lang: "tulpa"};
+	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has('manageGuild')))) {
+		let content = msg.content.substr(cfg.prefix.length).trim();
+		let args = content.split(" ");
+		let cmd = bot.cmds[args.shift()];
+		if(cmd && bot.checkPermissions(cmd,msg,args)) {
+			bot.logger.info(`${guild ? guild.id + "###" : "DM###"}${msg.author.id}###${content}`);
+			if(cmd.groupArgs) args = bot.getMatches(content,/['](.*?)[']|(\S+)/gi).slice(1);
+			return cmd.execute(bot, msg, args, cfg);
 		}
-	} else if(bot.tulpae[msg.author.id] && !(msg.channel.type == 1) && (!cfg.blacklist || !cfg.blacklist.includes(msg.channel.id))) {
+		return;
+	}
+	let tulpae = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1', [msg.author.id])).rows;
+	if(tulpae[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
 		let cleanarr = clean.split("\n");
@@ -17,12 +25,12 @@ module.exports = async (msg,bot) => {
 		let current = null;
 		for(let i = 0; i < lines.length; i++) {
 			let found = false;
-			bot.tulpae[msg.author.id].forEach(t => {
+			tulpae.forEach(t => {
 				if(bot.checkTulpa(msg, t, cleanarr[i])) {
 					if(t.brackets[1].length == 0) current = t;
 					else current = null;
 					found = true;
-					replace.push([msg,cfg,t,t.showbrackets ? lines[i] : lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
+					replace.push([msg,cfg,t,t.show_brackets ? lines[i] : lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
 				}
 			});
 			if(!found && current) 
@@ -32,9 +40,9 @@ module.exports = async (msg,bot) => {
 		if(replace.length < 2) replace = [];
 	
 		if(!replace[0]) {
-			for(let t of bot.tulpae[msg.author.id]) {
+			for(let t of tulpae) {
 				if(bot.checkTulpa(msg, t, clean)) {
-					replace.push([msg, cfg, t, t.showbrackets ? msg.content : msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
+					replace.push([msg, cfg, t, t.show_brackets ? msg.content : msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
 					break;
 				}
 			}

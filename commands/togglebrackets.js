@@ -4,18 +4,18 @@ module.exports = {
 	help: cfg => "Toggles whether the brackets are included or stripped in proxied messages for the given " + cfg.lang,
 	usage: cfg =>  ["togglebrackets <name> - toggles showing brackets on or off for the given " + cfg.lang],
 	permitted: () => true,
-	execute: (bot, msg, args, cfg) => {
+	groupArgs: true,
+	execute: async (bot, msg, args, cfg) => {
 		let out = "";
-		args = bot.getMatches(msg.content.slice(cfg.prefix.length),/['](.*?)[']|(\S+)/gi).slice(1);
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["togglebrackets"], cfg);
-		} else if(!bot.tulpae[msg.author.id] || !bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase())) {
+		}
+		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
+		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else {
-			let tup = bot.tulpae[msg.author.id].find(t => t.name.toLowerCase() == args[0].toLowerCase());
-			if(!tup.showbrackets) tup.showbrackets = false;
-			tup.showbrackets = !tup.showbrackets;
-			out = `Now ${tup.showbrackets ? "showing" : "hiding"} brackets in proxied messages for ${tup.name}.`;
+			bot.db.updateTulpa(msg.author.id,args[0],'show_brackets',!tulpa.show_brackets);
+			out = `Now ${tulpa.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${tulpa.name}.`;
 		}
 		bot.send(msg.channel, out);
 	}

@@ -1,11 +1,16 @@
-const Eris = require("eris");
-const {promisify} = require("util");
+require('dotenv').config();
 const fs = require("fs");
-const auth = require("./auth.json");
+const Eris = require("eris");
 
 const init = async () => {
+	try { 
+		require('./auth.json');
+		throw new Error("outdated");
+	} catch(e) { 
+		if(e.message == "outdated") throw new Error("auth.json is outdated, please use the .env file instead! See the github page for more info");
+	}
 
-	const bot = new Eris(auth.discord, {
+	const bot = new Eris(process.env.DISCORD_TOKEN, {
 		maxShards: "auto",
 		disableEvents: {
 			GUILD_BAN_ADD: true,
@@ -19,48 +24,40 @@ const init = async () => {
 		messageLimit: 0,
 	});
 
-	//create data files if they don't exist
-	["/tulpae.json","/servercfg.json","/webhooks.json"].forEach(async file => {
-		if(!(await promisify(fs.exists)(__dirname + file)))
-			await promisify(fs.writeFile)(__dirname + file, "{ }");
-	});
-
-	bot.tulpae = require("./tulpae.json");
-	bot.config = require("./servercfg.json");
-	bot.webhooks = require("./webhooks.json");
+	bot.db = require('./modules/db');
+	await bot.db.init();
 
 	bot.recent = {};
 	bot.pages = {};
 
 	bot.cmds = {};
+
+	bot.owner = process.env.DISCORD_OWNERID;
   
 	require("./modules/util")(bot);
-	bot.backupAll();
-	setInterval(() => bot.saveAll(), 600000);
-  
-	setInterval(() => bot.backupAll(), 86400000);
   
 	bot.logger = require("./modules/logger");
   
 	console.log("COMMANDS:");
-	let files = await promisify(fs.readdir)("./commands");
+	let files = fs.readdirSync("./commands");
 	files.forEach(file => {
-		console.log(`\t${file}`);
+		process.stdout.write(` ${file}`);
 		bot.cmds[file.slice(0,-3)] = require("./commands/"+file);
 	});
   
 	console.log("\nEVENTS:");
-	files = await promisify(fs.readdir)("./events");
+	files = fs.readdirSync("./events");
 	files.forEach(file => {
-		console.log(`\t${file}`);
+		process.stdout.write(` ${file}`);
 		bot.on(file.slice(0,-3), (...args) => require("./events/"+file)(...args,bot));
 	});
+	console.log();
 
-	if (!auth.inviteCode) {
+	if (!process.env.DISCORD_INVITE) {
 		delete bot.cmds.invite;
 	}
 
 	bot.connect();
 };
 
-init();
+init().catch(console.error);
