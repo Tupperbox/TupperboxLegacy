@@ -7,7 +7,7 @@ module.exports = {
 	execute: async (bot, msg, args, cfg) => {
 		let out = "";
 		if(args[0] == "all" || args[0] == "*") { //short list of all tuppers
-			if(!msg.channel.guild) return bot.send(msg.channel, "Cannot retrieve short form full list in DMs.");
+			if(!msg.channel.guild) return bot.send(msg.channel, "Cannot retrieve server-wide list in DMs.");
 			let tups = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY user_id, position", [msg.channel.guild.members.map(m => m.id)])).rows;
 			let all = {};
 			tups.forEach(t => {

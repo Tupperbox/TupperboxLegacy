@@ -14,7 +14,8 @@ module.exports = {
 		if(!args[0]) {
 			return bot.cmds.help.execute(bot, msg, ["avatar"], cfg);
 		}
-		let tulpa = await bot.db.getTulpa(msg.author.id, args[0]);
+		let name = msg.attachments[0] ? args.join(' ') : args[0];
+		let tulpa = await bot.db.getTulpa(msg.author.id, name);
 		if(!tulpa) {
 			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		} else if(!args[1] && !msg.attachments[0]) {
@@ -22,7 +23,7 @@ module.exports = {
 		} else if(!validUrl.isWebUri(args[1]) && !msg.attachments[0]) {
 			out = "Malformed url.";
 		} else {
-			let url = args[1] || msg.attachments[0].url;
+			let url = msg.attachments[0] ? msg.attachments[0].url : args[1];
 			request.head(url).then(res => {
 				if(!res.headers["content-type"] || !res.headers["content-type"].startsWith("image")) return bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");
 				if(Number(res.headers["content-length"]) > 1000000) {
@@ -30,10 +31,12 @@ module.exports = {
 				}
 				probe(url).then(async result => {
 					if(Math.min(result.width,result.height) >= 1024) return bot.send(msg.channel, "That image is too large and Discord will not accept it. Please use an image where width or height is less than 1024 pixels.");
-					await bot.db.updateTulpa(msg.author.id,args[0],"avatar_url",url);
-					bot.send(msg.channel, "Avatar changed successfully.");
+					try { 
+						await bot.db.updateTulpa(msg.author.id,name,"avatar_url",url);
+						bot.send(msg.channel, "Avatar changed successfully.");
+					} catch(e) { bot.err(msg,e); }
 				}).catch(err => { console.error(err); bot.send(msg.channel, "Something went wrong when checking the image. Please try again.");});
-			}).catch(err => { console.error(err); bot.send(msg.channel, "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).");});
+			}).catch(err => { console.error(err); bot.send(msg.channel, "There was an error accessing that URL. Please try another.");});
 			return;
 		}
 		bot.send(msg.channel, out);

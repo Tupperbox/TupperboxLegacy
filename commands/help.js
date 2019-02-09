@@ -9,7 +9,7 @@ module.exports = {
 	execute: (bot, msg, args, cfg) => {
 		let output = "";
 		if(args[0]) { //help for a specific command
-			if(bot.cmds[args[0]] && bot.checkPermissions(args[0],msg,args) && bot.cmds[args[0]].usage) {
+			if(bot.cmds[args[0]] && bot.checkPermissions(bot.cmds[args[0]],msg,args) && bot.cmds[args[0]].usage) {
 				output = { embed: {
 					title: "Bot Command | " + args[0],
 					description: bot.cmds[args[0]].help(cfg) + "\n\n**Usage:**\n",

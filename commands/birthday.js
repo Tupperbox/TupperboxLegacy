@@ -11,7 +11,7 @@ module.exports = {
 		if(!args[0]) {
 			let tulps = (await bot.db.query(`
 				SELECT *, birthday + date_trunc('year', age(birthday + 1)) + interval '1 year' as anniversary FROM Members WHERE user_id = ANY($1) ORDER BY anniversary LIMIT 5;
-			`, [[msg.author.id].concat(msg.channel.guild ? msg.channel.guild.members.map(m => m.id) : [])])).rows;
+			`, [[msg.author.id].concat(msg.channel.guild ? msg.channel.guild.members.map(m => m.id) : [])])).rows.filter(t => t.anniversary != null);
 			if(!tulps[0])
 				return bot.send(msg.channel, "No " + cfg.lang + "s on this server have birthdays set.");
 			return bot.send(msg.channel, "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + tulps.map(t => (bot.checkTulpaBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString("en-US",{timeZone:"UTC"})}`)).join("\n"));

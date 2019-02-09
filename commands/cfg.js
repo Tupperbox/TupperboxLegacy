@@ -21,7 +21,7 @@ module.exports = {
 				out = "Missing argument 'prefix'.";
 			} else {
 				let prefix = args.slice(1).join(" ");
-				bot.db.updateCfg(gid,"prefix",prefix);
+				await bot.db.updateCfg(gid,"prefix",prefix);
 				out = "Prefix changed to " + prefix;
 			}
 		} else if(args[0] == "roles") {

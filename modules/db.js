@@ -10,6 +10,10 @@ const question = q => {
 	});
 };
 
+let updateBlacklist = async (serverID, id, isChannel, blockProxies, blockCommands) => {
+	return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
+}
+
 module.exports = {
 	init: async () => {
 		process.stdout.write("Checking postgres connection... ");
@@ -131,8 +135,8 @@ module.exports = {
 					conn.query("INSERT INTO Servers VALUES ($1,$2,$3,$4,$5)", [id,cfg.prefix,cfg.lang,null,cfg.log || null])
 						.catch(e => { throw e; })
 						.then(async () => {
-							if(cfg.blacklist) for(let bl of cfg.blacklist) await conn.query("INSERT INTO Blacklist VALUES($1,$2,$3,$4,$5)", [bl,id,true,true,false]).then(() => console.log(`${id} - blacklist updated`));
-							if(cfg.cmdblacklist) for(let bl of cfg.cmdblacklist) await conn.query("INSERT INTO Blacklist VALUES($1,$2,$3,$4,$5)", [bl,id,true,false,true]).then(() => console.log(`${id} - blacklist updated`));
+							if(cfg.blacklist) for(let bl of cfg.blacklist) await updateBlacklist(id,bl,true,true,null).then(() => console.log(`${id} - blacklist updated`));
+							if(cfg.cmdblacklist) for(let bl of cfg.cmdblacklist) await updateBlacklist(id,bl,true,null,true).then(() => console.log(`${id} - blacklist updated`));
 							conn.release();
 						}).catch(e => { throw e; });
 				}
@@ -185,9 +189,7 @@ module.exports = {
 		return (await pool.query("SELECT * FROM Blacklist WHERE server_id = $1", [serverID])).rows;
 	},
 
-	updateBlacklist: async (serverID, id, isChannel, blockProxies, blockCommands) => {
-		return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
-	},
+	updateBlacklist: updateBlacklist,
 
 	deleteBlacklist: async (serverID, id) => {
 		return await pool.query("DELETE FROM Blacklist WHERE server_id = $1 AND id = $2", [serverID, id]);

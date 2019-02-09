@@ -28,7 +28,7 @@ module.exports = bot => {
 			if(e.code === 10015) {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
-				return bot.executeWebhook(hook.id,hook.token,data);
+				await bot.executeWebhook(hook.id,hook.token,data);
 			}
 		}
 
@@ -47,6 +47,11 @@ module.exports = bot => {
 			tulpa: tulpa,
 		};
 	};
+
+	bot.err = (msg, error) => {
+		console.error(error);
+		bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (Code ${error.code})`);
+	}
 
 	bot.checkTulpa = (msg, tulpa, clean) => {
 		return clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1]) && ((clean.length == (tulpa.brackets[0].length + tulpa.brackets[1].length) && msg.attachments[0]) || clean.length > (tulpa.brackets[0].length + tulpa.brackets[1].length));

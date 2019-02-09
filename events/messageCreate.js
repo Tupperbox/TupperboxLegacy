@@ -11,11 +11,13 @@ module.exports = async (msg,bot) => {
 		if(cmd && bot.checkPermissions(cmd,msg,args)) {
 			bot.logger.info(`${guild ? guild.id + "###" : "DM###"}${msg.author.id}###${content}`);
 			if(cmd.groupArgs) args = bot.getMatches(content,/['](.*?)[']|(\S+)/gi).slice(1);
-			return cmd.execute(bot, msg, args, cfg);
+			try {
+				await cmd.execute(bot, msg, args, cfg);
+			} catch(e) { bot.err(msg,e); }
 		}
 		return;
 	}
-	let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1", [msg.author.id])).rows;
+	let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
 	if(tulpae[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
@@ -49,12 +51,13 @@ module.exports = async (msg,bot) => {
 		}
 	
 		if(replace[0]) {
-			Promise.all(replace.map(r => bot.replaceMessage(...r)))
-				.then(() => {
-					if(msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
-						msg.delete().catch(e => { if(e.code == 50013) { bot.send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
-		
-				}).catch(e => bot.send(msg.channel, e.toString()));
+			try {
+				for(let r of replace) {
+					await bot.replaceMessage(...r);
+				}
+				if(msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
+					msg.delete().catch(e => { if(e.code == 50013) { bot.send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
+			} catch(e) { bot.err(msg, e); }
 		}
 	}
 };

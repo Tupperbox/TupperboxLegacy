@@ -11,16 +11,16 @@ module.exports = {
 			} else if(args[0] == "module") {
 				delete require.cache[fullPath];
 				switch(arg) {
-				case "util":
-					require("../modules/util")(bot);
-					break;
-				case "logger":
-					bot.logger = require("../modules/logger");
-					break;
-				case "db":
-					await bot.db.end();
-					bot.db = require("../modules/db");
-					break;
+					case "util":
+						require("../modules/util")(bot);
+						break;
+					case "logger":
+						bot.logger = require("../modules/logger");
+						break;
+					case "db":
+						await bot.db.end();
+						bot.db = require("../modules/db");
+						break;
 				}
 			} else if(args[0] == "event") {
 				bot.removeAllListeners(args[1]);
