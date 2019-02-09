@@ -31,20 +31,20 @@ module.exports = {
 				out = "Missing argument 'newname'";
 			} else {
 				let lang = args.slice(1).join(" ");
-				bot.db.updateCfg(gid,"lang",lang);
+				await bot.db.updateCfg(gid,"lang",lang);
 				out = "Entity name changed to " + lang;
 			}
 		} else if(args[0] == "log") {
 			if(!args[1]) {
+				await bot.db.updateCfg(gid,"log_channel",null);
 				out = "Logging channel unset. Logging is now disabled.";
-				bot.db.updateCfg(gid,"log_channel",null);
 			} else {
 				let channel = bot.resolveChannel(msg,args[1]);
 				if(!channel) {
 					out = "Channel not found.";
 				} else {
-					out = `Logging channel set to <#${channel.id}>`;
-					bot.db.updateCfg(gid,"log_channel",channel.id);
+					await bot.db.updateCfg(gid,"log_channel",channel.id);
+					out = `Logging channel set to <#${channel.id}>`;					
 				}
 			}
 		} else if(args[0] == "blacklist") {
@@ -129,6 +129,6 @@ module.exports = {
 			}
 		}
 
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

@@ -27,6 +27,6 @@ module.exports = {
 				out = "Brackets updated successfully.";
 			}
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

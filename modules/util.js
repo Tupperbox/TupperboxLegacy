@@ -1,4 +1,6 @@
 const request = require("got");
+const strlen = require('string-length');
+const { PermissionsError } = require('./errors');
 
 module.exports = bot => {  
 
@@ -7,13 +9,17 @@ module.exports = bot => {
 		const data = {
 			wait: true,
 			content: content,
-			username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""} ${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`,
+			username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`.trim(),
 			avatarURL: tulpa.avatar_url,
 		};
 
+		//discord treats astral characters (many emojis) as one character, so add a little dot to make it two
+		if(strlen(data.username) < 2) data.username += "\u00b7";
+		//discord collapses same-name messages, so if two would be sent by different users, break them up with a tiny space
 		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id].user_id && data.username === bot.recent[msg.channel.id].name) {
 			data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
 		}
+		//discord prevents the name 'clyde' being used in a webhook, so break it up with a tiny space
 		let c = data.username.toLowerCase().indexOf("clyde");
 		if(c > -1) data.username = data.username.substring(0,c+1) + "\u200a" + data.username.substring(c+1);
 
@@ -24,22 +30,21 @@ module.exports = bot => {
 		try {
 			await bot.executeWebhook(hook.id,hook.token,data);
 		} catch (e) {
-			console.log(e);
 			if(e.code === 10015) {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
 				await bot.executeWebhook(hook.id,hook.token,data);
-			}
+			} else throw e;
 		}
 
-		if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-			bot.send(msg.channel.guild.channels.get(cfg.log),
+		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
+			bot.send(msg.channel.guild.channels.get(cfg.log_channel),
 				`Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
 		bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
-			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and ${cfg.lang} webhook message will show.`);
+			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and proxied message will show.`);
 		}
 		bot.recent[msg.channel.id] = {
 			user_id: msg.author.id,
@@ -48,9 +53,10 @@ module.exports = bot => {
 		};
 	};
 
-	bot.err = (msg, error) => {
-		console.error(error);
-		bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (Code ${error.code})`);
+	bot.err = (msg, error, tell = true) => {
+		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author.id}]\n(${error.code}) ${error.stack} `);
+		if(tell) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
+		bot.sentry.captureException(error);
 	}
 
 	bot.checkTulpa = (msg, tulpa, clean) => {
@@ -63,33 +69,27 @@ module.exports = bot => {
 			files.push({ file: await bot.attach(msg.attachments[i].url), name: msg.attachments[i].filename });
 		}
 		data.file = files;
-		return new Promise((resolve, reject) => {
-			bot.executeWebhook(hook.id,hook.token,data)
-				.catch(async e => { 
-					console.log(e);
-					if(e.code == 10015) {
-						await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
-						return bot.fetchWebhook(msg.channel).then(hook => {
-							return bot.executeWebhook(hook.id,hook.token,data);
-						}).catch(e => reject("Webhook deleted and error creating new one. Check my permissions?"));
-					}
-				}).then(() => {
-					if(cfg.log && msg.channel.guild.channels.has(cfg.log)) {
-						let logchannel = msg.channel.guild.channels.get(cfg.log);
-						if(!bot.recent[msg.channel.id] && !logchannel.permissionsOf(bot.user.id).has("sendMessages")) {
-							bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-							cfg.log = null;
-						}
-						else if(logchannel.permissionsOf(bot.user.id).has("sendMessages"))
-							bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
-					}
-					bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
-					if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
-						bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-					bot.recent[msg.channel.id] = { user_id: msg.author.id, name: data.username, tulpa: tulpa };
-					resolve();
-				}).catch(reject);
-		});
+		try {
+			await bot.executeWebhook(hook.id,hook.token,data);
+			if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
+				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
+				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages")) {
+					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
+					await bot.db.updateCfg(msg.channel.guild.id,'log_channel',null);
+				}
+				else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+			}
+			bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
+			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
+				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
+			bot.recent[msg.channel.id] = { user_id: msg.author.id, name: data.username, tulpa: tulpa };
+		} catch(e) {
+			if(e.code == 10015) {
+				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
+				let hook = await bot.fetchWebhook(msg.channel);
+				return bot.executeWebhook(hook.id,hook.token,data);
+			} else throw e;
+		}
 	};
 
 	bot.fetchWebhook = async channel => {
@@ -97,13 +97,12 @@ module.exports = bot => {
 		if(q.rows[0])
 			return q.rows[0];
 		else if(!channel.permissionsOf(bot.user.id).has("manageWebhooks"))
-			throw "Proxy failed: Missing 'Manage Webhooks' permission in this channel.";
+			throw new PermissionsError("Manage Webhooks");
 		else {
-			return channel.createWebhook({ name: "Tupperhook" }).then(hook => {
-				let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
-				bot.db.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [hook.id,channel.id,hook.token]);
-				return wbhk;
-			}).catch(e => { console.log(e); throw "Proxy failed with unknown reason: " + e.message; });
+			let hook = await channel.createWebhook({ name: "Tupperhook" })
+			let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
+			await bot.db.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [hook.id,channel.id,hook.token]);
+			return wbhk;
 		}
 	};
 
@@ -130,20 +129,20 @@ module.exports = bot => {
 			}
 			return bot.send(msg.channel, "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the command is used.");
 		}
-		return bot.send(msg.channel, data[0]).then(m => {
-			buttons.forEach(b => bot.addMessageReaction(msg.channel.id,m.id,b));
-			bot.pages[m.id] = {
-				user: msg.author.id,
-				pages: data,
-				index: 0
-			};
-			setTimeout(() => {
-				if(!bot.pages[m.id]) return;
-				if(!(msg.channel.type == 1))
-					bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) console.error(e); }); 
-				delete bot.pages[m.id];
-			}, 300000);
-		});
+		let m = await bot.send(msg.channel, data[0]);
+		for(let i=0; i<buttons.length; i++)
+			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]);
+		bot.pages[m.id] = {
+			user: msg.author.id,
+			pages: data,
+			index: 0
+		};
+		setTimeout(() => {
+			if(!bot.pages[m.id]) return;
+			if(!(msg.channel.type == 1))
+				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) console.error(e); }); 
+			delete bot.pages[m.id];
+		}, 300000);
 	};
 
 	bot.checkTulpaBirthday = tulpa => {
@@ -171,9 +170,17 @@ module.exports = bot => {
 		if(err) return console.error(err);
 	};
 
-	bot.send = (channel, message, file) => {
+	bot.send = async (channel, message, file) => {
 		if(!channel.id) return;
-		return channel.createMessage(message, file);
+		let msg;
+		try {
+			msg = await channel.createMessage(message, file);
+		} catch(e) {
+			if(e.code == 50001) throw new PermissionsError("View Channel", message);
+			else if(e.code == 50013) throw new PermissionsError("Send Messages", message);
+			else throw e;
+		}
+		return msg;
 	};
 
 	bot.getMatches = (string, regex) => {

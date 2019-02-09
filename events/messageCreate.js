@@ -9,11 +9,22 @@ module.exports = async (msg,bot) => {
 		let args = content.split(" ");
 		let cmd = bot.cmds[args.shift()];
 		if(cmd && bot.checkPermissions(cmd,msg,args)) {
-			bot.logger.info(`${guild ? guild.id + "###" : "DM###"}${msg.author.id}###${content}`);
 			if(cmd.groupArgs) args = bot.getMatches(content,/['](.*?)[']|(\S+)/gi).slice(1);
 			try {
 				await cmd.execute(bot, msg, args, cfg);
-			} catch(e) { bot.err(msg,e); }
+			} catch(e) { 
+				if(e.name == "PermissionsError") {
+					let errorMsg = `This message was sent to you in DMs because I am lacking '${e.permission}' permissions in the channel you ran the command.`;
+					if(e.original.embed) e.original.content = errorMsg;
+					else e.original += `\n${errorMsg}`;
+					try {
+						await bot.send(await msg.author.getDMChannel(), e.original);
+					} catch(e) {
+						if(e.code != 50007) bot.err(msg,e);
+					}
+				}
+				else bot.err(msg,e);
+			}
 		}
 		return;
 	}
@@ -56,8 +67,11 @@ module.exports = async (msg,bot) => {
 					await bot.replaceMessage(...r);
 				}
 				if(msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
-					msg.delete().catch(e => { if(e.code == 50013) { bot.send(msg.channel, "Warning: I'm missing permissions needed to properly replace messages."); }});
-			} catch(e) { bot.err(msg, e); }
+					await msg.delete();
+			} catch(e) { 
+				if(e.permission) bot.send(msg.channel, `Unable to process proxy due to missing permission: '${e.permission}'`);
+				else if(e.code != 10008) bot.err(msg, e); 
+			}
 		}
 	}
 };

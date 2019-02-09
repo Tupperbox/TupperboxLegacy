@@ -9,9 +9,11 @@
   "author": "Keter",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^4.5.3",
     "bufferutil": "^4.0.1",
     "dotenv": "^6.2.0",
     "eris": "^0.9.0",
+    "eris-sharder": "^1.7.11",
     "erlpack": "github:abalabahaha/erlpack",
     "eventemitter3": "^3.1.0",
     "got": "^9.6.0",
@@ -19,6 +21,7 @@
     "pg": "^7.8.0",
     "probe-image-size": "^3.0.0",
     "sodium-native": "^2.2.5",
+    "string-length": "^2.0.0",
     "valid-url": "^1.0.9",
     "winston": "^3.2.0",
     "zlib-sync": "^0.1.4"

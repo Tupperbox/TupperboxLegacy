@@ -17,6 +17,6 @@ module.exports = {
 			await bot.db.updateTulpa(msg.author.id,args[0],"show_brackets",!tulpa.show_brackets);
 			out = `Now ${tulpa.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${tulpa.name}.`;
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

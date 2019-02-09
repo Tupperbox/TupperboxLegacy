@@ -18,6 +18,6 @@ module.exports = {
 			await bot.db.deleteTulpa(msg.author.id,name);
 			out = proper(cfg.lang) + " unregistered.";
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

@@ -28,6 +28,6 @@ module.exports = {
 			await bot.db.updateTulpa(msg.author.id,args[0],"birthday",date);
 			out = `${proper(cfg.lang)} '${args[0]}' birthday set to ${date.toDateString()}.`;
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

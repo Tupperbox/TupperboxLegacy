@@ -21,6 +21,6 @@ module.exports = {
 			if(desc.length > 700) out = "Description updated, but was truncated due to Discord embed limits.";
 			else out = "Description updated successfully.";
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

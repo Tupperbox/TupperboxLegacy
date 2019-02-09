@@ -23,6 +23,6 @@ module.exports = {
 			await bot.db.updateTulpa(msg.author.id,args[0],"tag",args.slice(1).join(" "));
 			out = "Tag updated successfully.";
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

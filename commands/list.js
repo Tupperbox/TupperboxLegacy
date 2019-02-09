@@ -105,6 +105,6 @@ module.exports = {
 			}
 				
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

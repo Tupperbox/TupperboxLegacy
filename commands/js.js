@@ -9,6 +9,6 @@ module.exports = {
 		} catch(e) {
 			out = e.toString();
 		}
-		bot.send(msg.channel, require("util").inspect(out).slice(0,2000));
+		return bot.send(msg.channel, require("util").inspect(out).slice(0,2000));
 	}
 };

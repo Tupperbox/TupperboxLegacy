@@ -27,7 +27,7 @@ module.exports = {
 				delete require.cache[fullPath];
 				bot.on(args[1], (...a) => require(path)(...a,bot));
 			}
-			bot.send(msg.channel, `${arg} reloaded`);
+			return bot.send(msg.channel, `${arg} reloaded`);
 		}
 	}
 };

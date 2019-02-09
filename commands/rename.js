@@ -25,6 +25,6 @@ module.exports = {
 			await bot.db.updateTulpa(msg.author.id,args[0],"name",args[1]);
 			out = proper(cfg.lang) + " renamed successfully.";
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };

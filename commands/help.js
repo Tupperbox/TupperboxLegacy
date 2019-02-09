@@ -6,7 +6,7 @@ module.exports = {
 	usage: cfg =>  ["help - print list of commands", 
 		"help [command] - get help on a specific command"],
 	permitted: () => true,
-	execute: (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg) => {
 		let output = "";
 		if(args[0]) { //help for a specific command
 			if(bot.cmds[args[0]] && bot.checkPermissions(bot.cmds[args[0]],msg,args) && bot.cmds[args[0]].usage) {
@@ -47,6 +47,6 @@ module.exports = {
 					output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
 			}
 		}
-		bot.send(msg.channel, output);
+		return bot.send(msg.channel, output);
 	}
 };

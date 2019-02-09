@@ -31,6 +31,6 @@ module.exports = {
 			await bot.db.addTulpa(msg.author.id,args[0],brackets);
 			out = proper(cfg.lang) + " registered successfully!\nName: " + args[0] + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info."; 
 		}
-		bot.send(msg.channel, out);
+		return bot.send(msg.channel, out);
 	}
 };
