@@ -42,9 +42,11 @@ PGHOST=???
 PGDATABASE=???
 PGPASSWORD=???
 PGPORT=3456
+SENTRY_DSN=https://(key)@sentry.io/(id)
 ```
 (don't worry, that token is a fake)
 The PG-prefixed variables should be filled in with the connection info to your PostgreSQL database set up during installation. You need a **database**, a **user** with associated **password** with full write access to that database, and the **host IP** of the machine running the server (localhost if it's the same machine).
+SENTRY_DSN is a link to a registered Sentry project. Make one here: https://sentry.io/ and copy the provided DSN link into that field.
 
 # Upgrading from JSON storage
 The new version of the bot runs on PostgreSQL and not JSON. If you would like to upgrade, install PostgreSQL, switch to the rewrite branch, and on startup the bot will prompt you to import your JSON databases to the Postgres server you've configured automatically. (Make a backup of these files first - it will delete them)
