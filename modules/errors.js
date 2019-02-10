@@ -8,4 +8,10 @@ class PermissionsError extends Error {
     }
 }
 
-module.exports = { PermissionsError };
+class EmptyError extends Error {
+    constructor() {
+        super("Cannot Send Empty Message");
+    }
+}
+
+module.exports = { PermissionsError, EmptyError };

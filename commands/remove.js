@@ -6,18 +6,15 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		let out = "";
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["remove"], cfg);
+		
+		//check arguments
 		let name = args.join(" ");
-		if(!args[0]) {
-			return bot.cmds.help.execute(bot, msg, ["remove"], cfg);
-		}
 		let tulpa = await bot.db.getTulpa(msg.author.id,name);
-		if(!tulpa) {
-			out = "Could not find " + cfg.lang + " with that name registered under your account.";
-		} else {
-			await bot.db.deleteTulpa(msg.author.id,name);
-			out = proper(cfg.lang) + " unregistered.";
-		}
-		return bot.send(msg.channel, out);
+		if(!tulpa) return "Could not find " + cfg.lang + " with that name registered under your account.";
+		
+		//delete
+		await bot.db.deleteTulpa(msg.author.id,name);
+		return proper(cfg.lang) + " unregistered.";
 	}
 };

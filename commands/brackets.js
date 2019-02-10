@@ -7,26 +7,18 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		let out = "";
-		if(!args[0]) {
-			return bot.cmds.help.execute(bot, msg, ["brackets"], cfg);
-		}
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["brackets"], cfg);
+
+		//check arguments
 		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
-		if(!tulpa) {
-			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		} else if(!args[1]) {
-			out = `Brackets for ${args[0]}: ${tulpa.brackets[0]}text${tulpa.brackets[1]}`;
-		} else {
-			let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
-			if(brackets.length < 2) {
-				out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
-			} else if(!brackets[0] && !brackets[1]) {
-				out = "Need something surrounding 'text'.";
-			} else {
-				await bot.db.updateTulpa(msg.author.id,args[0],"brackets",brackets);
-				out = "Brackets updated successfully.";
-			}
-		}
-		return bot.send(msg.channel, out);
+		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!args[1]) return `Brackets for ${args[0]}: ${tulpa.brackets[0]}text${tulpa.brackets[1]}`;
+		let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
+		if(brackets.length < 2) return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
+		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
+
+		//update tulpa
+		await bot.db.updateTulpa(msg.author.id,args[0],"brackets",brackets);
+		return "Brackets updated successfully.";
 	}
 };

@@ -11,7 +11,8 @@ module.exports = async (msg,bot) => {
 		if(cmd && bot.checkPermissions(cmd,msg,args)) {
 			if(cmd.groupArgs) args = bot.getMatches(content,/['](.*?)[']|(\S+)/gi).slice(1);
 			try {
-				await cmd.execute(bot, msg, args, cfg);
+				let output = await cmd.execute(bot, msg, args, cfg);
+				if(output && (typeof output == "string" || output.embed)) await bot.send(msg.channel,output);
 			} catch(e) { 
 				if(e.name == "PermissionsError") {
 					let errorMsg = `This message was sent to you in DMs because I am lacking '${e.permission}' permissions in the channel you ran the command.`;
@@ -70,7 +71,8 @@ module.exports = async (msg,bot) => {
 					await msg.delete();
 			} catch(e) { 
 				if(e.permission) bot.send(msg.channel, `Unable to process proxy due to missing permission: '${e.permission}'`);
-				else if(e.code != 10008) bot.err(msg, e); 
+				else if(e.message == "Cannot Send Empty Message") bot.send(msg.channel, `Cannot proxy empty message.`);
+				else if(e.code != 10008 && e.code != 500) bot.err(msg, e); 
 			}
 		}
 	}

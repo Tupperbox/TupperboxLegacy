@@ -6,17 +6,14 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		let out = "";
-		if(!args[0]) {
-			return bot.cmds.help.execute(bot, msg, ["togglebrackets"], cfg);
-		}
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["togglebrackets"], cfg);
+		
+		//check arguments
 		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
-		if(!tulpa) {
-			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		} else {
-			await bot.db.updateTulpa(msg.author.id,args[0],"show_brackets",!tulpa.show_brackets);
-			out = `Now ${tulpa.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${tulpa.name}.`;
-		}
-		return bot.send(msg.channel, out);
+		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		
+		//update tulpa
+		await bot.db.updateTulpa(msg.author.id,args[0],"show_brackets",!tulpa.show_brackets);
+		return `Now ${tulpa.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${tulpa.name}.`;
 	}
 };

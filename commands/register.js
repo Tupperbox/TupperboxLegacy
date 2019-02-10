@@ -7,30 +7,21 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		let out = "";
-		let brackets;
-		if(args[0])
-			brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
-		if(!args[0]) {
-			return bot.cmds.help.execute(bot, msg, ["register"], cfg);
-		}
-		let tulpa = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,args[0],brackets || []])).rows[0];
-		if(!args[1]) {
-			out = "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
-		} else if(args[0].length < 2 || args[0].length > 28) {
-			out = "Name must be between 2 and 28 characters.";
-		} else if(brackets.length < 2) {
-			out = "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
-		} else if(!brackets[0] && !brackets[1]) {
-			out = "Need something surrounding 'text'.";
-		} else if(tulpa && tulpa.name.toLowerCase() == args[0].toLowerCase()) {
-			out = proper(cfg.lang) + " with that name under your user account already exists.";
-		} else if(tulpa && tulpa.brackets[0] == brackets[0] && tulpa.brackets[1] == brackets[1]) {
-			out = proper(cfg.lang) + " with those brackets under your user account already exists.";
-		} else {
-			await bot.db.addTulpa(msg.author.id,args[0],brackets);
-			out = proper(cfg.lang) + " registered successfully!\nName: " + args[0] + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info."; 
-		}
-		return bot.send(msg.channel, out);
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["register"], cfg);
+
+		//check arguments
+		let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
+		let name = args[0].trim();
+		let tulpa = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
+		if(!args[1]) return "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
+		if(name.length < 2 || name.length > 28)	return "Name must be between 2 and 28 characters.";
+		if(brackets.length < 2)	return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
+		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
+		if(tulpa && tulpa.name.toLowerCase() == name.toLowerCase())	return proper(cfg.lang) + " with that name under your user account already exists.";
+		if(tulpa && tulpa.brackets[0] == brackets[0] && tulpa.brackets[1] == brackets[1]) return proper(cfg.lang) + " with those brackets under your user account already exists.";
+		
+		//add tulpa
+		await bot.db.addTulpa(msg.author.id,name,brackets);
+		return proper(cfg.lang) + " registered successfully!\nName: " + name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info."; 
 	}
 };

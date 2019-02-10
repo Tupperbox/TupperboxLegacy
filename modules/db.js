@@ -58,7 +58,9 @@ module.exports = {
     CREATE TABLE IF NOT EXISTS Groups(
       id SERIAL PRIMARY KEY,
       user_id VARCHAR(32) NOT NULL,
-      name TEXT NOT NULL
+	  name TEXT NOT NULL,
+	  description TEXT,
+	  tag VARCHAR(32)
     );`);
 
 		console.log("ok!\nChecking for data to import...");
@@ -157,11 +159,11 @@ module.exports = {
 	},
 
 	getTulpa: async (userID, name) => {
-		return (await pool.query("SELECT * FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]).catch(console.error)).rows[0];
+		return (await pool.query("SELECT * FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
 	},
 
 	updateTulpa: async (userID, name, column, newVal) => {
-		return await pool.query(`UPDATE Members SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]).catch(console.error);
+		return await pool.query(`UPDATE Members SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
 	},
 
 	deleteTulpa: async (userID, name) => {
@@ -198,6 +200,26 @@ module.exports = {
 	isBlacklisted: async (serverID, id, proxy) => {
 		if(proxy) return (await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0];
 		else return (await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0];
+	},
+
+	getGroup: async (userID, name) => {
+		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
+	},
+
+	getGroups: async(userID) => {
+		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
+	},
+
+	addGroup: async (userID, name) => {
+		return await pool.query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT COUNT(user_id) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
+	},
+
+	updateGroup: async (userID, name, column, newVal) => {
+		return await pool.query(`UPDATE Groups SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
+	},
+
+	deleteGroup: async (userID, name) => {
+		return await pool.query("DELETE FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
 	},
 
 	end: async () => { return await pool.end(); }

@@ -7,10 +7,10 @@ module.exports = {
 		"help [command] - get help on a specific command"],
 	permitted: () => true,
 	execute: async (bot, msg, args, cfg) => {
-		let output = "";
-		if(args[0]) { //help for a specific command
+		//help for a specific command
+		if(args[0]) {
 			if(bot.cmds[args[0]] && bot.checkPermissions(bot.cmds[args[0]],msg,args) && bot.cmds[args[0]].usage) {
-				output = { embed: {
+				let output = { embed: {
 					title: "Bot Command | " + args[0],
 					description: bot.cmds[args[0]].help(cfg) + "\n\n**Usage:**\n",
 					timestamp: new Date().toJSON(),
@@ -27,26 +27,29 @@ module.exports = {
 					output.embed.description += `${cfg.prefix + u}\n`;
 				if(bot.cmds[args[0]].desc)
 					output.embed.description += `\n${bot.cmds[args[0]].desc(cfg)}`;
-			} else output += "Command not found.";
-		} else { //general help
-			output = { embed: {
-				title: "Tupperware | Help",
-				description: "I am Tupperware, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
-				timestamp: new Date().toJSON(),
-				color: 0x999999,
-				author: {
-					name: "Tupperware",
-					icon_url: bot.user.avatarURL
-				},
-				footer: {
-					text: "By Keter#1730"
-				}
-			}, content: announcement};
-			for(let cmd of Object.keys(bot.cmds)) {
-				if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
-					output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
+				return output;
 			}
+			return "Command not found.";
 		}
-		return bot.send(msg.channel, output);
+
+		//general help
+		let output = { embed: {
+			title: "Tupperware | Help",
+			description: "I am Tupperware, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
+			timestamp: new Date().toJSON(),
+			color: 0x999999,
+			author: {
+				name: "Tupperware",
+				icon_url: bot.user.avatarURL
+			},
+			footer: {
+				text: "By Keter#1730"
+			}
+		}, content: announcement};
+		for(let cmd of Object.keys(bot.cmds)) {
+			if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
+				output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
+		}
+		return output;
 	}
 };

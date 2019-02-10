@@ -28,6 +28,9 @@ class Tupperware extends Base {
 		files.forEach(file => {
 			bot.on(file.slice(0,-3), (...args) => require("./events/"+file)(...args,bot));
 		});
+
+		setInterval(bot.updateStatus,3600000); //every hour
+		bot.updateStatus();
 	
 		if (!process.env.DISCORD_INVITE) {
 			delete bot.cmds.invite;

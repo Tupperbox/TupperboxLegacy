@@ -1,20 +1,31 @@
 const request = require("got");
 const strlen = require('string-length');
-const { PermissionsError } = require('./errors');
+const { PermissionsError, EmptyError } = require('./errors');
 
 module.exports = bot => {  
 
-	bot.replaceMessage = async (msg, cfg, tulpa, content) => {
+	bot.replaceMessage = async (msg, cfg, tulpa, content, retry = true) => {
 		const hook = await bot.fetchWebhook(msg.channel);
+		let groupTag;
+		if(tulpa.group_id) groupTag = (await bot.db.query('SELECT tag FROM Groups WHERE id = $1',[tulpa.group_id])).rows[0].tag;
 		const data = {
 			wait: true,
 			content: content,
 			username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`.trim(),
 			avatarURL: tulpa.avatar_url,
 		};
+		if(groupTag) {
+			let l = (32-data.username.length)
+			if(l > 4) {
+				if(groupTag.length > l) groupTag = groupTag.slice(0,l-4) + "..";
+				data.username += " " + groupTag;
+			}
+		}
 
 		//discord treats astral characters (many emojis) as one character, so add a little dot to make it two
-		if(strlen(data.username) < 2) data.username += "\u00b7";
+		let len = strlen(data.username);
+		if(len == 0) data.username += "\u00b7\u00b7";
+		else if(len == 1) data.username += "\u00b7";
 		//discord collapses same-name messages, so if two would be sent by different users, break them up with a tiny space
 		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id].user_id && data.username === bot.recent[msg.channel.id].name) {
 			data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
@@ -26,6 +37,7 @@ module.exports = bot => {
 		if(msg.attachments[0]) {
 			return bot.sendAttachmentsWebhook(msg, cfg, data, content, hook, tulpa);
 		}
+		if(data.content.trim().length == 0) throw new EmptyError();
 
 		try {
 			await bot.executeWebhook(hook.id,hook.token,data);
@@ -34,6 +46,8 @@ module.exports = bot => {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
 				await bot.executeWebhook(hook.id,hook.token,data);
+			} else if(e.code == 504 && retry) {
+				return await bot.replaceMessage(msg,cfg,tulpa,content,false);
 			} else throw e;
 		}
 
@@ -54,7 +68,7 @@ module.exports = bot => {
 	};
 
 	bot.err = (msg, error, tell = true) => {
-		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author.id}]\n(${error.code}) ${error.stack} `);
+		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
 		if(tell) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
 		bot.sentry.captureException(error);
 	}
@@ -114,9 +128,41 @@ module.exports = bot => {
 		bot.editStatus({ name: `tul!help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
 	};
 
+	bot.generatePages = (arr, fieldGen, extra = {}) => {
+		let embeds = [];
+		let current = { embed: {
+			title: extra.title,
+			author: extra.author,
+			description: extra.description,
+			footer: extra.footer,
+			fields: []
+		}};
+		
+		for(let i=0; i<arr.length; i++) {
+			if(current.embed.fields.length < 5) {
+				current.embed.fields.push(fieldGen(arr[i],embeds.length+1));
+			} else {
+				embeds.push(current);
+				current = { embed: {
+					title: extra.title,
+					author: extra.author,
+					description: extra.description,
+					footer: extra.footer,
+					fields: [fieldGen(arr[i],embeds.length+1)]
+				}};
+			}
+		}
+		embeds.push(current);
+		if(embeds.length > 1) {
+			for(let i = 0; i < embeds.length; i++)
+				embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${arr.length} total)`;
+		}
+		return embeds;
+	};
+
 	bot.generateTulpaField = tulpa => {
 		return {
-			name: tulpa.name,
+			name: tulpa.name + "\u200b",
 			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${tulpa.brackets[0]}text${tulpa.brackets[1]}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
 	};
@@ -127,7 +173,7 @@ module.exports = bot => {
 			for(let e of data) {
 				await bot.send(msg.channel, e);
 			}
-			return bot.send(msg.channel, "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the command is used.");
+			return "'Add Reactions' permission missing, cannot use reaction buttons.\nUntil the permission is added, all pages will be sent at once and this message shall repeat each time the command is used.";
 		}
 		let m = await bot.send(msg.channel, data[0]);
 		for(let i=0; i<buttons.length; i++)
@@ -140,7 +186,7 @@ module.exports = bot => {
 		setTimeout(() => {
 			if(!bot.pages[m.id]) return;
 			if(!(msg.channel.type == 1))
-				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) console.error(e); }); 
+				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { }); 
 			delete bot.pages[m.id];
 		}, 300000);
 	};

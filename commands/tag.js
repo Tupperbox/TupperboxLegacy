@@ -7,22 +7,19 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		let out = "";
-		if(!args[0]) {
-			return bot.cmds.help.execute(bot, msg, ["tag"], cfg);
-		} 
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["tag"], cfg);
+		
+		//check arguments & clear tag if empty
 		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
-		if(!tulpa) {
-			out = "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		} else if(!args[1]) {
+		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!args[1]) {
 			await bot.db.updateTulpa(msg.author.id,args[0],"tag",null);
-			out = "Tag cleared.";
-		} else if (args.slice(1).join(" ").length + tulpa.name.length > 27) {
-			out = "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
-		} else {
-			await bot.db.updateTulpa(msg.author.id,args[0],"tag",args.slice(1).join(" "));
-			out = "Tag updated successfully.";
+			return "Tag cleared.";
 		}
-		return bot.send(msg.channel, out);
+		if (args.slice(1).join(" ").length + tulpa.name.length > 27) return "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
+		
+		//update tulpa
+		await bot.db.updateTulpa(msg.author.id,args[0],"tag",args.slice(1).join(" "));
+		return "Tag updated successfully.";
 	}
 };
