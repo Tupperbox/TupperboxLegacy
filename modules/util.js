@@ -71,10 +71,14 @@ module.exports = bot => {
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
 		if(tell) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
 		bot.sentry.captureException(error);
-	}
+	};
 
 	bot.checkTulpa = (msg, tulpa, clean) => {
-		return clean.startsWith(tulpa.brackets[0]) && clean.endsWith(tulpa.brackets[1]) && ((clean.length == (tulpa.brackets[0].length + tulpa.brackets[1].length) && msg.attachments[0]) || clean.length > (tulpa.brackets[0].length + tulpa.brackets[1].length));
+		for(let i=0; i<tulpa.brackets.length/2; i++) {
+			if(clean.startsWith(tulpa.brackets[i*2]) && clean.endsWith(tulpa.brackets[i*2+1]) && ((clean.length == (tulpa.brackets[i*2].length + tulpa.brackets[i*2+1].length) && msg.attachments[0]) || clean.length > (tulpa.brackets[i*2].length + tulpa.brackets[i*2+1].length)))
+				return i;
+		}
+		return -1;
 	};
 
 	bot.sendAttachmentsWebhook = async (msg, cfg, data, content, hook, tulpa) => {
@@ -163,9 +167,17 @@ module.exports = bot => {
 	bot.generateTulpaField = tulpa => {
 		return {
 			name: tulpa.name + "\u200b",
-			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${tulpa.brackets[0]}text${tulpa.brackets[1]}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
+			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
 	};
+
+	bot.getBrackets = tulpa => {
+		let out = [];
+		for(let i=0; i<tulpa.brackets.length; i+=2) {
+			out.push(tulpa.brackets[i] + "text" + tulpa.brackets[i+1]);
+		}
+		return out.join(" | ");
+	}
 
 	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9"];
 	bot.paginate = async (msg, data) => {

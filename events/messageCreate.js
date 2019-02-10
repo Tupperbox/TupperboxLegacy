@@ -40,11 +40,12 @@ module.exports = async (msg,bot) => {
 		for(let i = 0; i < lines.length; i++) {
 			let found = false;
 			tulpae.forEach(t => {
-				if(bot.checkTulpa(msg, t, cleanarr[i])) {
-					if(t.brackets[1].length == 0) current = t;
+				let res = bot.checkTulpa(msg, t, cleanarr[i]);
+				if(res >= 0) {
+					if(t.brackets[res*2+1].length == 0) current = t;
 					else current = null;
 					found = true;
-					replace.push([msg,cfg,t,t.show_brackets ? lines[i] : lines[i].substring(t.brackets[0].length, lines[i].length-t.brackets[1].length)]);
+					replace.push([msg,cfg,t,t.show_brackets ? lines[i] : lines[i].substring(t.brackets[res*2].length, lines[i].length-t.brackets[res*2+1].length)]);
 				}
 			});
 			if(!found && current) 
@@ -55,8 +56,9 @@ module.exports = async (msg,bot) => {
 	
 		if(!replace[0]) {
 			for(let t of tulpae) {
-				if(bot.checkTulpa(msg, t, clean)) {
-					replace.push([msg, cfg, t, t.show_brackets ? msg.content : msg.content.substring(t.brackets[0].length, msg.content.length-t.brackets[1].length)]);
+				let res = bot.checkTulpa(msg, t, clean);
+				if(res >= 0) {
+					replace.push([msg, cfg, t, t.show_brackets ? msg.content : msg.content.substring(t.brackets[res*2].length, msg.content.length-t.brackets[res*2+1].length)]);
 					break;
 				}
 			}

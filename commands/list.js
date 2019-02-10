@@ -4,7 +4,7 @@ module.exports = {
 	help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 	usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
 	permitted: () => true,
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, ng = false) => {
 		//short list of all tuppers in server
 		if(args[0] == "all" || args[0] == "*") {
 			if(!msg.channel.guild) return "Cannot retrieve server-wide list in DMs.";
@@ -41,12 +41,12 @@ module.exports = {
 			target = bot.resolveUser(msg, args.join(" "));
 		} else target = msg.author;
 		if(!target) return "User not found.";
-		let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
-		if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 
 		//generate paginated list with groups
 		let groups = (await bot.db.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [target.id])).rows;
-		if(groups[0]) {
+		if(groups[0] && !ng) {
+			let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
+			if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 			groups.push({name: "Ungrouped", id: null});
 			let embeds = [];
 			for(let i=0; i<groups.length; i++) {
@@ -74,6 +74,8 @@ module.exports = {
 			if(embeds[1]) return bot.paginate(msg,embeds);
 			return embeds[0];
 		}
+		let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 
 		//generate paginated list
 		let extra = {

@@ -27,7 +27,7 @@ module.exports = {
                 name = args.slice(1).join(" ");
                 existing = await bot.db.getGroup(msg.author.id, name);
                 if(!existing) return "You don't have a group with that name.";
-                await bot.db.query('UPDATE Members SET group_id = null WHERE group_id = $1', [existing.id]);
+                await bot.db.query('UPDATE Members SET group_id = null, group_pos = null WHERE group_id = $1', [existing.id]);
                 await bot.db.deleteGroup(msg.author.id, name);
                 return "Group deleted, members have been set to no group.";
 
@@ -39,6 +39,7 @@ module.exports = {
                 tup = await bot.db.getTulpa(msg.author.id, args.slice(2).join(" "));
                 if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
                 await bot.db.updateTulpa(msg.author.id, tup.name, 'group_id', group.id);
+                await bot.db.query('UPDATE Members SET group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2', [group.id,tup.id]);
                 return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 
             case "remove":
@@ -48,25 +49,29 @@ module.exports = {
                 if(!group) return "You don't have a group with that name.";
                 tup = await bot.db.getTulpa(msg.author.id, args.slice(2).join(" "));
                 if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-                await bot.db.updateTulpa(msg.author.id, tup.name, 'group_id', null);
+                await bot.db.query('UPDATE Members SET group_id = null, group_pos = null WHERE group_id = $1', [group.id]);
                 return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 
             case "list":
                 let groups = (await bot.db.query('SELECT * FROM Groups WHERE user_id = $1 ORDER BY position', [msg.author.id])).rows;
                 if(!groups[0]) return `You have no groups. Try \`${cfg.prefix}group create <name>\` to make one.`;
-                let tulpas = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1', [msg.author.id])).rows;
-                let title = `${msg.author.username}#${msg.author.discriminator}'s registered groups`;
-                let author = {
-                    name: msg.author.username,
-                    icon_url: msg.author.avatarURL
+                let tulpas = (await bot.db.query('SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position', [msg.author.id])).rows;
+                let extra = {
+                    title: `${msg.author.username}#${msg.author.discriminator}'s registered groups`,
+                    author: {
+                        name: msg.author.username,
+                        icon_url: msg.author.avatarURL
+                    }
                 };
                 groups.push({name: "No Group", id: null});
-                let embeds = bot.generatePages(title,author,groups,g => {
-                    return {
+                let embeds = bot.generatePages(groups,g => {
+                    let field = {
                         name: g.name,
                         value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""}Members: ${tulpas.filter(t => t.group_id == g.id).map(t => t.name).join(", ")}`
                     };
-                });
+                    if(field.value.length > 1020) field.value = field.value.slice(0,1020) + "...";
+                    return field;
+                },extra);
                 
                 if(embeds[1]) return bot.paginate(msg, embeds);                
                 return embeds[0];

@@ -155,7 +155,7 @@ module.exports = {
 	},
 
 	addTulpa: async (userID, name, brackets) => {
-		return await pool.query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT COUNT(user_id) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
+		return await pool.query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
 	},
 
 	getTulpa: async (userID, name) => {
@@ -211,7 +211,7 @@ module.exports = {
 	},
 
 	addGroup: async (userID, name) => {
-		return await pool.query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT COUNT(user_id) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
+		return await pool.query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
 	},
 
 	updateGroup: async (userID, name, column, newVal) => {
