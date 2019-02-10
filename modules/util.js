@@ -27,7 +27,8 @@ module.exports = bot => {
 		if(len == 0) data.username += "\u00b7\u00b7";
 		else if(len == 1) data.username += "\u00b7";
 		//discord collapses same-name messages, so if two would be sent by different users, break them up with a tiny space
-		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id].user_id && data.username === bot.recent[msg.channel.id].name) {
+
+		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id][0].user_id && data.username === bot.recent[msg.channel.id][0].name) {
 			data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
 		}
 		//discord prevents the name 'clyde' being used in a webhook, so break it up with a tiny space
@@ -39,13 +40,14 @@ module.exports = bot => {
 		}
 		if(data.content.trim().length == 0) throw new EmptyError();
 
+		let webmsg;
 		try {
-			await bot.executeWebhook(hook.id,hook.token,data);
+			webmsg = await bot.executeWebhook(hook.id,hook.token,data);
 		} catch (e) {
 			if(e.code === 10015) {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
-				await bot.executeWebhook(hook.id,hook.token,data);
+				webmsg = await bot.executeWebhook(hook.id,hook.token,data);
 			} else if(e.code == 504 && retry) {
 				return await bot.replaceMessage(msg,cfg,tulpa,content,false);
 			} else throw e;
@@ -60,11 +62,12 @@ module.exports = bot => {
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
 			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and proxied message will show.`);
 		}
-		bot.recent[msg.channel.id] = {
+		bot.updateRecent(msg, {
 			user_id: msg.author.id,
 			name: data.username,
-			tulpa: tulpa,
-		};
+			rawname: tulpa.name,
+			id: webmsg.id
+		});
 	};
 
 	bot.err = (msg, error, tell = true) => {
@@ -88,7 +91,7 @@ module.exports = bot => {
 		}
 		data.file = files;
 		try {
-			await bot.executeWebhook(hook.id,hook.token,data);
+			let webmsg = await bot.executeWebhook(hook.id,hook.token,data);
 			if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages")) {
@@ -100,7 +103,12 @@ module.exports = bot => {
 			bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
 			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
-			bot.recent[msg.channel.id] = { user_id: msg.author.id, name: data.username, tulpa: tulpa };
+			bot.updateRecent(msg, {
+				user_id: msg.author.id,
+				name: data.username,
+				rawname: tulpa.name,
+				id: webmsg.id
+			});
 		} catch(e) {
 			if(e.code == 10015) {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
@@ -109,6 +117,14 @@ module.exports = bot => {
 			} else throw e;
 		}
 	};
+
+	bot.updateRecent = (msg, data) => {
+		if(!bot.recent[msg.channel.id]) {
+			bot.recent[msg.channel.id] = [];
+		}
+		bot.recent[msg.channel.id].unshift(data);
+		if(bot.recent[msg.channel.id].length > 5) bot.recent[msg.channel.id] = bot.recent[msg.channel.id].slice(0,5);
+	}
 
 	bot.fetchWebhook = async channel => {
 		let q = await bot.db.query("SELECT * FROM Webhooks WHERE channel_id = $1", [channel.id]);
@@ -232,6 +248,7 @@ module.exports = bot => {
 		if(!channel.id) return;
 		let msg;
 		try {
+			if(bot.announcement && message.embed) message.embed.footer.text += bot.announcement;
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
 			if(e.code == 50001) throw new PermissionsError("View Channel", message);

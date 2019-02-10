@@ -74,7 +74,7 @@ module.exports = async (msg,bot) => {
 			} catch(e) { 
 				if(e.permission) bot.send(msg.channel, `Unable to process proxy due to missing permission: '${e.permission}'`);
 				else if(e.message == "Cannot Send Empty Message") bot.send(msg.channel, `Cannot proxy empty message.`);
-				else if(e.code != 10008 && e.code != 500) bot.err(msg, e); 
+				else if(e.code != 10008 && e.code != 500 && e.code != 50001) bot.err(msg, e); 
 			}
 		}
 	}

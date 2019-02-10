@@ -1,6 +1,7 @@
 let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9"];
 
 module.exports = async (message, emoji, userID, bot) => {
+	if(emoji.name == "\u274c" && bot.recent[message.channel.id] && bot.recent[message.channel.id].find(r => r.user_id == userID && message.id == r.id)) return bot.deleteMessage(message.channel.id,message.id);
 	if(!bot.pages[message.id] || bot.pages[message.id].user != userID || !buttons.includes(emoji.name)) return;
 	let data = bot.pages[message.id];
 	switch(emoji.name) {

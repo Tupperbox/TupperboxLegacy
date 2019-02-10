@@ -1,5 +1,3 @@
-const announcement = "";
-
 module.exports = {
 	help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 	usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
@@ -47,7 +45,7 @@ module.exports = {
 		if(groups[0] && !ng) {
 			let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
 			if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
-			groups.push({name: "Ungrouped", id: null});
+			if(tulpae.find(t => !t.group_id)) groups.push({name: "Ungrouped", id: null});
 			let embeds = [];
 			for(let i=0; i<groups.length; i++) {
 				let extra = {
