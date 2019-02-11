@@ -1,4 +1,4 @@
-# Tupperware
+# Tupperbox
 A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> for proxying user messages through webhooks, originally created to emulate tulpas/systems users having their own user accounts.
 
 # Commands
