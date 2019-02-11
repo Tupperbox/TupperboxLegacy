@@ -31,7 +31,7 @@ const init = async () => {
         //clusters: 2,
         //shards: 2,
         debug: true,
-        name: 'Tupperware'
+        name: 'Tupperbox'
     });
 
     sharder.on('stats', stats => {

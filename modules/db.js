@@ -175,15 +175,15 @@ module.exports = {
 	},
 
 	addCfg: async (serverID) => {
-		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,"tul!","member"]);
+		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,"tul!","tupper"]);
 	},
 
 	getCfg: async (serverID) => {
-		return (await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0] || { id: serverID, prefix: "tul!", lang: "member"};
+		return (await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0] || { id: serverID, prefix: "tul!", lang: "tupper"};
 	},
 
 	updateCfg: async (serverID, column, newVal) => {
-		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID, "tul!", "member"]);
+		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID, "tul!", "tupper"]);
 		return await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2`, [newVal,serverID]);
 	},
 

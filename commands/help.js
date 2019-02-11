@@ -15,7 +15,7 @@ module.exports = {
 					timestamp: new Date().toJSON(),
 					color: 0x999999,
 					author: {
-						name: "Tupperware",
+						name: "Tupperbox",
 						icon_url: bot.user.avatarURL
 					},
 					footer: {
@@ -33,12 +33,12 @@ module.exports = {
 
 		//general help
 		let output = { embed: {
-			title: "Tupperware | Help",
-			description: "I am Tupperware, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
+			title: "Tupperbox | Help",
+			description: "I am Tupperbox, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
 			timestamp: new Date().toJSON(),
 			color: 0x999999,
 			author: {
-				name: "Tupperware",
+				name: "Tupperbox",
 				icon_url: bot.user.avatarURL
 			},
 			footer: {
@@ -49,6 +49,7 @@ module.exports = {
 			if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
 				output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
 		}
+		output.embed.fields = [{ name: "\u200b", value: "Proxy tips:\nReact with \u274c to a recent proxy to delete it!\nYou can proxy messages with attachments too!"}];
 		return output;
 	}
 };

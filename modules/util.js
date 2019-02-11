@@ -214,11 +214,13 @@ module.exports = bot => {
 
 	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9"];
 	bot.paginate = async (msg, data) => {
-		let perms = msg.channel.permissionsOf(bot.user.id);
-		if(!(msg.channel.type == 1) && (!perms.has("addReactions") || !perms.has('readMessageHistory'))) {
-			await bot.send(msg.channel, data[0]);
-			if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
-			else return "'Read Message History' permission missing, cannot use reaction buttons. (Discord requires this permission to add reactions.) Only first page shown.";
+		if(!(msg.channel.type == 1)) {
+			let perms = msg.channel.permissionsOf(bot.user.id);
+			if(!perms.has("addReactions") || !perms.has('readMessageHistory')) {
+				await bot.send(msg.channel, data[0]);
+				if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
+				else return "'Read Message History' permission missing, cannot use reaction buttons. (Discord requires this permission to add reactions.) Only first page shown.";
+			}
 		}
 		let m = await bot.send(msg.channel, data[0]);
 		for(let i=0; i<buttons.length; i++)
@@ -277,7 +279,10 @@ module.exports = bot => {
 		if(!channel.id) return;
 		let msg;
 		try {
-			if(bot.announcement && message.embed) message.embed.footer.text += bot.announcement;
+			if(bot.announcement && message.embed) {
+				if(!message.content) message.content = "";
+				message.content += "\n"+bot.announcement;
+			}
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
 			if(e.code == 50001) throw new PermissionsError("View Channel", message);

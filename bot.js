@@ -4,7 +4,7 @@ Sentry.init({dsn: process.env.SENTRY_DSN });
 
 const Base = require('eris-sharder').Base;
 
-class Tupperware extends Base {
+class Tupperbox extends Base {
 	constructor(bot) {
 		super(bot);
 	}
@@ -39,4 +39,4 @@ class Tupperware extends Base {
 	}
 }
 
-module.exports = Tupperware;
+module.exports = Tupperbox;

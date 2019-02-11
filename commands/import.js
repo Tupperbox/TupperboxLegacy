@@ -24,7 +24,7 @@ module.exports = {
 			else throw e;
 		}
 		let uid = msg.author.id;
-		if(data.tuppers) { //tupperware file
+		if(data.tuppers) { //tupperbox file
 			let tups = data.tuppers;
 			let groups = data.groups;
 			try {
