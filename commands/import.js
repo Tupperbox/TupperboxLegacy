@@ -4,6 +4,7 @@ module.exports = {
 	help: cfg => "Import your data from a file",
 	usage: cfg =>  ["import - Attach a compatible .json file when using this command. Data files can be obtained from compatible bots like me and Pluralkit."],
 	permitted: () => true,
+	desc: cfg => "Importing data acts as a merge, meaning if there are any " + cfg.lang + "s already registered with the same name as one being imported, the values will be updated instead of registering a new one.",
 	execute: async (bot, msg, args, cfg) => {
 		let file = msg.attachments[0];
 		if(!file) return "Please attach a .json file to import when running this command.\nYou can get a file by running the export command from me or Pluralkit.";
