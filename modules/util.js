@@ -256,7 +256,19 @@ module.exports = bot => {
 		if(err) return console.error(err);
 	};
 
-	bot.send = async (channel, message, file) => {
+	bot.waitMessage = (msg) => {
+		return new Promise((res, rej) => {
+			bot.dialogs[msg.channel.id + msg.author.id] = res;
+			setTimeout(() => {
+				if(bot.dialogs[msg.channel.id + msg.author.id] != undefined) {
+					delete bot.dialogs[msg.channel.id + msg.author.id];
+					rej("timeout");
+				}
+			}, 10000);
+		});
+	};
+
+	bot.send = async (channel, message, file, retry = true) => {
 		if(!channel.id) return;
 		let msg;
 		try {
@@ -265,7 +277,9 @@ module.exports = bot => {
 		} catch(e) {
 			if(e.code == 50001) throw new PermissionsError("View Channel", message);
 			else if(e.code == 50013) throw new PermissionsError("Send Messages", message);
-			else throw e;
+			else if(e.code == 500) {
+				if(retry) return bot.send(channel,message,file,false);
+			} else throw e;
 		}
 		return msg;
 	};

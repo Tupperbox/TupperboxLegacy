@@ -16,6 +16,7 @@ class Tupperware extends Base {
 		bot.recent = {};
 		bot.pages = {};
 		bot.cmds = {};
+		bot.dialogs = {};
 		bot.owner = process.env.DISCORD_OWNERID;
 		require("./modules/util")(bot);
 	  

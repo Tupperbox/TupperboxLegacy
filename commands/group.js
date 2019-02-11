@@ -38,7 +38,7 @@ module.exports = {
                 group = await bot.db.getGroup(msg.author.id, args[1]);
                 if(!group) return "You don't have a group with that name.";
                 if(args[2] == "*") {
-                    let tupps = (await bot.db.query('SELECT id FROM Members WHERE user_id = $1 AND group_id IS NULL',[msg.author.id])).rows;
+                    let tupps = (await bot.db.query('SELECT id FROM Members WHERE user_id = $1 AND group_id IS NULL ORDER BY position',[msg.author.id])).rows;
                     for(let i=0; i<tupps.length; i++) await bot.db.query('UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2', [group.id,tupps[i].id]);
                     return "All groupless " + cfg.lang + "s assigned to group " + group.name + ".";
                 }
@@ -74,7 +74,7 @@ module.exports = {
                 };
                 if(tulpas.find(t => !t.group_id))
                     groups.push({name: "No Group", id: null});
-                let embeds = bot.generatePages(groups,g => {
+                let embeds = await bot.generatePages(groups,g => {
                     let field = {
                         name: g.name,
                         value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""}Members: ${tulpas.filter(t => t.group_id == g.id).map(t => t.name).join(", ")}`
@@ -90,7 +90,8 @@ module.exports = {
                 if(!args[1]) return "No group name given.";
                 group = await bot.db.getGroup(msg.author.id, args[1]);
                 if(!group) return "You don't have a group with that name.";
-                if(!args[2]) {
+                if(!args[2]) return group.tag ? "Current tag: " + group.tag + "\nTo remove it, try " + cfg.prefix + "group tag " + group.name + " clear" : "No tag currently set.";
+                if(["clear","remove","none","delete"].includes(args[2])) {
                     await bot.db.updateGroup(msg.author.id,group.name,'tag',null);
                     return "Tag cleared.";
                 }
@@ -114,7 +115,8 @@ module.exports = {
                 if(!args[1]) return "No group name given.";
                 group = await bot.db.getGroup(msg.author.id, args[1]);
                 if(!group) return "You don't have a group with that name.";
-                if(!args[2]) {
+                if(!args[2]) return group.description ? "Current description: " + group.description + "\nTo remove it, try " + cfg.prefix + "group describe " + group.name + " clear" : "No description currently set.";
+                if(["clear","remove","none","delete"].includes(args[2])) {
                     await bot.db.updateGroup(msg.author.id,group.name,'description',null);
                     return "Description cleared.";
                 }

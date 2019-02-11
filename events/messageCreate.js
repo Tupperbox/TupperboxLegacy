@@ -29,6 +29,10 @@ module.exports = async (msg,bot) => {
 		}
 		return;
 	}
+	if(bot.dialogs[msg.channel.id + msg.author.id]) {
+		bot.dialogs[msg.channel.id+msg.author.id](msg);
+		delete bot.dialogs[msg.channel.id+msg.author.id];
+	}
 	let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
 	if(tulpae[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 		let clean = msg.cleanContent || msg.content;
