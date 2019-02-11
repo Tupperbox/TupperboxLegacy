@@ -2,7 +2,8 @@ const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Remove or change " + article(cfg) + " " + cfg.lang + "'s tag (displayed next to name when proxying)",
-	usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, clear the tag",
+	usage: cfg => ["tag <name> [tag] - if tag is given, change the " + cfg.lang + "'s tag, if not, show the current one.",
+					"tag [name] clear/remove/none/delete - Unset a tag for the given " + cfg.lang + ".",
 					"tag * - clear tag for all " + cfg.lang + "s"],
 	desc: cfg => proper(article(cfg)) + " " + cfg.lang + "'s tag is shown next to their name when speaking.",
 	permitted: () => true,
@@ -18,8 +19,9 @@ module.exports = {
 		}
 		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
 		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(!args[1]) {
-			await bot.db.updateTulpa(msg.author.id,args[0],"tag",null);
+		if(!args[1]) return tulpa.tag ? "Current tag: " + tulpa.tag + "\nTo remove it, try " + cfg.prefix + "tag " + tulpa.name + " clear" : "No tag currently set for " + args[0];
+		if(["clear","remove","none","delete"].includes(args[1])) {
+			await bot.db.updateTulpa(msg.author.id,tulpa.name,"tag",null);
 			return "Tag cleared.";
 		}
 		if (args.slice(1).join(" ").length + tulpa.name.length > 27) return "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";

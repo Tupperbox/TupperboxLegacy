@@ -7,6 +7,7 @@ module.exports = {
                     "group add <name> <member> - Add an existing " + cfg.lang + " to the named group (use * to select all groupless " + cfg.lang + "s)",
                     "group remove <name> <member> - Remove a member from the named group (use * to empty the group)",
                     "group list - Short list of your groups and their " + cfg.lang + "s",
+                    "group rename <name> <newname> - Rename a group",
                     "group tag <name> <tag> - Give the group a tag, to be displayed after group member names and personal tags",
                     "group describe <name> <description> - Give the group a description"],
 	permitted: () => true,
@@ -57,7 +58,7 @@ module.exports = {
                 }
                 tup = await bot.db.getTulpa(msg.author.id, args.slice(2).join(" "));
                 if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-                await bot.db.query('UPDATE Members SET group_id = null, group_pos = null WHERE group_id = $1', [group.id]);
+                await bot.db.query('UPDATE Members SET group_id = null, group_pos = null WHERE id = $1', [tup.id]);
                 return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 
             case "list":
@@ -97,6 +98,17 @@ module.exports = {
                 if(tag.length > 25) return "That tag is far too long. Please pick one shorter than 25 characters.";
                 await bot.db.updateGroup(msg.author.id, group.name, 'tag', args.slice(2).join(" "));
                 return "Tag set. Group members will attempt to have their group tags displayed when proxying, if there's enough room.";
+
+            case "rename":
+                if(!args[1]) return "No group name given.";
+                group = await bot.db.getGroup(msg.author.id, args[1]);
+                if(!group) return "You don't have a group with that name.";
+                if(!args[2]) return "No new name given.";
+                let newname = args.slice(2).join(" ").trim();
+                let group2 = await bot.db.getGroup(msg.author.id, newname);
+                if(group2) return "There is already a group with that name.";
+                await bot.db.updateGroup(msg.author.id, group.name, 'name', newname);
+                return "Group renamed to '" + newname + "'.";
 
             case "describe":
                 if(!args[1]) return "No group name given.";

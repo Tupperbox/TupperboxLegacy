@@ -56,7 +56,7 @@ module.exports = {
 					},
 					description: `Group: ${groups[i].name}${groups[i].tag ? "\nTag: " + groups[i].tag : ""}${groups[i].description ? "\n" + groups[i].description : ""}`
 				};
-				let add = bot.generatePages(tulpae.filter(t => t.group_id == groups[i].id), bot.generateTulpaField,extra);
+				let add = await bot.generatePages(tulpae.filter(t => t.group_id == groups[i].id), t => bot.generateTulpaField(t),extra);
 				if(add[add.length-1].embed.fields.length < 5 && groups[i+1]) add[add.length-1].embed.fields.push({
 					name: "\u200b",
 					value: `Next page: group ${groups[i+1].name}`
@@ -83,7 +83,12 @@ module.exports = {
 				icon_url: target.avatarURL
 			}
 		};
-		let embeds = bot.generatePages(tulpae, bot.generateTulpaField, extra);
+		
+		let embeds = await bot.generatePages(tulpae, async t => {
+			let group = null;
+			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
+			return bot.generateTulpaField(t,group);
+		}, extra);
 		if(embeds[1]) return bot.paginate(msg, embeds);
 		return embeds[0];
 	}

@@ -18,12 +18,14 @@ module.exports = {
 		if(tul.length == 1) { 
 			let t = tul[0];
 			let host = bot.users.get(t.user_id);
+			let group = null;
+			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
 			let embed = { embed: {
 				author: {
 					name: t.name,
 					icon_url: t.url
 				},
-				description: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t).value}`,
+				description: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`,
 			}};
 			return embed;
 		}
@@ -34,7 +36,7 @@ module.exports = {
 			title: "Results",
 			fields: []
 		}};
-		tul.forEach(t => {
+		tul.forEach(async t => {
 			if(current.embed.fields.length > 5) {
 				embeds.push(current);
 				current = { embed: {
@@ -42,8 +44,10 @@ module.exports = {
 					fields: []
 				}};
 			}
+			let group = null;
+			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
 			let host = bot.users.get(t.user_id);
-			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t).value}`});
+			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`});
 		});
 		embeds.push(current);
 		if(embeds.length > 1) {

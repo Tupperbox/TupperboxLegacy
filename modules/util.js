@@ -133,7 +133,19 @@ module.exports = bot => {
 		else if(!channel.permissionsOf(bot.user.id).has("manageWebhooks"))
 			throw new PermissionsError("Manage Webhooks");
 		else {
-			let hook = await channel.createWebhook({ name: "Tupperhook" })
+			let hook;
+			try {
+				hook = await channel.createWebhook({ name: "Tupperhook" })
+			} catch(e) {
+				if(e.code == 30007) {
+					let wbhooks = await channel.getWebhooks();
+					for(let i=0; i<wbhooks.length; i++) {
+						if(wbhooks[i].user.id == bot.user.id) await bot.deleteWebhook(wbhooks[i].id,wbhooks[i].token);
+					}
+					if(wbhooks.length == 10) hook = wbhooks[9];
+					else hook = await channel.createWebhook({ name: "Tupperhook" });
+				} else throw e;
+			}
 			let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
 			await bot.db.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [hook.id,channel.id,hook.token]);
 			return wbhk;
@@ -148,7 +160,7 @@ module.exports = bot => {
 		bot.editStatus({ name: `tul!help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
 	};
 
-	bot.generatePages = (arr, fieldGen, extra = {}) => {
+	bot.generatePages = async (arr, fieldGen, extra = {}) => {
 		let embeds = [];
 		let current = { embed: {
 			title: extra.title,
@@ -160,7 +172,7 @@ module.exports = bot => {
 		
 		for(let i=0; i<arr.length; i++) {
 			if(current.embed.fields.length < 5) {
-				current.embed.fields.push(fieldGen(arr[i],embeds.length+1));
+				current.embed.fields.push(await fieldGen(arr[i],embeds.length+1));
 			} else {
 				embeds.push(current);
 				current = { embed: {
@@ -168,7 +180,7 @@ module.exports = bot => {
 					author: extra.author,
 					description: extra.description,
 					footer: extra.footer,
-					fields: [fieldGen(arr[i],embeds.length+1)]
+					fields: [await fieldGen(arr[i],embeds.length+1)]
 				}};
 			}
 		}
@@ -180,10 +192,10 @@ module.exports = bot => {
 		return embeds;
 	};
 
-	bot.generateTulpaField = tulpa => {
+	bot.generateTulpaField = (tulpa,group = null) => {
 		return {
 			name: tulpa.name + "\u200b",
-			value: `${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
+			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
 	};
 
