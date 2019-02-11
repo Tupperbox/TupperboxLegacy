@@ -20,48 +20,52 @@ module.exports = {
 		(await (await pool.connect()).release());
 		process.stdout.write("ok!\nChecking tables...");
 		await pool.query(`
-    CREATE TABLE IF NOT EXISTS Members(
-      id SERIAL PRIMARY KEY,
-      user_id VARCHAR(32) NOT NULL,
-      name VARCHAR(32) NOT NULL,
-      position INTEGER NOT NULL,
-      avatar_url TEXT NOT NULL,
-      brackets TEXT[] NOT NULL,
-      posts INTEGER NOT NULL,
-      show_brackets BOOLEAN NOT NULL,
-      birthday DATE,
-      description TEXT,
-      tag VARCHAR(32),
-      group_id INTEGER,
-      UNIQUE (user_id,name)
-    );
-    CREATE TABLE IF NOT EXISTS Webhooks(
-      id VARCHAR(32) PRIMARY KEY,
-      channel_id VARCHAR(32) NOT NULL,
-      token VARCHAR(100) NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS Servers(
-      id VARCHAR(32) PRIMARY KEY,
-      prefix TEXT NOT NULL,
-      lang TEXT NOT NULL,
-      lang_plural TEXT,
-      log_channel VARCHAR(32)
-    );
-    CREATE TABLE IF NOT EXISTS Blacklist(
-      id VARCHAR(32) NOT NULL,
-      server_id VARCHAR(32) NOT NULL,
-      is_channel BOOLEAN NOT NULL,
-      block_proxies BOOLEAN NOT NULL,
-      block_commands BOOLEAN NOT NULL,
-      PRIMARY KEY (id, server_id)
-    );
-    CREATE TABLE IF NOT EXISTS Groups(
-      id SERIAL PRIMARY KEY,
-      user_id VARCHAR(32) NOT NULL,
-	  name TEXT NOT NULL,
-	  description TEXT,
-	  tag VARCHAR(32)
-    );`);
+		CREATE TABLE IF NOT EXISTS Members(
+			id SERIAL PRIMARY KEY,
+			user_id VARCHAR(32) NOT NULL,
+			name VARCHAR(32) NOT NULL,
+			position INTEGER NOT NULL,
+			avatar_url TEXT NOT NULL,
+			brackets TEXT[] NOT NULL,
+			posts INTEGER NOT NULL,	
+			show_brackets BOOLEAN NOT NULL,
+			birthday DATE,
+			description TEXT,
+			tag VARCHAR(32),
+			group_id INTEGER,
+			group_pos INTEGER,
+			UNIQUE (user_id,name),
+			FOREIGN KEY (group_id) REFERENCES groups(id)
+		  );
+		  CREATE TABLE IF NOT EXISTS Webhooks(
+			id VARCHAR(32) PRIMARY KEY,
+			channel_id VARCHAR(32) NOT NULL,
+			token VARCHAR(100) NOT NULL
+		  );
+		  CREATE TABLE IF NOT EXISTS Servers(
+			id VARCHAR(32) PRIMARY KEY,
+			prefix TEXT NOT NULL,
+			lang TEXT NOT NULL,
+			lang_plural TEXT,
+			log_channel VARCHAR(32)
+		  );
+		  CREATE TABLE IF NOT EXISTS Blacklist(
+			id VARCHAR(32) NOT NULL,
+			server_id VARCHAR(32) NOT NULL,
+			is_channel BOOLEAN NOT NULL,
+			block_proxies BOOLEAN NOT NULL,
+			block_commands BOOLEAN NOT NULL,
+			PRIMARY KEY (id, server_id)
+		  );
+		  CREATE TABLE IF NOT EXISTS Groups(
+			id SERIAL PRIMARY KEY,
+			user_id VARCHAR(32) NOT NULL,
+			name TEXT NOT NULL,
+			description TEXT,
+			tag VARCHAR(32),
+			position INTEGER,
+			UNIQUE (user_id, name)
+		  );`);
 
 		console.log("ok!\nChecking for data to import...");
 		let found = false;
