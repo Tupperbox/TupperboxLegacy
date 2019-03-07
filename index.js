@@ -34,9 +34,19 @@ const init = async () => {
         name: 'Tupperbox'
     });
 
-    sharder.on('stats', stats => {
-        console.log(stats);
-    });    
+    if(cluster.isMaster) {
+        let events = require('./modules/ipc.js');
+
+        cluster.on('message',(worker,message) => {
+            if(message.name == "reloadIPC") {
+                delete require.cache[require.resolve('./modules/ipc.js')];
+                events = require('./modules/ipc.js');
+                console.log("Reloaded IPC plugin!");
+            } else if(events[message.name]) {
+                events[message.name](worker,message,sharder);
+            }
+        });
+    }
 }
 
 init();

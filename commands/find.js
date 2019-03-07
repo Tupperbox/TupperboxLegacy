@@ -36,8 +36,9 @@ module.exports = {
 			title: "Results",
 			fields: []
 		}};
-		tul.forEach(async t => {
-			if(current.embed.fields.length > 5) {
+		for(let i=0; i<tul.length; i++) {
+			let t = tul[i];
+			if(current.embed.fields.length >= 5) {
 				embeds.push(current);
 				current = { embed: {
 					title: "Results",
@@ -48,7 +49,8 @@ module.exports = {
 			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
 			let host = bot.users.get(t.user_id);
 			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`});
-		});
+		}
+
 		embeds.push(current);
 		if(embeds.length > 1) {
 			for(let i = 0; i < embeds.length; i++)

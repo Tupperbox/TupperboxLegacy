@@ -178,8 +178,8 @@ module.exports = {
 		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,"tul!","tupper"]);
 	},
 
-	getCfg: async (serverID) => {
-		return (await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0] || { id: serverID, prefix: "tul!", lang: "tupper"};
+	getCfg: async (serverID) => { 
+		return (((await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0]) || { id: serverID, prefix: "tul!", lang: "tupper"});
 	},
 
 	updateCfg: async (serverID, column, newVal) => {

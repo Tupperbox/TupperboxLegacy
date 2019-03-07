@@ -11,6 +11,7 @@ class Tupperbox extends Base {
 
 	launch() {
 		let bot = this.bot;
+		bot.base = this;
 		bot.sentry = Sentry;
 		bot.db = require('./modules/db');
 		bot.recent = {};

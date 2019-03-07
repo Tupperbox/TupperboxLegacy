@@ -79,13 +79,13 @@ module.exports = {
 				for(let i=0; i<tups.length; i++) {
 					let t = tups[i];
 					let old = oldTups.find(tu => t.name == tu.name) || {};
-					let newBrackets = [t.prefix || `${t.name}:`,t.suffix || ''];
+					let newBrackets = (!t.prefix && !t.suffix) ? [`${t.name}:`,''] : [t.prefix || '', t.suffix || ''];
 					if(!old.name) { //update existing entry
 						added++;
 						await bot.db.addTulpa(uid,t.name,newBrackets);
 					} else updated++;
-					await bot.db.query('UPDATE Members SET avatar_url = $1, birthday = $2, description = $3, group_id = $4, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1), brackets = $5 FROM Members WHERE group_id = $4) WHERE user_id = $5 AND name = $6',
-							[t.avatar_url || old.avatar_url || 'https://i.imgur.com/ZpijZpg.png', t.birthday || null, t.description || null, systemGroup.id, newBrackets, uid, t.name]);
+					await bot.db.query('UPDATE Members SET avatar_url = $1, posts = $2, birthday = $3, description = $4, group_id = $5, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $5), brackets = $6::text[] WHERE user_id = $7 AND name = $8',
+							[t.avatar_url || old.avatar_url || 'https://i.imgur.com/ZpijZpg.png', t.message_count || 0, t.birthday || null, t.description || null, systemGroup.id, newBrackets, uid, t.name]);
 				}
 				return `Import successful. Added ${added} entries and updated ${updated} entries.`;
 			} catch(e) {

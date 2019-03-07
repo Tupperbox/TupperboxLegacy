@@ -24,10 +24,10 @@ module.exports = {
 			await bot.db.updateTulpa(msg.author.id,tulpa.name,"tag",null);
 			return "Tag cleared.";
 		}
-		if (args.slice(1).join(" ").length + tulpa.name.length > 27) return "That tag is too long to use with that " + cfg.lang + "'s name. The combined total must be less than 28 characters.";
+		if (args.slice(1).join(" ").length > 25) return "That tag is too long. Please use one with less than 25 characters.";
 		
 		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,args[0],"tag",args.slice(1).join(" "));
+		await bot.db.updateTulpa(msg.author.id,args[0],"tag",bot.noVariation(args.slice(1).join(" ")));
 		return "Tag updated successfully.";
 	}
 };

@@ -2,6 +2,8 @@ const request = require("got");
 const strlen = require('string-length');
 const { PermissionsError, EmptyError } = require('./errors');
 
+let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
+
 module.exports = bot => {  
 
 	bot.replaceMessage = async (msg, cfg, tulpa, content, retry = true) => {
@@ -10,17 +12,14 @@ module.exports = bot => {
 		if(tulpa.group_id) groupTag = (await bot.db.query('SELECT tag FROM Groups WHERE id = $1',[tulpa.group_id])).rows[0].tag;
 		const data = {
 			wait: true,
-			content: content,
-			username: `${tulpa.name} ${tulpa.tag ? tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}`.trim(),
+			content: bot.recent[msg.channel.id] ? content.replace(tagRegex,match => {
+				let includesDiscrim = match.endsWith("#0000");
+				let found = bot.recent[msg.channel.id].find(r => (includesDiscrim ? r.name == match.slice(1,-5) : r.rawname.toLowerCase() == match.slice(1).toLowerCase()));
+				return found ? `${includesDiscrim ? match.slice(0,-5) : match} (<@${found.user_id}>)` : match;
+			 }) : content,
+			username: `${tulpa.name}${tulpa.tag ? " " + tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}${groupTag ? " " + groupTag : ""}`.trim(),
 			avatarURL: tulpa.avatar_url,
 		};
-		if(groupTag) {
-			let l = (32-data.username.length)
-			if(l > 4) {
-				if(groupTag.length > l) groupTag = groupTag.slice(0,l-4) + "..";
-				data.username += " " + groupTag;
-			}
-		}
 
 		//discord treats astral characters (many emojis) as one character, so add a little dot to make it two
 		let len = strlen(data.username);
@@ -34,6 +33,7 @@ module.exports = bot => {
 		//discord prevents the name 'clyde' being used in a webhook, so break it up with a tiny space
 		let c = data.username.toLowerCase().indexOf("clyde");
 		if(c > -1) data.username = data.username.substring(0,c+1) + "\u200a" + data.username.substring(c+1);
+		if(data.username.length > 32) data.username = data.username.slice(0,30) + "..";
 
 		if(msg.attachments[0]) {
 			return bot.sendAttachmentsWebhook(msg, cfg, data, content, hook, tulpa);
@@ -54,8 +54,12 @@ module.exports = bot => {
 		}
 
 		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
-			bot.send(msg.channel.guild.channels.get(cfg.log_channel),
-				`Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
+			if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
+				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
+				await bot.db.updateCfg(msg.channel.guild.id,'log_channel',null);
+			}
+			else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
 		bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
@@ -66,13 +70,15 @@ module.exports = bot => {
 			user_id: msg.author.id,
 			name: data.username,
 			rawname: tulpa.name,
-			id: webmsg.id
+			id: webmsg.id,
+			tag: `${msg.author.username}#${msg.author.discriminator}`
 		});
 	};
 
 	bot.err = (msg, error, tell = true) => {
+		if(error.message.startsWith("Request timed out") || error.code == 500) return;
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
-		if(tell) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
+		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
 		bot.sentry.captureException(error);
 	};
 
@@ -99,7 +105,7 @@ module.exports = bot => {
 			let webmsg = await bot.executeWebhook(hook.id,hook.token,data);
 			if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
-				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages")) {
+				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 					await bot.db.updateCfg(msg.channel.guild.id,'log_channel',null);
 				}
@@ -112,7 +118,8 @@ module.exports = bot => {
 				user_id: msg.author.id,
 				name: data.username,
 				rawname: tulpa.name,
-				id: webmsg.id
+				id: webmsg.id,
+				tag: `${msg.author.username}#${msg.author.discriminator}`
 			});
 		} catch(e) {
 			if(e.code == 10015) {
@@ -199,7 +206,7 @@ module.exports = bot => {
 
 	bot.generateTulpaField = (tulpa,group = null) => {
 		return {
-			name: tulpa.name + "\u200b",
+			name: tulpa.name.trim().length < 1 ? tulpa.name + "\u200b" : tulpa.name,
 			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
 	};
@@ -212,10 +219,11 @@ module.exports = bot => {
 		return out.join(" | ");
 	}
 
-	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9"];
+	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3"];
 	bot.paginate = async (msg, data) => {
 		if(!(msg.channel.type == 1)) {
 			let perms = msg.channel.permissionsOf(bot.user.id);
+			if(!perms.has("readMessages") || !perms.has("sendMessages")) return;
 			if(!perms.has("addReactions") || !perms.has('readMessageHistory')) {
 				await bot.send(msg.channel, data[0]);
 				if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
@@ -235,7 +243,7 @@ module.exports = bot => {
 			if(!(msg.channel.type == 1))
 				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { }); 
 			delete bot.pages[m.id];
-		}, 300000);
+		}, 900000);
 	};
 
 	bot.checkTulpaBirthday = tulpa => {
@@ -275,7 +283,7 @@ module.exports = bot => {
 		});
 	};
 
-	bot.send = async (channel, message, file, retry = true) => {
+	bot.send = async (channel, message, file, retry = true, author) => {
 		if(!channel.id) return;
 		let msg;
 		try {
@@ -285,14 +293,17 @@ module.exports = bot => {
 			}
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
-			if(e.code == 50001) throw new PermissionsError("View Channel", message);
-			else if(e.code == 50013) throw new PermissionsError("Send Messages", message);
-			else if(e.code == 500) {
+			if(e.message.startsWith("Request timed out") || e.code == 500) {
 				if(retry) return bot.send(channel,message,file,false);
+				else return;
 			} else throw e;
 		}
 		return msg;
 	};
+
+	bot.noVariation = word => {
+		return word.replace(/[\ufe0f]/g,'');
+	}
 
 	bot.getMatches = (string, regex) => {
 		var matches = [];

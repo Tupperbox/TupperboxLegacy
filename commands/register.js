@@ -2,8 +2,8 @@ const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Register a new " + cfg.lang + "",
-	usage: cfg =>  ["register <name> <brackets> - Register a new " + cfg.lang + ".\n\t<name> - the " + cfg.lang + "'s name, for multi-word names surround this argument in `''`\n\t<brackets> - the word 'text' surrounded by any characters on one or both sides"],
-	desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `''`.",
+	usage: cfg =>  ["register <name> <brackets> - Register a new " + cfg.lang + ".\n\t<name> - the " + cfg.lang + "'s name, for multi-word names surround this argument in apostrophes `'like this'`\n\t<brackets> - the word 'text' surrounded by any characters on one or both sides"],
+	desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `'like so'`.",
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
@@ -21,7 +21,7 @@ module.exports = {
 		if(tulpa && tulpa.brackets[0] == brackets[0] && tulpa.brackets[1] == brackets[1]) return proper(cfg.lang) + " with those brackets under your user account already exists.";
 		
 		//add tulpa
-		await bot.db.addTulpa(msg.author.id,name,brackets);
+		await bot.db.addTulpa(msg.author.id,name,brackets.slice(0,2));
 		return proper(cfg.lang) + " registered successfully!\nName: " + name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info."; 
 	}
 };

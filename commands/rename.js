@@ -17,7 +17,7 @@ module.exports = {
 		if(newTulpa) return "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
 		
 		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,args[0],"name",args[1]);
+		await bot.db.updateTulpa(msg.author.id,args[0],"name",bot.noVariation(args[1]));
 		return proper(cfg.lang) + " renamed successfully.";
 	}
 };

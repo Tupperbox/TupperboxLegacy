@@ -3,6 +3,6 @@ module.exports = {
 	usage: cfg =>  ["invite - sends the bot's oauth2 URL in this channel"],
 	permitted: (msg) => true,
 	execute: (bot, msg, args, cfg) => {
-		return `https://discordapp.com/api/oauth2/authorize?client_id=${bot.user.id}&permissions=536931392&scope=bot`;
+		return `https://discordapp.com/oauth2/authorize?client_id=431544605209788416&scope=bot&permissions=536996928`;
 	}
 };

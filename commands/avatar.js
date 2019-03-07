@@ -25,7 +25,7 @@ module.exports = {
 		try { head = await request.head(url); }
 		catch(e) { return "I was unable to access that URL. Please try another."; }
 		if(!head.headers["content-type"] || !head.headers["content-type"].startsWith("image")) return "I couldn't find an image at that URL. Make sure it's a direct link (ends in .jpg or .png for example).";
-		if(Number(head.headers["content-length"]) > 1000000) {
+		if(Number(head.headers["content-length"]) > 1048575) {
 			return "That image is too large and Discord will not accept it. Please use an image under 1mb.";
 		}
 		let res;

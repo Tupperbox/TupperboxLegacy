@@ -49,7 +49,7 @@ module.exports = {
 			if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
 				output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
 		}
-		output.embed.fields = [{ name: "\u200b", value: "Proxy tips:\nReact with \u274c to a recent proxy to delete it!\nYou can proxy messages with attachments too!"}];
+		output.embed.fields = [{ name: "\u200b", value: "Proxy tips:\nReact with \u274c to a recent proxy to delete it (if you sent it)!\nReact with \u2753 to a recent proxy to show who sent it in DM!"}];
 		return output;
 	}
 };
