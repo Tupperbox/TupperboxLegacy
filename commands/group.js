@@ -21,7 +21,7 @@ module.exports = {
                 existing = await bot.db.getGroup(msg.author.id, name);
                 if(existing) return "You already have a group with that name.";
                 await bot.db.addGroup(msg.author.id, bot.noVariation(name));
-                return `Group created. Add ${cfg.lang}s to it with '${cfg.prefix}group add ${args.length < 2 ? name : "'" + name + "'"} <name>'.`;
+                return `Group created. Add ${cfg.lang}s to it with "${cfg.prefix}group add ${args.length < 3 ? name : "'" + name + "'"} <name>".`;
 
             case "delete":
                 if(!args[1]) return "No group name given.";
