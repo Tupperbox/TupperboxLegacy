@@ -8,9 +8,9 @@ module.exports = {
 		let data = { tuppers: tups, groups };
 		try {
 			let channel = await msg.author.getDMChannel(); //get the user's DM channel
-			return channel.send(msg.channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
+			return await bot.send(channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
 		} catch (e) {
-			return bot.send(msg.channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))});
+			return bot.send(msg.channel,"I couldn't access your DMs; sending publicly: ",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))});
 		}
 	}
 };
