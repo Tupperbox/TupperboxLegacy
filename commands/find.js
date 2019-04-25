@@ -6,13 +6,13 @@ module.exports = {
 	permitted: (msg) => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		if(msg.channel.type == 1) return "This command cannot be used in private messages.";
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search
 		let search = args.join(" ").toLowerCase();
-		let tul = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[msg.channel.guild.members.map(m => m.id),search])).rows;
-		if(!tul[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name in this server.";
+		let targets = msg.channel.type == 1 ? [msg.author.id] : msg.channel.guild.members.map(m => m.id);
+		let tul = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
+		if(!tul[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
 
 		//return single match
 		if(tul.length == 1) { 

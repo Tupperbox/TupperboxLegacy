@@ -19,24 +19,8 @@ module.exports = {
 		process.stdout.write("Checking postgres connection... ");
 		(await (await pool.connect()).release());
 		process.stdout.write("ok!\nChecking tables...");
+		//move members after
 		await pool.query(`
-		CREATE TABLE IF NOT EXISTS Members(
-			id SERIAL PRIMARY KEY,
-			user_id VARCHAR(32) NOT NULL,
-			name VARCHAR(32) NOT NULL,
-			position INTEGER NOT NULL,
-			avatar_url TEXT NOT NULL,
-			brackets TEXT[] NOT NULL,
-			posts INTEGER NOT NULL,	
-			show_brackets BOOLEAN NOT NULL,
-			birthday DATE,
-			description TEXT,
-			tag VARCHAR(32),
-			group_id INTEGER,
-			group_pos INTEGER,
-			UNIQUE (user_id,name),
-			FOREIGN KEY (group_id) REFERENCES groups(id)
-		  );
 		  CREATE TABLE IF NOT EXISTS Webhooks(
 			id VARCHAR(32) PRIMARY KEY,
 			channel_id VARCHAR(32) NOT NULL,
@@ -65,6 +49,23 @@ module.exports = {
 			tag VARCHAR(32),
 			position INTEGER,
 			UNIQUE (user_id, name)
+		  );
+		  CREATE TABLE IF NOT EXISTS Members(
+			id SERIAL PRIMARY KEY,
+			user_id VARCHAR(32) NOT NULL,
+			name VARCHAR(32) NOT NULL,
+			position INTEGER NOT NULL,
+			avatar_url TEXT NOT NULL,
+			brackets TEXT[] NOT NULL,
+			posts INTEGER NOT NULL,	
+			show_brackets BOOLEAN NOT NULL,
+			birthday DATE,
+			description TEXT,
+			tag VARCHAR(32),
+			group_id INTEGER,
+			group_pos INTEGER,
+			UNIQUE (user_id,name),
+			FOREIGN KEY (group_id) REFERENCES groups(id)
 		  );`);
 
 		console.log("ok!\nChecking for data to import...");
@@ -85,9 +86,9 @@ module.exports = {
 						let a = count;
 						let tulpa = tulpae[id][i];
 						let conn = await pool.connect();
-						conn.query("INSERT INTO Members(user_id,name,position,avatar_url,brackets,posts,show_brackets,birthday,description,tag,group_id) VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8)::date,$9,$10,$11)",
-							[id,tulpa.name,i,tulpa.url,tulpa.brackets,tulpa.posts,!!tulpa.showbrackets,tulpa.birthday ? tulpa.birthday/1000 : null,tulpa.desc || null,tulpa.tag || null,null])
-							.catch(e => { throw e; })
+						conn.query("INSERT INTO Members(user_id,name,position,avatar_url,brackets,posts,show_brackets,birthday,description,tag) VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8)::date,$9,$10)",
+							[id,tulpa.name,i,tulpa.url,tulpa.brackets,tulpa.posts,!!tulpa.showbrackets,tulpa.birthday ? tulpa.birthday/1000 : null,tulpa.desc || null,tulpa.tag || null])
+							.catch(e => { console.error(e); })
 							.then(() => {
 								console.log(`\tuser ${a} - ${tulpa.name} done`);
 								conn.release();
@@ -113,7 +114,7 @@ module.exports = {
 					console.log(`\tImporting webhook for channel ${id} (${count} of ${keys.length})`);
 					let conn = await pool.connect();
 					conn.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [webhooks[id].id,id,webhooks[id].token])
-						.catch(e => { throw e; })
+						.catch(e => { console.error(e); })
 						.then(() => {
 							console.log(`\twebhook ${id} done`);
 							conn.release();
@@ -139,7 +140,7 @@ module.exports = {
 					console.log(`\tImporting config for server ${id} (${count} of ${keys.length})`);
 					let conn = await pool.connect();
 					conn.query("INSERT INTO Servers VALUES ($1,$2,$3,$4,$5)", [id,cfg.prefix,cfg.lang,null,cfg.log || null])
-						.catch(e => { throw e; })
+						.catch(e => { console.error(e); })
 						.then(async () => {
 							if(cfg.blacklist) for(let bl of cfg.blacklist) await updateBlacklist(id,bl,true,true,null).then(() => console.log(`${id} - blacklist updated`));
 							if(cfg.cmdblacklist) for(let bl of cfg.cmdblacklist) await updateBlacklist(id,bl,true,null,true).then(() => console.log(`${id} - blacklist updated`));
@@ -172,6 +173,10 @@ module.exports = {
 
 	deleteTulpa: async (userID, name) => {
 		return await pool.query("DELETE FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
+	},
+
+	mergeTulpa: async () => {
+
 	},
 
 	addCfg: async (serverID) => {

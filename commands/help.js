@@ -35,21 +35,17 @@ module.exports = {
 		let output = { embed: {
 			title: "Tupperbox | Help",
 			description: "I am Tupperbox, a bot that allows you to send messages as other pseudo-users using Discord webhooks.\nTo get started, register " + article(cfg) + " " + cfg.lang + " with `" + cfg.prefix + "register` and enter a message with the brackets you set!\n\n**Command List**\nType `"+cfg.prefix+"help command` for detailed help on a command.\n" + String.fromCharCode(8203) + "\n",
-			timestamp: new Date().toJSON(),
 			color: 0x999999,
 			author: {
 				name: "Tupperbox",
 				icon_url: bot.user.avatarURL
-			},
-			footer: {
-				text: "By Keter#1730"
 			}
 		}};
 		for(let cmd of Object.keys(bot.cmds)) {
 			if(bot.cmds[cmd].help && bot.cmds[cmd].permitted(msg,args))
 				output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
 		}
-		output.embed.fields = [{ name: "\u200b", value: "Proxy tips:\nReact with \u274c to a recent proxy to delete it (if you sent it)!\nReact with \u2753 to a recent proxy to show who sent it in DM!"}];
+		output.embed.fields = [{ name: "\u200b", value: "Proxy tips:\nReact with \u274c to a recent proxy to delete it (if you sent it)!\nReact with \u2753 to a recent proxy to show who sent it in DM!\n\nQuestions? Join the support server: [invite](https://discord.gg/6WF6Z5m)\nNow accepting donations to cover server costs! [patreon](https://www.patreon.com/tupperbox)"}];
 		return output;
 	}
 };
