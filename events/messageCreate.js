@@ -16,7 +16,7 @@ module.exports = async (msg,bot) => {
 					noPerms = true;
 				}
 			}
-			if(cmd.groupArgs) args = bot.getMatches(content,/['](.*?)[']|(\S+)/gi).slice(1);
+			if(cmd.groupArgs) args = bot.getMatches(content,/['](.+?)[']|(\S+)/gi).slice(1);
 			let targetChannel = msg.channel;
 			if(noPerms) {
 				try {
