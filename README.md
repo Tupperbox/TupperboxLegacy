@@ -27,7 +27,7 @@ A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> 
 # Installation
 This bot runs off of Node.js. You can download it from https://nodejs.org/en/download/
 
-Once node is installed, run `npm install` from the bot directory to install the bot's dependencies. If the dependencies all install successfully (note: you may have to run `npm -g install windows-build-tools` first if on Windows) then you can now run the bot by running `node bot`.
+Once node is installed, run `npm install` from the bot directory to install the bot's dependencies. If the dependencies all install successfully (note: you may have to run `npm -g install windows-build-tools` first if on Windows) then you can now run the bot by running `node index`.
 
 Additionally, the bot now requires PostgreSQL to run. You can download it from https://www.postgresql.org/download/
 
