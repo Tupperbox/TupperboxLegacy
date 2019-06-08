@@ -2,8 +2,8 @@ const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Register a new " + cfg.lang + "",
-	usage: cfg =>  ["register <name> <brackets> - Register a new " + cfg.lang + ".\n\t<name> - the " + cfg.lang + "'s name, for multi-word names surround this argument in apostrophes `'like this'`\n\t<brackets> - the word 'text' surrounded by any characters on one or both sides"],
-	desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in apostrophes `'like so'`.",
+	usage: cfg =>  ["register <name> <brackets> - Register a new " + cfg.lang + ".\n\t<name> - the " + cfg.lang + "'s name, for multi-word names surround this argument in single or double quotes.\n\t<brackets> - the word 'text' surrounded by any characters on one or both sides"],
+	desc: cfg => "Example use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in single or double quotes `'like this'` or `\"like this\"`.",
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
@@ -22,6 +22,6 @@ module.exports = {
 		
 		//add tulpa
 		await bot.db.addTulpa(msg.author.id,name,brackets.slice(0,2));
-		return proper(cfg.lang) + " registered successfully!\nName: " + name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info."; 
+		return proper(cfg.lang) + " registered successfully!\nName: " + name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info.\n*If the name is part of the brackets, try removing and re-registering using \"quotation marks\" around the name!*"; 
 	}
 };

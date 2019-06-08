@@ -20,8 +20,8 @@ module.exports = {
 		
 		//update tulpa
 		let desc = args.slice(1).join(" ");
-		await bot.db.updateTulpa(msg.author.id,args[0],"description",desc.slice(0,700));
-		if(desc.length > 700) return "Description updated, but was truncated due to Discord embed limits.";
+		await bot.db.updateTulpa(msg.author.id,args[0],"description",desc.slice(0,1023));
+		if(desc.length > 1023) return "Description updated, but was truncated due to Discord embed limits.";
 		return "Description updated successfully.";
 	}
 };

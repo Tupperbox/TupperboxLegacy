@@ -19,6 +19,7 @@ class Tupperbox extends Base {
 		bot.cmds = {};
 		bot.dialogs = {};
 		bot.owner = process.env.DISCORD_OWNERID;
+		require('./modules/ipc')(bot);
 		require("./modules/util")(bot);
 	  
 		let files = fs.readdirSync("./commands");
@@ -29,6 +30,10 @@ class Tupperbox extends Base {
 		files = fs.readdirSync("./events");
 		files.forEach(file => {
 			bot.on(file.slice(0,-3), (...args) => require("./events/"+file)(...args,bot));
+		});
+
+		process.on('message', message => {
+			if(bot.ipc[message.name]) bot.ipc[message.name](message);
 		});
 
 		setInterval(bot.updateStatus,3600000); //every hour

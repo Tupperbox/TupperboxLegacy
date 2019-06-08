@@ -78,7 +78,7 @@ module.exports = bot => {
 	bot.err = (msg, error, tell = true) => {
 		if(error.message.startsWith("Request timed out") || error.code == 500) return;
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
-		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`);
+		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`).catch(e => {});
 		bot.sentry.captureException(error);
 	};
 
@@ -205,10 +205,12 @@ module.exports = bot => {
 	};
 
 	bot.generateTulpaField = (tulpa,group = null) => {
-		return {
+		let out = {
 			name: tulpa.name.trim().length < 1 ? tulpa.name + "\u200b" : tulpa.name,
 			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
 		};
+		if(out.value.length > 1023) out.value = out.value.slice(0,1020) + "...";
+		return out;
 	};
 
 	bot.getBrackets = tulpa => {
@@ -223,7 +225,7 @@ module.exports = bot => {
 	bot.paginate = async (msg, data) => {
 		if(!(msg.channel.type == 1)) {
 			let perms = msg.channel.permissionsOf(bot.user.id);
-			if(!perms.has("readMessages") || !perms.has("sendMessages")) return;
+			if(!perms.has("readMessages") || !perms.has("sendMessages") || !perms.has("embedLinks")) return;
 			if(!perms.has("addReactions") || !perms.has('readMessageHistory')) {
 				await bot.send(msg.channel, data[0]);
 				if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
@@ -293,10 +295,10 @@ module.exports = bot => {
 			}
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
-			if(e.message.startsWith("Request timed out") || e.code == 500) {
+			if(e.message.startsWith("Request timed out") || e.code >= 500) {
 				if(retry) return bot.send(channel,message,file,false);
 				else return;
-			} else throw e;
+			} else if(e.code != 50007 && e.code != 10003) throw e;
 		}
 		return msg;
 	};
