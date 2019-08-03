@@ -1,5 +1,5 @@
 # Tupperbox
-A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> for proxying user messages through webhooks, originally created to emulate tulpas/systems users having their own user accounts.
+A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> for proxying user messages through webhooks to emulate users having multiple user accounts.
 
 # Commands
 - tul!avatar  -  View or change a member's avatar

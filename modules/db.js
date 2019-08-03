@@ -12,7 +12,7 @@ const question = q => {
 
 let updateBlacklist = async (serverID, id, isChannel, blockProxies, blockCommands) => {
 	return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
-}
+};
 
 module.exports = {
 	init: async () => {

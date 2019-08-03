@@ -19,7 +19,7 @@ module.exports = {
 			let t = tul[0];
 			let host = bot.users.get(t.user_id);
 			let group = null;
-			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
+			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
 			let embed = { embed: {
 				author: {
 					name: t.name,
@@ -46,7 +46,7 @@ module.exports = {
 				}};
 			}
 			let group = null;
-			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
+			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
 			let host = bot.users.get(t.user_id);
 			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`});
 		}

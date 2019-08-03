@@ -13,7 +13,7 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["avatar"], cfg);
 
 		//check arguments
-		let name = msg.attachments[0] ? args.join(' ') : args[0];
+		let name = msg.attachments[0] ? args.join(" ") : args[0];
 		let tulpa = await bot.db.getTulpa(msg.author.id, name);
 		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		if(!args[1] && !msg.attachments[0]) return tulpa.avatar_url;

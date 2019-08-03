@@ -27,6 +27,8 @@
         ],
 				"no-console": "off",
 				"no-unused-vars": "off",
-				"no-cond-assign": "off"
+                "no-cond-assign": "off",
+                "no-case-declarations": "off",
+                "no-empty": "off"
     }
 }

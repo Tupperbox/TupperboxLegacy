@@ -1,6 +1,6 @@
 const request = require("got");
-const strlen = require('string-length');
-const { PermissionsError, EmptyError } = require('./errors');
+const strlen = require("string-length");
+const { PermissionsError, EmptyError } = require("./errors");
 
 let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 
@@ -9,14 +9,14 @@ module.exports = bot => {
 	bot.replaceMessage = async (msg, cfg, tulpa, content, retry = true) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		let groupTag;
-		if(tulpa.group_id) groupTag = (await bot.db.query('SELECT tag FROM Groups WHERE id = $1',[tulpa.group_id])).rows[0].tag;
+		if(tulpa.group_id) groupTag = (await bot.db.query("SELECT tag FROM Groups WHERE id = $1",[tulpa.group_id])).rows[0].tag;
 		const data = {
 			wait: true,
 			content: bot.recent[msg.channel.id] ? content.replace(tagRegex,match => {
 				let includesDiscrim = match.endsWith("#0000");
 				let found = bot.recent[msg.channel.id].find(r => (includesDiscrim ? r.name == match.slice(1,-5) : r.rawname.toLowerCase() == match.slice(1).toLowerCase()));
 				return found ? `${includesDiscrim ? match.slice(0,-5) : match} (<@${found.user_id}>)` : match;
-			 }) : content,
+			}) : content,
 			username: `${tulpa.name}${tulpa.tag ? " " + tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}${groupTag ? " " + groupTag : ""}`.trim(),
 			avatarURL: tulpa.avatar_url,
 		};
@@ -57,14 +57,14 @@ module.exports = bot => {
 			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 			if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-				await bot.db.updateCfg(msg.channel.guild.id,'log_channel',null);
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 			}
 			else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
 		bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
-			bot.send(msg.channel, `Warning: I do not have permission to delete messages. Both the original message and proxied message will show.`);
+			bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and proxied message will show.");
 		}
 		bot.updateRecent(msg, {
 			user_id: msg.author.id,
@@ -107,7 +107,7 @@ module.exports = bot => {
 				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-					await bot.db.updateCfg(msg.channel.guild.id,'log_channel',null);
+					await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 				}
 				else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 			}
@@ -136,7 +136,7 @@ module.exports = bot => {
 		}
 		bot.recent[msg.channel.id].unshift(data);
 		if(bot.recent[msg.channel.id].length > 5) bot.recent[msg.channel.id] = bot.recent[msg.channel.id].slice(0,5);
-	}
+	};
 
 	bot.fetchWebhook = async channel => {
 		let q = await bot.db.query("SELECT * FROM Webhooks WHERE channel_id = $1", [channel.id]);
@@ -147,7 +147,7 @@ module.exports = bot => {
 		else {
 			let hook;
 			try {
-				hook = await channel.createWebhook({ name: "Tupperhook" })
+				hook = await channel.createWebhook({ name: "Tupperhook" });
 			} catch(e) {
 				if(e.code == 30007) {
 					let wbhooks = await channel.getWebhooks();
@@ -219,14 +219,14 @@ module.exports = bot => {
 			out.push(tulpa.brackets[i] + "text" + tulpa.brackets[i+1]);
 		}
 		return out.join(" | ");
-	}
+	};
 
 	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3"];
 	bot.paginate = async (msg, data) => {
 		if(!(msg.channel.type == 1)) {
 			let perms = msg.channel.permissionsOf(bot.user.id);
 			if(!perms.has("readMessages") || !perms.has("sendMessages") || !perms.has("embedLinks")) return;
-			if(!perms.has("addReactions") || !perms.has('readMessageHistory')) {
+			if(!perms.has("addReactions") || !perms.has("readMessageHistory")) {
 				await bot.send(msg.channel, data[0]);
 				if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
 				else return "'Read Message History' permission missing, cannot use reaction buttons. (Discord requires this permission to add reactions.) Only first page shown.";
@@ -304,8 +304,8 @@ module.exports = bot => {
 	};
 
 	bot.noVariation = word => {
-		return word.replace(/[\ufe0f]/g,'');
-	}
+		return word.replace(/[\ufe0f]/g,"");
+	};
 
 	bot.getMatches = (string, regex) => {
 		var matches = [];

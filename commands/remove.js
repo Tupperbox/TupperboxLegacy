@@ -3,7 +3,7 @@ const {article,proper} = require("../modules/lang");
 module.exports = {
 	help: cfg => "Unregister " + article(cfg) + " " + cfg.lang + "",
 	usage: cfg =>  ["remove <name> - Unregister the named " + cfg.lang + " from your list",
-					"remove * - Unregister ALL of your " + cfg.lang + "s (requires confirmation)"],
+		"remove * - Unregister ALL of your " + cfg.lang + "s (requires confirmation)"],
 	permitted: () => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
@@ -19,7 +19,7 @@ module.exports = {
 				if(e == "timeout") return "Response timed out. Canceling.";
 				else throw e;
 			}
-			await bot.db.query('DELETE FROM Members WHERE user_id = $1',[msg.author.id]);
+			await bot.db.query("DELETE FROM Members WHERE user_id = $1",[msg.author.id]);
 			return `All ${cfg.lang}s removed.`;
 		}
 		let name = args.join(" ");

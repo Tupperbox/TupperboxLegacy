@@ -3,8 +3,8 @@ const {article,proper} = require("../modules/lang");
 module.exports = {
 	help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s brackets",
 	usage: cfg =>  ["brackets <name> [brackets] - if brackets are given, change the " + cfg.lang + "'s brackets, if not, simply echo the current ones",
-					"brackets add <name> <brackets> - add another set of brackets to proxy with",
-					"brackets remove <name> <brackets> - remove a set of brackets, unless it's the last one"],
+		"brackets add <name> <brackets> - add another set of brackets to proxy with",
+		"brackets remove <name> <brackets> - remove a set of brackets, unless it's the last one"],
 	desc: cfg => "Brackets must be the word 'text' surrounded by any symbols or letters, i.e. `[text]` or `>>text`",
 	permitted: () => true,
 	groupArgs: true,

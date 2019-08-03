@@ -15,108 +15,108 @@ module.exports = {
 		let gid = msg.channel.guild.id;
 		let channels, out;
 		switch(args[0]) {
-			case "prefix":
-				if(!args[1]) return "Missing argument 'prefix'.";
-				let prefix = args.slice(1).join(" ");
+		case "prefix":
+			if(!args[1]) return "Missing argument 'prefix'.";
+			let prefix = args.slice(1).join(" ");
 
-				await bot.db.updateCfg(gid,"prefix",prefix);
-				return "Prefix changed to " + prefix;
+			await bot.db.updateCfg(gid,"prefix",prefix);
+			return "Prefix changed to " + prefix;
 
-			case "roles":
-				return "This feature has been disabled indefinitely.";
+		case "roles":
+			return "This feature has been disabled indefinitely.";
 
-			case "rename":
-				if(!args[1]) return "Missing argument 'newname'";
-				let lang = args.slice(1).join(" ");
-				await bot.db.updateCfg(gid,"lang",lang);
-				return "Entity name changed to " + lang;
+		case "rename":
+			if(!args[1]) return "Missing argument 'newname'";
+			let lang = args.slice(1).join(" ");
+			await bot.db.updateCfg(gid,"lang",lang);
+			return "Entity name changed to " + lang;
 
-			case "log":
-				if(!args[1]) {
-					await bot.db.updateCfg(gid,"log_channel",null);
-					return "Logging channel unset. Logging is now disabled.";
+		case "log":
+			if(!args[1]) {
+				await bot.db.updateCfg(gid,"log_channel",null);
+				return "Logging channel unset. Logging is now disabled.";
+			}
+			let channel = bot.resolveChannel(msg,args[1]);
+			if(!channel) return "Channel not found.";
+			await bot.db.updateCfg(gid,"log_channel",channel.id);
+			return `Logging channel set to <#${channel.id}>`;					
+
+		case "blacklist":
+			if(!args[1]) {
+				let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_proxies);
+				if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
+				return "No channels currently blacklisted.";
+			}
+			switch(args[1]) {
+			case "add":
+				if(!args[2]) return "Must provide name/mention/id of channel to blacklist.";
+				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
+				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+				if(channels.find(ch => ch == undefined)) {
+					out = "Could not find these channels: ";
+					for(let i = 0; i < channels.length; i++)
+						if(!channels[i]) out += args.slice(2)[i];
+					return out;
 				}
-				let channel = bot.resolveChannel(msg,args[1]);
-				if(!channel) return "Channel not found.";
-				await bot.db.updateCfg(gid,"log_channel",channel.id);
-				return `Logging channel set to <#${channel.id}>`;					
-
-			case "blacklist":
-				if(!args[1]) {
-					let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_proxies);
-					if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
-					return "No channels currently blacklisted.";
-				}
-				switch(args[1]) {
-					case "add":
-						if(!args[2]) return "Must provide name/mention/id of channel to blacklist.";
-						channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
-						if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-						if(channels.find(ch => ch == undefined)) {
-							out = "Could not find these channels: ";
-							for(let i = 0; i < channels.length; i++)
-								if(!channels[i]) out += args.slice(2)[i];
-							return out;
-						}
-						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,true,null);
-						return `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
+				for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,true,null);
+				return `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
 						
-					case "remove":
-						if(!args[2]) return "Must provide name/mention/id of channel to allow.";
-						channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
-						if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-						if(channels.find(ch => ch == undefined)) {
-							out = "Could not find these channels: ";
-							for(let i = 0; i < channels.length; i++)
-								if(!channels[i]) out += args.slice(2)[i] + " ";
-							return out;
-						}
-						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,false,null);
-						return `Channel${channels.length > 1 ? "s" : ""} removed from blacklist.`;
-
-					default:
-						return "Invalid argument: must be 'add' or 'remove'";
+			case "remove":
+				if(!args[2]) return "Must provide name/mention/id of channel to allow.";
+				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
+				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+				if(channels.find(ch => ch == undefined)) {
+					out = "Could not find these channels: ";
+					for(let i = 0; i < channels.length; i++)
+						if(!channels[i]) out += args.slice(2)[i] + " ";
+					return out;
 				}
-
-			case "cmdblacklist":
-				if(!args[1]) {
-					let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_commands);
-					if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
-					return "No channels currently cmdblacklisted.";
-				}
-				switch(args[1]) {
-					case "add":
-						if(!args[2]) return "Must provide name/mention/id of channel to cmdblacklist.";
-						channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
-						if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-						if(channels.find(ch => ch == undefined)) {
-							out = "Could not find these channels: ";
-							for(let i = 0; i < channels.length; i++)
-								if(!channels[i]) out += args.slice(2)[i];
-							return out;
-						}
-						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,true);
-						return `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
-						
-					case "remove":
-						if(!args[2]) return "Must provide name/mention/id of channel to allow.";
-						channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
-						if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-						if(channels.find(ch => ch == undefined)) {
-							out = "Could not find these channels: ";
-							for(let i = 0; i < channels.length; i++)
-								if(!channels[i]) out += args.slice(2)[i] + " ";
-							return out;
-						}
-						for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,false);
-						return `Channel${channels.length > 1 ? "s" : ""} removed from cmdblacklist.`;
-
-					default:
-						return "Invalid argument: must be 'add' or 'remove'";
-				}
+				for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,false,null);
+				return `Channel${channels.length > 1 ? "s" : ""} removed from blacklist.`;
 
 			default:
-				return bot.cmds.help.execute(bot, msg, ["cfg"], cfg);
+				return "Invalid argument: must be 'add' or 'remove'";
+			}
+
+		case "cmdblacklist":
+			if(!args[1]) {
+				let blacklist = (await bot.db.getBlacklist(gid)).filter(bl => bl.is_channel && bl.block_commands);
+				if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
+				return "No channels currently cmdblacklisted.";
+			}
+			switch(args[1]) {
+			case "add":
+				if(!args[2]) return "Must provide name/mention/id of channel to cmdblacklist.";
+				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
+				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+				if(channels.find(ch => ch == undefined)) {
+					out = "Could not find these channels: ";
+					for(let i = 0; i < channels.length; i++)
+						if(!channels[i]) out += args.slice(2)[i];
+					return out;
+				}
+				for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,true);
+				return `Channel${channels.length > 1 ? "s" : ""} blacklisted successfully.`;
+						
+			case "remove":
+				if(!args[2]) return "Must provide name/mention/id of channel to allow.";
+				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
+				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
+				if(channels.find(ch => ch == undefined)) {
+					out = "Could not find these channels: ";
+					for(let i = 0; i < channels.length; i++)
+						if(!channels[i]) out += args.slice(2)[i] + " ";
+					return out;
+				}
+				for(let i=0; i<channels.length; i++) await bot.db.updateBlacklist(gid,channels[i],true,null,false);
+				return `Channel${channels.length > 1 ? "s" : ""} removed from cmdblacklist.`;
+
+			default:
+				return "Invalid argument: must be 'add' or 'remove'";
+			}
+
+		default:
+			return bot.cmds.help.execute(bot, msg, ["cfg"], cfg);
 		}
 	}
 };

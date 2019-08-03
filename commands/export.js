@@ -3,8 +3,8 @@ module.exports = {
 	usage: cfg =>  ["export - Get a .json file of your data that you can import to compatible bots"],
 	permitted: () => true,
 	execute: async (bot, msg, args, cfg) => {
-		let tups = (await bot.db.query('SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 ORDER BY position', [msg.author.id])).rows;
-		let groups = (await bot.db.query('SELECT id, name, description, tag FROM Groups WHERE user_id = $1 ORDER BY position',[msg.author.id])).rows;
+		let tups = (await bot.db.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+		let groups = (await bot.db.query("SELECT id, name, description, tag FROM Groups WHERE user_id = $1 ORDER BY position",[msg.author.id])).rows;
 		let data = { tuppers: tups, groups };
 		try {
 			let channel = await msg.author.getDMChannel(); //get the user's DM channel

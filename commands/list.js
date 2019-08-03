@@ -65,7 +65,7 @@ module.exports = {
 			}
 			
 			for(let i=0; i<embeds.length; i++) {
-				embeds[i].embed.title = `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`
+				embeds[i].embed.title = `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`;
 				if(embeds.length > 1) embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${tulpae.length} total)`;
 			}
 
@@ -86,7 +86,7 @@ module.exports = {
 		
 		let embeds = await bot.generatePages(tulpae, async t => {
 			let group = null;
-			if(t.group_id) group = (await bot.db.query('SELECT name FROM Groups WHERE id = $1',[t.group_id])).rows[0];
+			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
 			return bot.generateTulpaField(t,group);
 		}, extra);
 		if(embeds[1]) return bot.paginate(msg, embeds);
