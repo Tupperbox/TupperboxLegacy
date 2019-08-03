@@ -85,8 +85,10 @@ module.exports = {
 						await bot.db.addTulpa(uid,t.name,newBrackets);
 					} else updated++;
 					await bot.db.query('UPDATE Members SET avatar_url = $1, posts = $2, birthday = $3, description = $4, group_id = $5, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $5), brackets = $6::text[] WHERE user_id = $7 AND name = $8',
-							[t.avatar_url || old.avatar_url || 'https://i.imgur.com/ZpijZpg.png', t.message_count || 0, t.birthday || null, t.description || null, systemGroup.id, newBrackets, uid, t.name]);
+							[t.avatar_url || old.avatar_url || 'https://i.imgur.com/ZpijZpg.png', t.message_count || 0, t.birthday || null, t.description || null, old.group_id || systemGroup.id, newBrackets, uid, t.name]);
 				}
+				let systemGroupTups = (await bot.db.query('SELECT COUNT(name) FROM Members WHERE group_id = $1', [systemGroup.id]));
+				if(systemGroupTups.rows[0].count == 0) await bot.db.deleteGroup(uid,sysName);
 				return `Import successful. Added ${added} entries and updated ${updated} entries.`;
 			} catch(e) {
 				bot.err(msg,e,false);

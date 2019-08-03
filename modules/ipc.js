@@ -1,10 +1,23 @@
 const cluster = require('cluster');
+const os = require('os');
+
+const dhm = t => {
+    let cd = 24 * 60 * 60 * 1000, ch = 60 * 60 * 1000, cm = 60 * 1000, cs = 1000;
+    let d = Math.floor(t/cd), h = Math.floor((t-d*cd)/ch), m = Math.floor((t-d*cd-h*ch)/cm), s = Math.floor((t-d*cd-h*ch-m*cm)/cs);
+    return `${d}d ${h}h ${m}m ${s}s`;
+}
 
 if(cluster.isMaster) {
     module.exports = {
         postStats: (wrk,msg,shrd) => {
             if(!msg.channelID) return;
-            shrd.eris.createMessage(msg.channelID,"testgay");
+            shrd.eris.createMessage(msg.channelID,
+                "```"+
+                    shrd.stats.stats.clusters.sort((a,b) => a.cluster-b.cluster).map(c => 
+                    `Cluster ${c.cluster} - up ${dhm(c.uptime)}\n\tShards: ${c.shards}\n\tMemory: ${c.ram.toFixed(1)} MB\n\tServers: ${c.guilds}`).join('\n')
+                    +`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB`
+                + "```"
+            );
         }
     }
 } else {

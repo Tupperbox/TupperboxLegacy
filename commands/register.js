@@ -22,6 +22,6 @@ module.exports = {
 		
 		//add tulpa
 		await bot.db.addTulpa(msg.author.id,name,brackets.slice(0,2));
-		return proper(cfg.lang) + " registered successfully!\nName: " + name + "\nBrackets: " + `${brackets[0]}text${brackets[1]}` + "\nUse `" + cfg.prefix + "rename`, `" + cfg.prefix + "brackets`, and `" + cfg.prefix + "avatar` to set/update your " + cfg.lang + "'s info.\n*If the name is part of the brackets, try removing and re-registering using \"quotation marks\" around the name!*"; 
+		return `${proper(cfg.lang)} registered successfully!\nName: ${name}\nBrackets: ${brackets[0]}text${brackets[1]}\nTo proxy using this ${cfg.lang}, enter a message like \`${brackets[0]}hello${brackets[1]}\`\n*Please check that the name and brackets are correct, if they aren't, try re-registering using "quotation marks" around the name!*`; 
 	}
 };

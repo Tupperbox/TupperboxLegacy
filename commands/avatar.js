@@ -5,9 +5,9 @@ const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "View or change " + article(cfg) + " " + cfg.lang + "'s avatar",
-	usage: cfg =>  ["avatar <name> [url] - if url is specified, change the " + cfg.lang + "'s avatar, if not, simply echo the current one"],
+	usage: cfg =>  ["avatar <name> [url] - if url is specified or an image is uploaded with the command, change the " + cfg.lang + "'s avatar, if no image is given, send the current one"],
 	permitted: () => true,
-	desc: cfg => "The specified URL must be a direct link to an image - that is, the URL should end in .jpg or .png or another common image filetype. Also, it can't be over 1mb in size, as Discord doesn't accept images over this size as webhook avatars.",
+	desc: cfg => "It's possible to simply upload the new avatar as an attachment while running the command instead of providing the URL. If a URL is provided, it must be a direct link to an image - that is, the URL should end in .jpg or .png or another common image filetype.\n\nDue to Discord limitations, avatars can't be over 1mb in size and either the width or height of the avatar must be less than 1024.",
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["avatar"], cfg);
