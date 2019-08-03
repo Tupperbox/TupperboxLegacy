@@ -6,10 +6,10 @@ let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 
 module.exports = bot => {  
 
-	bot.replaceMessage = async (msg, cfg, tulpa, content, retry = true) => {
+	bot.replaceMessage = async (msg, cfg, member, content, retry = true) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		let groupTag;
-		if(tulpa.group_id) groupTag = (await bot.db.query("SELECT tag FROM Groups WHERE id = $1",[tulpa.group_id])).rows[0].tag;
+		if(member.group_id) groupTag = (await bot.db.query("SELECT tag FROM Groups WHERE id = $1",[member.group_id])).rows[0].tag;
 		const data = {
 			wait: true,
 			content: bot.recent[msg.channel.id] ? content.replace(tagRegex,match => {
@@ -17,8 +17,8 @@ module.exports = bot => {
 				let found = bot.recent[msg.channel.id].find(r => (includesDiscrim ? r.name == match.slice(1,-5) : r.rawname.toLowerCase() == match.slice(1).toLowerCase()));
 				return found ? `${includesDiscrim ? match.slice(0,-5) : match} (<@${found.user_id}>)` : match;
 			}) : content,
-			username: `${tulpa.name}${tulpa.tag ? " " + tulpa.tag : ""}${bot.checkTulpaBirthday(tulpa) ? "\uD83C\uDF70" : ""}${groupTag ? " " + groupTag : ""}`.trim(),
-			avatarURL: tulpa.avatar_url,
+			username: `${member.name}${member.tag ? " " + member.tag : ""}${bot.checkMemberBirthday(member) ? "\uD83C\uDF70" : ""}${groupTag ? " " + groupTag : ""}`.trim(),
+			avatarURL: member.avatar_url,
 		};
 
 		//discord treats astral characters (many emojis) as one character, so add a little dot to make it two
@@ -36,7 +36,7 @@ module.exports = bot => {
 		if(data.username.length > 32) data.username = data.username.slice(0,30) + "..";
 
 		if(msg.attachments[0]) {
-			return bot.sendAttachmentsWebhook(msg, cfg, data, content, hook, tulpa);
+			return bot.sendAttachmentsWebhook(msg, cfg, data, content, hook, member);
 		}
 		if(data.content.trim().length == 0) throw new EmptyError();
 
@@ -49,7 +49,7 @@ module.exports = bot => {
 				const hook = await bot.fetchWebhook(msg.channel);
 				webmsg = await bot.executeWebhook(hook.id,hook.token,data);
 			} else if(e.code == 504 && retry) {
-				return await bot.replaceMessage(msg,cfg,tulpa,content,false);
+				return await bot.replaceMessage(msg,cfg,member,content,false);
 			} else throw e;
 		}
 
@@ -59,17 +59,17 @@ module.exports = bot => {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 			}
-			else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
-		bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
+		bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
 			bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and proxied message will show.");
 		}
 		bot.updateRecent(msg, {
 			user_id: msg.author.id,
 			name: data.username,
-			rawname: tulpa.name,
+			rawname: member.name,
 			id: webmsg.id,
 			tag: `${msg.author.username}#${msg.author.discriminator}`
 		});
@@ -82,15 +82,15 @@ module.exports = bot => {
 		bot.sentry.captureException(error);
 	};
 
-	bot.checkTulpa = (msg, tulpa, clean) => {
-		for(let i=0; i<tulpa.brackets.length/2; i++) {
-			if(clean.startsWith(tulpa.brackets[i*2]) && clean.endsWith(tulpa.brackets[i*2+1]) && ((clean.length == (tulpa.brackets[i*2].length + tulpa.brackets[i*2+1].length) && msg.attachments[0]) || clean.length > (tulpa.brackets[i*2].length + tulpa.brackets[i*2+1].length)))
+	bot.checkMember = (msg, member, clean) => {
+		for(let i=0; i<member.brackets.length/2; i++) {
+			if(clean.startsWith(member.brackets[i*2]) && clean.endsWith(member.brackets[i*2+1]) && ((clean.length == (member.brackets[i*2].length + member.brackets[i*2+1].length) && msg.attachments[0]) || clean.length > (member.brackets[i*2].length + member.brackets[i*2+1].length)))
 				return i;
 		}
 		return -1;
 	};
 
-	bot.sendAttachmentsWebhook = async (msg, cfg, data, content, hook, tulpa) => {
+	bot.sendAttachmentsWebhook = async (msg, cfg, data, content, hook, member) => {
 		let files = [];
 		for(let i = 0; i < msg.attachments.length; i++) {
 			let head;
@@ -109,15 +109,15 @@ module.exports = bot => {
 					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 					await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 				}
-				else bot.send(logchannel, `Name: ${tulpa.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+				else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 			}
-			bot.db.updateTulpa(tulpa.user_id,tulpa.name,"posts",tulpa.posts+1);
+			bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
 			bot.updateRecent(msg, {
 				user_id: msg.author.id,
 				name: data.username,
-				rawname: tulpa.name,
+				rawname: member.name,
 				id: webmsg.id,
 				tag: `${msg.author.username}#${msg.author.discriminator}`
 			});
@@ -204,19 +204,19 @@ module.exports = bot => {
 		return embeds;
 	};
 
-	bot.generateTulpaField = (tulpa,group = null) => {
+	bot.generateMemberField = (member,group = null) => {
 		let out = {
-			name: tulpa.name.trim().length < 1 ? tulpa.name + "\u200b" : tulpa.name,
-			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${tulpa.tag ? ("Tag: " + tulpa.tag + "\n") : ""}Brackets: ${bot.getBrackets(tulpa)}\nAvatar URL: ${tulpa.avatar_url}${tulpa.birthday ? ("\nBirthday: "+tulpa.birthday.toDateString()) : ""}\nTotal messages sent: ${tulpa.posts}${tulpa.description ? ("\n"+tulpa.description) : ""}`
+			name: member.name.trim().length < 1 ? member.name + "\u200b" : member.name,
+			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${member.tag ? ("Tag: " + member.tag + "\n") : ""}Brackets: ${bot.getBrackets(member)}\nAvatar URL: ${member.avatar_url}${member.birthday ? ("\nBirthday: "+member.birthday.toDateString()) : ""}\nTotal messages sent: ${member.posts}${member.description ? ("\n"+member.description) : ""}`
 		};
 		if(out.value.length > 1023) out.value = out.value.slice(0,1020) + "...";
 		return out;
 	};
 
-	bot.getBrackets = tulpa => {
+	bot.getBrackets = member => {
 		let out = [];
-		for(let i=0; i<tulpa.brackets.length; i+=2) {
-			out.push(tulpa.brackets[i] + "text" + tulpa.brackets[i+1]);
+		for(let i=0; i<member.brackets.length; i+=2) {
+			out.push(member.brackets[i] + "text" + member.brackets[i+1]);
 		}
 		return out.join(" | ");
 	};
@@ -248,10 +248,10 @@ module.exports = bot => {
 		}, 900000);
 	};
 
-	bot.checkTulpaBirthday = tulpa => {
-		if(!tulpa.birthday) return false;
+	bot.checkMemberBirthday = member => {
+		if(!member.birthday) return false;
 		let now = new Date();
-		return tulpa.birthday.getUTCDate() == now.getUTCDate() && tulpa.birthday.getUTCMonth() == now.getUTCMonth();
+		return member.birthday.getUTCDate() == now.getUTCDate() && member.birthday.getUTCMonth() == now.getUTCMonth();
 	};
 
 	bot.resolveUser = (msg, text) => {

@@ -17,17 +17,17 @@ module.exports = {
 			await bot.db.query("UPDATE Members SET tag = null WHERE user_id = $1", [msg.author.id]);
 			return "Tag cleared for all " + cfg.lang + "s.";
 		}
-		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
-		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(!args[1]) return tulpa.tag ? "Current tag: " + tulpa.tag + "\nTo remove it, try " + cfg.prefix + "tag " + tulpa.name + " clear" : "No tag currently set for " + args[0];
+		let member = await bot.db.getMember(msg.author.id,args[0]);
+		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!args[1]) return member.tag ? "Current tag: " + member.tag + "\nTo remove it, try " + cfg.prefix + "tag " + member.name + " clear" : "No tag currently set for " + args[0];
 		if(["clear","remove","none","delete"].includes(args[1])) {
-			await bot.db.updateTulpa(msg.author.id,tulpa.name,"tag",null);
+			await bot.db.updateMember(msg.author.id,member.name,"tag",null);
 			return "Tag cleared.";
 		}
 		if (args.slice(1).join(" ").length > 25) return "That tag is too long. Please use one with less than 25 characters.";
 		
-		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,args[0],"tag",bot.noVariation(args.slice(1).join(" ")));
+		//update member
+		await bot.db.updateMember(msg.author.id,args[0],"tag",bot.noVariation(args.slice(1).join(" ")));
 		return "Tag updated successfully.";
 	}
 };

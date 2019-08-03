@@ -72,25 +72,25 @@ module.exports = {
 		let found = false;
 		//check tulpae.json
 		try {
-			let tulpae = require("../tulpae.json");
+			let members = require("../tulpae.json");
 			found = true;
 			if((await question("Found tulpae.json file. Import to database? (yes/no)\n") != "yes")) console.log("Ignoring file."); 
 			else {
 				console.log("Beginning import.");
 				let count = 0;
-				let keys = Object.keys(tulpae);
+				let keys = Object.keys(members);
 				for(let id of keys) {
 					count++;
 					console.log(`\tImporting user ${id} (${count} of ${keys.length})`);
-					for(let i=0;i<tulpae[id].length;i++) {
+					for(let i=0;i<members[id].length;i++) {
 						let a = count;
-						let tulpa = tulpae[id][i];
+						let member = members[id][i];
 						let conn = await pool.connect();
 						conn.query("INSERT INTO Members(user_id,name,position,avatar_url,brackets,posts,show_brackets,birthday,description,tag) VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8)::date,$9,$10)",
-							[id,tulpa.name,i,tulpa.url,tulpa.brackets,tulpa.posts,!!tulpa.showbrackets,tulpa.birthday ? tulpa.birthday/1000 : null,tulpa.desc || null,tulpa.tag || null])
+							[id,member.name,i,member.url,member.brackets,member.posts,!!member.showbrackets,member.birthday ? member.birthday/1000 : null,member.desc || null,member.tag || null])
 							.catch(e => { console.error(e); })
 							.then(() => {
-								console.log(`\tuser ${a} - ${tulpa.name} done`);
+								console.log(`\tuser ${a} - ${member.name} done`);
 								conn.release();
 							});
 					}
@@ -159,23 +159,23 @@ module.exports = {
 		return pool.query(text, params, callback);
 	},
 
-	addTulpa: async (userID, name, brackets) => {
+	addMember: async (userID, name, brackets) => {
 		return await pool.query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
 	},
 
-	getTulpa: async (userID, name) => {
+	getMember: async (userID, name) => {
 		return (await pool.query("SELECT * FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
 	},
 
-	updateTulpa: async (userID, name, column, newVal) => {
+	updateMember: async (userID, name, column, newVal) => {
 		return await pool.query(`UPDATE Members SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
 	},
 
-	deleteTulpa: async (userID, name) => {
+	deleteMember: async (userID, name) => {
 		return await pool.query("DELETE FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
 	},
 
-	mergeTulpa: async () => {
+	mergeMember: async () => {
 
 	},
 

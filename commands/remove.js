@@ -23,11 +23,11 @@ module.exports = {
 			return `All ${cfg.lang}s removed.`;
 		}
 		let name = args.join(" ");
-		let tulpa = await bot.db.getTulpa(msg.author.id,name);
-		if(!tulpa) return "Could not find " + cfg.lang + " with that name registered under your account.";
+		let member = await bot.db.getMember(msg.author.id,name);
+		if(!member) return "Could not find " + cfg.lang + " with that name registered under your account.";
 		
 		//delete
-		await bot.db.deleteTulpa(msg.author.id,name);
+		await bot.db.deleteMember(msg.author.id,name);
 		return proper(cfg.lang) + " unregistered.";
 	}
 };

@@ -51,8 +51,8 @@ module.exports = async (msg,bot) => {
 		delete bot.dialogs[msg.channel.id+msg.author.id];
 	}
 	if(msg.channel.guild && (!msg.channel.permissionsOf(bot.user.id).has("readMessages") || !msg.channel.permissionsOf(bot.user.id).has("sendMessages"))) return;
-	let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
-	if(tulpae[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
+	let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+	if(members[0] && !(msg.channel.type == 1) && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");
 		let cleanarr = clean.split("\n");
@@ -61,8 +61,8 @@ module.exports = async (msg,bot) => {
 		let current = null;
 		for(let i = 0; i < lines.length; i++) {
 			let found = false;
-			tulpae.forEach(t => {
-				let res = bot.checkTulpa(msg, t, cleanarr[i]);
+			members.forEach(t => {
+				let res = bot.checkMember(msg, t, cleanarr[i]);
 				if(res >= 0) {
 					if(t.brackets[res*2+1].length == 0) current = t;
 					else current = null;
@@ -77,8 +77,8 @@ module.exports = async (msg,bot) => {
 		if(replace.length < 2) replace = [];
 	
 		if(!replace[0]) {
-			for(let t of tulpae) {
-				let res = bot.checkTulpa(msg, t, clean);
+			for(let t of members) {
+				let res = bot.checkMember(msg, t, clean);
 				if(res >= 0) {
 					replace.push([msg, cfg, t, t.show_brackets ? msg.content : msg.content.substring(t.brackets[res*2].length, msg.content.length-t.brackets[res*2+1].length)]);
 					break;

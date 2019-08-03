@@ -10,15 +10,15 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["rename"], cfg);
 
 		//check arguments
-		let tulpa = await bot.db.getTulpa(msg.author.id,args[0]);
+		let member = await bot.db.getMember(msg.author.id,args[0]);
 		if(!args[1]) return "Missing argument 'newname'.";
-		let newTulpa = await bot.db.getTulpa(msg.author.id,args[1]);
+		let newMember = await bot.db.getMember(msg.author.id,args[1]);
 		if(args[1].length < 2 || args[1].length > 28) return "New name must be between 2 and 28 characters.";
-		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(newTulpa) return "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
+		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(newMember) return "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
 		
-		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,args[0],"name",bot.noVariation(args[1]));
+		//update member
+		await bot.db.updateMember(msg.author.id,args[0],"name",bot.noVariation(args[1]));
 		return proper(cfg.lang) + " renamed successfully.";
 	}
 };

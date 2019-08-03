@@ -13,33 +13,33 @@ module.exports = {
 
 		//check arguments
 		let name = (args[0] == "add" || args[0] == "remove") ? args[1] : args[0];
-		let tulpa = await bot.db.getTulpa(msg.author.id,name);
-		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(!args[1]) return `Brackets for ${args[0]}: ${bot.getBrackets(tulpa)}`;
+		let member = await bot.db.getMember(msg.author.id,name);
+		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!args[1]) return `Brackets for ${args[0]}: ${bot.getBrackets(member)}`;
 		let brackets = msg.content.slice(msg.content.indexOf(name)+name.length+1).trim().split("text");
 		if(brackets.length < 2) return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
 		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
 		if(args[0] == "add") {
-			tulpa.brackets = tulpa.brackets.concat(brackets);
-			await bot.db.updateTulpa(msg.author.id,tulpa.name,"brackets",tulpa.brackets);
+			member.brackets = member.brackets.concat(brackets);
+			await bot.db.updateMember(msg.author.id,member.name,"brackets",member.brackets);
 			return "Brackets added.";
 		} else if(args[0] == "remove") {
 			let index = -1;
-			for(let i=0; i<tulpa.brackets.length; i+=2) {
-				if(tulpa.brackets[i] == brackets[0] && tulpa.brackets[i+1] == brackets[1]) {
+			for(let i=0; i<member.brackets.length; i+=2) {
+				if(member.brackets[i] == brackets[0] && member.brackets[i+1] == brackets[1]) {
 					index = i;
 					break;
 				}
 			}
 			if(index < 0) return "No matching brackets found.";
-			if(tulpa.brackets.length < 3) return "Cannot remove last brackets.";
-			tulpa.brackets = tulpa.brackets.slice(0,index).concat(tulpa.brackets.slice(index+2));
-			await bot.db.updateTulpa(msg.author.id,tulpa.name,"brackets",tulpa.brackets);
+			if(member.brackets.length < 3) return "Cannot remove last brackets.";
+			member.brackets = member.brackets.slice(0,index).concat(member.brackets.slice(index+2));
+			await bot.db.updateMember(msg.author.id,member.name,"brackets",member.brackets);
 			return "Brackets removed.";
 		}
 
-		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,tulpa.name,"brackets",brackets);
+		//update member
+		await bot.db.updateMember(msg.author.id,member.name,"brackets",brackets);
 		return "Brackets set successfully.";
 	}
 };

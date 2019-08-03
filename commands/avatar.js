@@ -14,9 +14,9 @@ module.exports = {
 
 		//check arguments
 		let name = msg.attachments[0] ? args.join(" ") : args[0];
-		let tulpa = await bot.db.getTulpa(msg.author.id, name);
-		if(!tulpa) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(!args[1] && !msg.attachments[0]) return tulpa.avatar_url;
+		let member = await bot.db.getMember(msg.author.id, name);
+		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!args[1] && !msg.attachments[0]) return member.avatar_url;
 		if(!validUrl.isWebUri(args[1]) && !msg.attachments[0]) return "Malformed url.";
 
 		//check image is valid
@@ -33,8 +33,8 @@ module.exports = {
 		catch(e) { return "There was a problem checking that image. Please try another."; }
 		if(Math.min(res.width,res.height) >= 1024) return "That image is too large and Discord will not accept it. Please use an image where width or height is less than 1024 pixels.";
 
-		//update tulpa
-		await bot.db.updateTulpa(msg.author.id,name,"avatar_url",url);
+		//update member
+		await bot.db.updateMember(msg.author.id,name,"avatar_url",url);
 		return "Avatar changed successfully.";
 	}
 };

@@ -11,12 +11,12 @@ module.exports = {
 		//do search
 		let search = args.join(" ").toLowerCase();
 		let targets = msg.channel.type == 1 ? [msg.author.id] : msg.channel.guild.members.map(m => m.id);
-		let tul = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
-		if(!tul[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
+		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
+		if(!results[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
 
 		//return single match
-		if(tul.length == 1) { 
-			let t = tul[0];
+		if(results.length == 1) { 
+			let t = results[0];
 			let host = bot.users.get(t.user_id);
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
@@ -25,7 +25,7 @@ module.exports = {
 					name: t.name,
 					icon_url: t.url
 				},
-				description: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`,
+				description: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateMemberField(t,group).value}`,
 			}};
 			return embed;
 		}
@@ -36,8 +36,8 @@ module.exports = {
 			title: "Results",
 			fields: []
 		}};
-		for(let i=0; i<tul.length; i++) {
-			let t = tul[i];
+		for(let i=0; i<results.length; i++) {
+			let t = results[i];
 			if(current.embed.fields.length >= 5) {
 				embeds.push(current);
 				current = { embed: {
@@ -48,13 +48,13 @@ module.exports = {
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
 			let host = bot.users.get(t.user_id);
-			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateTulpaField(t,group).value}`});
+			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateMemberField(t,group).value}`});
 		}
 
 		embeds.push(current);
 		if(embeds.length > 1) {
 			for(let i = 0; i < embeds.length; i++)
-				embeds[i].embed.title += ` (page ${i+1}/${embeds.length} of ${tul.length} results)`;
+				embeds[i].embed.title += ` (page ${i+1}/${embeds.length} of ${results.length} results)`;
 			return bot.paginate(msg, embeds);
 		}
 		return embeds[0];

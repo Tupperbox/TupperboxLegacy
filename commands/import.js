@@ -47,7 +47,7 @@ module.exports = {
 					let old = oldTups.find(tu => t.name == tu.name) || {};
 					if(!old.name) { //update existing entry
 						added++;
-						await bot.db.addTulpa(uid,t.name,t.brackets);
+						await bot.db.addMember(uid,t.name,t.brackets);
 					} else updated++;
 					await bot.db.query("UPDATE Members SET avatar_url = $1, posts = $2, show_brackets = $3, birthday = $4, description = $5, tag = $6, brackets = $7 WHERE user_id = $8 AND name = $9",
 						[t.avatar_url || old.avatar_url, Math.max(old.posts || 0,t.posts || 0), t.show_brackets || false, t.birthday || null, t.description || null, t.tag || null, t.brackets || old.brackets, uid, t.name]);
@@ -82,7 +82,7 @@ module.exports = {
 					let newBrackets = (!t.prefix && !t.suffix) ? [`${t.name}:`,""] : [t.prefix || "", t.suffix || ""];
 					if(!old.name) { //update existing entry
 						added++;
-						await bot.db.addTulpa(uid,t.name,newBrackets);
+						await bot.db.addMember(uid,t.name,newBrackets);
 					} else updated++;
 					await bot.db.query("UPDATE Members SET avatar_url = $1, posts = $2, birthday = $3, description = $4, group_id = $5, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $5), brackets = $6::text[] WHERE user_id = $7 AND name = $8",
 						[t.avatar_url || old.avatar_url || "https://i.imgur.com/ZpijZpg.png", t.message_count || 0, t.birthday || null, t.description || null, old.group_id || systemGroup.id, newBrackets, uid, t.name]);

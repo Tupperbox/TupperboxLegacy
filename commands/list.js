@@ -23,7 +23,7 @@ module.exports = {
 				let user = bot.users.get(id);
 				let field = {
 					name: `${user.username}#${user.discriminator} (${all[id].length} registered)`,
-					value: all[id].map(tul => tul.name).join(", ")
+					value: all[id].map(mem => mem.name).join(", ")
 				};
 				if(field.value.length > 1000) field.value = field.value.slice(0,1000) + "...";
 				return field;
@@ -43,9 +43,9 @@ module.exports = {
 		//generate paginated list with groups
 		let groups = (await bot.db.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [target.id])).rows;
 		if(groups[0] && !ng) {
-			let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
-			if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
-			if(tulpae.find(t => !t.group_id)) groups.push({name: "Ungrouped", id: null});
+			let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
+			if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
+			if(members.find(t => !t.group_id)) groups.push({name: "Ungrouped", id: null});
 			let embeds = [];
 			for(let i=0; i<groups.length; i++) {
 				let extra = {
@@ -56,7 +56,7 @@ module.exports = {
 					},
 					description: `Group: ${groups[i].name}${groups[i].tag ? "\nTag: " + groups[i].tag : ""}${groups[i].description ? "\n" + groups[i].description : ""}`
 				};
-				let add = await bot.generatePages(tulpae.filter(t => t.group_id == groups[i].id), t => bot.generateTulpaField(t),extra);
+				let add = await bot.generatePages(members.filter(t => t.group_id == groups[i].id), t => bot.generateMemberField(t),extra);
 				if(add[add.length-1].embed.fields.length < 5 && groups[i+1]) add[add.length-1].embed.fields.push({
 					name: "\u200b",
 					value: `Next page: group ${groups[i+1].name}`
@@ -66,14 +66,14 @@ module.exports = {
 			
 			for(let i=0; i<embeds.length; i++) {
 				embeds[i].embed.title = `${target.username}#${target.discriminator}'s registered ${cfg.lang}s`;
-				if(embeds.length > 1) embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${tulpae.length} total)`;
+				if(embeds.length > 1) embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${members.length} total)`;
 			}
 
 			if(embeds[1]) return bot.paginate(msg,embeds);
 			return embeds[0];
 		}
-		let tulpae = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
-		if(!tulpae[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
+		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 
 		//generate paginated list
 		let extra = {
@@ -84,10 +84,10 @@ module.exports = {
 			}
 		};
 		
-		let embeds = await bot.generatePages(tulpae, async t => {
+		let embeds = await bot.generatePages(members, async t => {
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
-			return bot.generateTulpaField(t,group);
+			return bot.generateMemberField(t,group);
 		}, extra);
 		if(embeds[1]) return bot.paginate(msg, embeds);
 		return embeds[0];
