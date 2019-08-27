@@ -21,10 +21,10 @@ module.exports = bot => {
 			avatarURL: member.avatar_url,
 		};
 
-		//discord treats astral characters (many emojis) as one character, so add a little dot to make it two
+		//discord treats astral characters (many emojis) as one character, so add an invisible char to make it two
 		let len = strlen(data.username);
-		if(len == 0) data.username += "\u00b7\u00b7";
-		else if(len == 1) data.username += "\u00b7";
+		if(len == 0) data.username += "\u17B5\u17B5";
+		else if(len == 1) data.username += "\u17B5";
 		//discord collapses same-name messages, so if two would be sent by different users, break them up with a tiny space
 
 		if(bot.recent[msg.channel.id] && msg.author.id !== bot.recent[msg.channel.id][0].user_id && data.username === bot.recent[msg.channel.id][0].name) {
