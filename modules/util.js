@@ -33,7 +33,7 @@ module.exports = bot => {
 		//discord prevents the name 'clyde' being used in a webhook, so break it up with a tiny space
 		let c = data.username.toLowerCase().indexOf("clyde");
 		if(c > -1) data.username = data.username.substring(0,c+1) + "\u200a" + data.username.substring(c+1);
-		if(data.username.length > 32) data.username = data.username.slice(0,30) + "..";
+		if(data.username.length > 80) data.username = data.username.slice(0,78) + "..";
 
 		if(msg.attachments[0]) {
 			return bot.sendAttachmentsWebhook(msg, cfg, data, content, hook, member);

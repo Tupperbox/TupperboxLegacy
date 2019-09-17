@@ -73,3 +73,5 @@ webhooks.json
 backups
 package-lock.json
 recovery*
+.vscode/
+.vs/
