@@ -11,10 +11,11 @@ if(cluster.isMaster) {
 	module.exports = {
 		postStats: (wrk,msg,shrd) => {
 			if(!msg.channelID) return;
+			let guilds = shrd.stats.stats.clusters.reduce((a,b)=>a+b.guilds,0);
 			shrd.eris.createMessage(msg.channelID,
 				"```"+shrd.stats.stats.clusters.sort((a,b) => a.cluster-b.cluster).map(c => 
 					`Cluster ${c.cluster} - up ${dhm(c.uptime)}\n\tShards: ${c.shards}\n\tMemory: ${c.ram.toFixed(1)} MB\n\tServers: ${c.guilds}`).join("\n")
-				+`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB` + "```"
+				+`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB\nTotal servers: ${guilds}\n\nRequest received on Shard ${msg.shard} (Cluster ${wrk.id})` + "```"
 			);
 		}
 	};
