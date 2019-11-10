@@ -207,8 +207,8 @@ module.exports = {
 	},
 
 	isBlacklisted: async (serverID, id, proxy) => {
-		if(proxy) return (await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0];
-		else return (await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0];
+		if(proxy) return ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0] != undefined);
+		else return ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0] != undefined);
 	},
 
 	getGroup: async (userID, name) => {

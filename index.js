@@ -14,7 +14,7 @@ const init = async () => {
 		await require("./modules/db").init();
 	}
 
-	let sharder = new Sharder(process.env.DISCORD_TOKEN,"/bot.js",{
+	let sharder = new Sharder("Bot " + process.env.DISCORD_TOKEN,"/bot.js",{
 		clientOptions: {
 			disableEvents: {
 				GUILD_BAN_ADD: true,
@@ -25,7 +25,9 @@ const init = async () => {
 				TYPING_START: true,
 				VOICE_STATE_UPDATE: true
 			},
-			messageLimit: 0
+            messageLimit: 0,
+            guildSubscriptions: false,
+            restMode: true
 		},
 		stats: true,
 		//clusters: 2,

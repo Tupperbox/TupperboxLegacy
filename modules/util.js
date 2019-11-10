@@ -254,10 +254,13 @@ module.exports = bot => {
 		return member.birthday.getUTCDate() == now.getUTCDate() && member.birthday.getUTCMonth() == now.getUTCMonth();
 	};
 
-	bot.resolveUser = (msg, text) => {
-		let target = bot.users.get(/<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1]) || bot.users.get(text) || msg.channel.guild.members.find(m => m.username.toLowerCase() == text.toLowerCase() || (m.nick && m.nick.toLowerCase()) == text.toLowerCase() || text.toLowerCase() == `${m.username.toLowerCase()}#${m.discriminator}`);
-		if(target && target.user) target = target.user;
-		return target;
+    bot.resolveUser = async (msg, text) => {
+        let uid = /<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1] || text;
+        if (/^\d+$/.test(uid)) {
+            let target = await bot.getRESTUser(uid);
+            if (target && target.user) target = target.user;
+            return target;
+        } else return null;
 	};
 
 	bot.resolveChannel = (msg, text) => {

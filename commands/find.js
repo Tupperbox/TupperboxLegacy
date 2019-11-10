@@ -1,11 +1,12 @@
-const {article,proper} = require("../modules/lang");
+﻿const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Find and display info about " + cfg.lang + "s by name",
 	usage: cfg =>  ["find <name> - Attempts to find " + article(cfg) + " " + cfg.lang + " with exactly the given name, and if none are found, tries to find " + cfg.lang + "s with names containing the given name."],
 	permitted: (msg) => true,
 	groupArgs: true,
-	execute: async (bot, msg, args, cfg) => {
+    execute: async (bot, msg, args, cfg) => {
+        return "This command is temporarily disabled due to performance limitations. Consider ❓ reacting to a message or using " + cfg.prefix + "showuser to learn about the desired tupper.\nAlso consider donating towards a server upgrade! <https://www.patreon.com/tupperbox>";
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search

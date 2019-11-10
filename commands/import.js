@@ -79,7 +79,7 @@ module.exports = {
 				for(let i=0; i<tups.length; i++) {
 					let t = tups[i];
 					let old = oldTups.find(tu => t.name == tu.name) || {};
-					let newBrackets = (!t.prefix && !t.suffix) ? [`${t.name}:`,""] : [t.prefix || "", t.suffix || ""];
+					let newBrackets = (t.proxy_tags.length == 0) ? [`${t.name}:`,""] : t.proxy_tags.map(pt => [pt.prefix ||  "", pt.suffix || ""]).reduce((acc,val) => acc.concat(val),[]);
 					if(!old.name) { //update existing entry
 						added++;
 						await bot.db.addMember(uid,t.name,newBrackets);
