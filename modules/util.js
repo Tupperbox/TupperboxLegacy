@@ -55,6 +55,7 @@ module.exports = bot => {
 
 		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
+			if(typeof(logchannel.createMessage) != "function") console.log(logchannel)
 			if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);

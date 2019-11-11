@@ -6,13 +6,25 @@ module.exports = {
 	permitted: (msg) => true,
 	groupArgs: true,
     execute: async (bot, msg, args, cfg) => {
-        return "This command is temporarily disabled due to performance limitations. Consider ❓ reacting to a message or using " + cfg.prefix + "showuser to learn about the desired tupper.\nAlso consider donating towards a server upgrade! <https://www.patreon.com/tupperbox>";
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search
 		let search = args.join(" ").toLowerCase();
-		let targets = msg.channel.type == 1 ? [msg.author.id] : msg.channel.guild.members.map(m => m.id);
-		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
+		let targets; 
+		if(msg.channel.type == 1)
+			targets = [msg.author.id]
+		else {
+			targets = [];
+			let amtFound = 1000;
+			let lastId = 0;
+			while(amtFound == 1000) {
+				let found = await msg.channel.guild.getRESTMembers(1000,lastId);
+				amtFound = found.length;
+				if(found.length > 0) lastId = found[found.length-1].id;
+				targets = targets.concat(found.map(m => m.id));
+			}
+		}
+		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
 		if(!results[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
 
 		//return single match

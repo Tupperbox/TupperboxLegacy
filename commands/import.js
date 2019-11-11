@@ -25,6 +25,9 @@ module.exports = {
 		}
 		let uid = msg.author.id;
 		if(data.tuppers) { //tupperbox file
+			if(data.tuppers.length > 3000 || data.groups.length > 500) {
+				return "Data too large for import. Please visit the support server for assistance: https://discord.gg/6WF6Z5m";
+			}
 			let tups = data.tuppers;
 			let groups = data.groups;
 			try {
@@ -64,6 +67,9 @@ module.exports = {
 				return `Something went wrong importing your data. This may have resulted in a partial import. Please check the data and try again. (${e.code || e.message})`;
 			}
 		} else if(data.switches) { //pluralkit file
+			if(data.members.length > 3000) {
+				return "Data too large for import. Please visit the support server for assistance: https://discord.gg/6WF6Z5m";
+			}
 			try {
 				let sysName = data.name || msg.author.username;
 				let systemGroup = await bot.db.getGroup(uid,sysName);

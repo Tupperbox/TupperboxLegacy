@@ -1,29 +1,31 @@
 {
-  "name": "tupperware",
+  "name": "tupperbox",
   "version": "1.5.0",
-  "description": "tupperware bot for discord tulpa hooks",
-  "main": "bot.js",
+  "description": "tupperbox bot for discord message proxying",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "homepage": "https://github.com/Keterr/Tupperbox/blob/rewrite/README.md",
+  "repository": "github:Keterr/Tupperbox",
+  "bugs": "https://github.com/Keterr/Tupperbox/issues",
   "author": "Keter",
   "license": "ISC",
   "dependencies": {
-    "@sentry/node": "^4.5.3",
+    "@sentry/node": "^5.7.1",
     "bufferutil": "^4.0.1",
     "dotenv": "^6.2.0",
-    "eris": "^0.9.0",
-    "eris-sharder": "^1.7.11",
-    "erlpack": "github:abalabahaha/erlpack",
-    "eventemitter3": "^3.1.0",
+    "eris": "github:abalabahaha/eris#dev",
+    "eris-sharder": "^1.9.0",
     "got": "^9.6.0",
-    "pako": "^1.0.8",
-    "pg": "^7.8.0",
-    "probe-image-size": "^3.0.0",
-    "sodium-native": "^2.2.5",
+    "ioredis": "^4.14.1",
+    "pako": "^1.0.10",
+    "pg": "^7.12.1",
+    "probe-image-size": "^3.2.0",
+    "sodium-native": "^2.4.6",
     "string-length": "^2.0.0",
     "valid-url": "^1.0.9",
-    "winston": "^3.2.0",
-    "zlib-sync": "^0.1.4"
+    "winston": "^3.2.1",
+    "zlib-sync": "^0.1.6"
   }
 }

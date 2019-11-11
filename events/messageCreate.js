@@ -1,5 +1,6 @@
 module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
+	if(bot.blacklist.includes(msg.author.id)) return;
 	let cfg;
 	let guild = msg.channel.guild;
 	if(guild) cfg = await bot.db.getCfg(guild.id);
