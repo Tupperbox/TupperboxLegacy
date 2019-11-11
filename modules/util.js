@@ -222,7 +222,7 @@ module.exports = bot => {
 		return out.join(" | ");
 	};
 
-	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3"];
+	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3", "\uD83D\uDD20"];
 	bot.paginate = async (msg, data) => {
 		if(!(msg.channel.type == 1)) {
 			let perms = msg.channel.permissionsOf(bot.user.id);
