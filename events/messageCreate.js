@@ -99,7 +99,7 @@ module.exports = async (msg,bot) => {
 				if(e.message == "Cannot Send Empty Message") bot.send(msg.channel, "Cannot proxy empty message.");
 				else if(e.permission == "Manage Webhooks") bot.send(msg.channel, "Proxy failed because I don't have 'Manage Webhooks' permission in this channel.");
 				else if(e.message == "toolarge") bot.send(msg.channel, "Message not proxied because bots can't send attachments larger than 8mb. Sorry!");
-				else if(e.code != 500 && !e.message.startsWith("Request timed out") && e.code != 10008) bot.err(msg, e); 
+				else if((e.code < 500 || e.code > 599) && e.code != 10003 && !e.message.startsWith("Request timed out") && e.code != 10008) bot.err(msg, e); 
 			}
 		}
 	}

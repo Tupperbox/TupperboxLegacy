@@ -16,29 +16,30 @@ module.exports = {
 		else {
 			targets = [];
 			let amtFound = 1000;
-			let lastId = 0;
+			let lastId = "0";
 			while(amtFound == 1000) {
-				let found = await msg.channel.guild.getRESTMembers(1000,lastId);
+				let found = await bot.requestHandler.request("GET", require("eris/lib/rest/Endpoints").GUILD_MEMBERS(msg.channel.guild.id), true, {limit:1000,after:lastId});
 				amtFound = found.length;
-				if(found.length > 0) lastId = found[found.length-1].id;
-				targets = targets.concat(found.map(m => m.id));
+				if(found.length > 0) lastId = found[found.length-1].user.id;
+				targets = targets.concat(found.map(m => m.user));
 			}
 		}
-		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets,search])).rows;
+		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets.map(u => u.id),search])).rows;
 		if(!results[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
 
 		//return single match
 		if(results.length == 1) { 
 			let t = results[0];
-			let host = bot.users.get(t.user_id);
+			let host = targets.find(u => u.id == t.user_id);
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
 			let embed = { embed: {
 				author: {
 					name: t.name,
 					icon_url: t.url
 				},
-				description: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateMemberField(t,group).value}`,
+				description: val + bot.generateMemberField(t,group,val.length).value,
 			}};
 			return embed;
 		}
@@ -60,8 +61,9 @@ module.exports = {
 			}
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
-			let host = bot.users.get(t.user_id);
-			current.embed.fields.push({name: t.name, value: `Host: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.host}\n${bot.generateMemberField(t,group).value}`});
+			let host = targets.find(u => u.id == t.user_id);
+			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
+			current.embed.fields.push({name: t.name, value: val + bot.generateMemberField(t,group,val.length).value});
 		}
 
 		embeds.push(current);

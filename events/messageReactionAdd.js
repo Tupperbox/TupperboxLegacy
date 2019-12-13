@@ -27,7 +27,7 @@ module.exports = async (message, emoji, userID, bot) => {
 		if(message.channel.type != 1 && message.channel.permissionsOf(bot.user.id).has("manageMessages"))
 			await bot.removeMessageReaction(message.channel.id, message.id, emoji.name, userID);
 	} catch(e) {
-		if(!e.message.startsWith("Request timed out") && e.code != 500) bot.err(message,e,false);
+		if(!e.message.startsWith("Request timed out") && e.code != 500 && e.code != 10008) bot.err(message,e,false);
 	}
 	let msg1,msg2;
 	switch(emoji.name) {

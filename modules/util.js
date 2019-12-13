@@ -55,8 +55,12 @@ module.exports = bot => {
 
 		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
-			if(typeof(logchannel.createMessage) != "function") console.log(logchannel)
-			if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
+			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
+				cfg.log_channel = null;
+				bot.send(msg.channel, "Warning: There is a log channel configured but it is not a text channel. Logging has been disabled.");
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
+			}
+			else if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 			}
@@ -127,6 +131,8 @@ module.exports = bot => {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				let hook = await bot.fetchWebhook(msg.channel);
 				return bot.executeWebhook(hook.id,hook.token,data);
+			} else if(e.code == 40005) {
+				throw new Error("toolarge");
 			} else throw e;
 		}
 	};
@@ -205,12 +211,12 @@ module.exports = bot => {
 		return embeds;
 	};
 
-	bot.generateMemberField = (member,group = null) => {
+	bot.generateMemberField = (member,group = null,add = 0) => {
 		let out = {
 			name: member.name.trim().length < 1 ? member.name + "\u200b" : member.name,
 			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${member.tag ? ("Tag: " + member.tag + "\n") : ""}Brackets: ${bot.getBrackets(member)}\nAvatar URL: ${member.avatar_url}${member.birthday ? ("\nBirthday: "+member.birthday.toDateString()) : ""}\nTotal messages sent: ${member.posts}${member.description ? ("\n"+member.description) : ""}`
 		};
-		if(out.value.length > 1023) out.value = out.value.slice(0,1020) + "...";
+		if(out.value.length + add > 1023) out.value = out.value.slice(0,1020-add) + "...";
 		return out;
 	};
 
@@ -258,7 +264,10 @@ module.exports = bot => {
     bot.resolveUser = async (msg, text) => {
         let uid = /<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1] || text;
         if (/^\d+$/.test(uid)) {
-            let target = await bot.getRESTUser(uid);
+			let target = null;
+			try {
+				target = await bot.getRESTUser(uid);
+			} catch(e) {}
             if (target && target.user) target = target.user;
             return target;
         } else return null;
