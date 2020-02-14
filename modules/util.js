@@ -64,7 +64,7 @@ module.exports = bot => {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
 			}
-			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
 
 		bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
