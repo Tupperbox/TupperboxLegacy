@@ -10,7 +10,8 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["register"], cfg);
 
 		//check arguments
-		let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
+		let content = args.join(" ");
+		let brackets = content.slice(content.indexOf(args[0])+args[0].length+1).trim().split("text");
 		let name = args[0].trim();
 		let member = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
 		if(!args[1]) return "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
