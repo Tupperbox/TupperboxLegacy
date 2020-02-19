@@ -11,7 +11,7 @@ module.exports = {
 
 		//check arguments
 		let brackets = msg.content.slice(msg.content.indexOf(args[0])+args[0].length+1).trim().split("text");
-		let name = args[0].trim();
+		let name = bot.sanitizeName(args[0]);
 		let member = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
 		if(!args[1]) return "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
 		if(name.length < 1 || name.length > 76)	return "Name must be between 1 and 76 characters.";

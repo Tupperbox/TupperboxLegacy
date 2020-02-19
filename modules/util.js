@@ -3,8 +3,17 @@ const strlen = require("string-length");
 const { PermissionsError, EmptyError } = require("./errors");
 
 let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
+let ignoreEvents = ['INVITE_CREATE','INVITE_DELETE'];
 
 module.exports = bot => {  
+	bot.removeAllListeners('unknown');
+	bot.on('unknown',data => {
+		if(!ignoreEvents.includes(data.t)) console.log(`Unknown Packet ${data.t}`);
+	});
+	bot.removeAllListeners('debug');
+	bot.on('debug',data => {
+		if(typeof data == "string" && data.includes(" 429 (")) console.log(data);
+	});
 
 	bot.replaceMessage = async (msg, cfg, member, content, retry = true) => {
 		const hook = await bot.fetchWebhook(msg.channel);
@@ -31,8 +40,7 @@ module.exports = bot => {
 			data.username = data.username.substring(0,1) + "\u200a" + data.username.substring(1);
 		}
 		//discord prevents the name 'clyde' being used in a webhook, so break it up with a tiny space
-		let c = data.username.toLowerCase().indexOf("clyde");
-		if(c > -1) data.username = data.username.substring(0,c+1) + "\u200a" + data.username.substring(c+1);
+		data.username = data.username.replace(/(c)(lyde)/gi, "$1\u200a$2");
 		if(data.username.length > 80) data.username = data.username.slice(0,78) + "..";
 
 		if(msg.attachments[0]) {
@@ -81,7 +89,7 @@ module.exports = bot => {
 	};
 
 	bot.err = (msg, error, tell = true) => {
-		if(error.message.startsWith("Request timed out") || error.code == 500) return;
+		if(error.message.startsWith("Request timed out") || error.code == 500) return; //Internal discord errors don't need reporting
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
 		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`).catch(e => {});
 		bot.sentry.captureException(error);
@@ -163,7 +171,7 @@ module.exports = bot => {
 					}
 					if(wbhooks.length == 10) hook = wbhooks[9];
 					else hook = await channel.createWebhook({ name: "Tupperhook" });
-				} else throw e;
+				} else if(e.code != 10003) throw e;
 			}
 			let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
 			await bot.db.query("INSERT INTO Webhooks VALUES ($1,$2,$3)", [hook.id,channel.id,hook.token]);
@@ -241,7 +249,7 @@ module.exports = bot => {
 		}
 		let m = await bot.send(msg.channel, data[0]);
 		for(let i=0; i<buttons.length; i++)
-			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]);
+			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]).catch(e => { if(e.code != 10008) throw e; });
 		bot.pages[m.id] = {
 			user: msg.author.id,
 			pages: data,
@@ -249,8 +257,8 @@ module.exports = bot => {
 		};
 		setTimeout(() => {
 			if(!bot.pages[m.id]) return;
-			if(!(msg.channel.type == 1))
-				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { }); 
+			if(!msg.channel.guild || msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
+				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) throw e; });  //discard "Unknown Message" - no way to know if the message has been deleted
 			delete bot.pages[m.id];
 		}, 900000);
 	};
@@ -265,9 +273,7 @@ module.exports = bot => {
         let uid = /<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1] || text;
         if (/^\d+$/.test(uid)) {
 			let target = null;
-			try {
-				target = await bot.getRESTUser(uid);
-			} catch(e) {}
+			target = await bot.getRESTUser(uid).catch(e => { if(e.code != 10013) throw e; return null }); //return null if user wasn't found, otherwise throw
             if (target && target.user) target = target.user;
             return target;
         } else return null;
@@ -311,10 +317,14 @@ module.exports = bot => {
 			if(e.message.startsWith("Request timed out") || e.code >= 500) {
 				if(retry) return bot.send(channel,message,file,false);
 				else return;
-			} else if(e.code != 50007 && e.code != 10003) throw e;
+			} else throw e;
 		}
 		return msg;
 	};
+
+	bot.sanitizeName = name => {
+		return name.trim();
+	}
 
 	bot.noVariation = word => {
 		return word.replace(/[\ufe0f]/g,"");

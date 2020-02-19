@@ -27,7 +27,8 @@ const init = async () => {
 			},
             messageLimit: 0,
             guildSubscriptions: false,
-            restMode: true
+			restMode: true,
+			ratelimiterOffset: 50,
 		},
 		stats: true,
 		//clusters: 2,
@@ -35,6 +36,8 @@ const init = async () => {
 		debug: true,
 		name: "Tupperbox"
 	});
+
+	sharder.eris.on('debug',console.log);
 
 	if(cluster.isMaster) {
 		let events = require("./modules/ipc.js");

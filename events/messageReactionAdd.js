@@ -3,7 +3,7 @@ let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3",
 module.exports = async (message, emoji, userID, bot) => {
 	if(emoji.name == "\u274c" && bot.recent[message.channel.id] && bot.recent[message.channel.id].find(r => r.user_id == userID && message.id == r.id)) {
 		if(!message.channel.guild || message.channel.permissionsOf(bot.user.id).has("manageMessages"))
-			bot.deleteMessage(message.channel.id,message.id).catch(e => { if(e.code != 10008) throw e; });
+			bot.deleteMessage(message.channel.id,message.id);
 		return;
 	} else if(emoji.name == "\u2753" && bot.recent[message.channel.id]) {
 		let recent = bot.recent[message.channel.id].find(r => message.id == r.id);
@@ -16,9 +16,9 @@ module.exports = async (message, emoji, userID, bot) => {
 		} catch(e) {
 			target = message.channel;
 			response = `<@${userID}>: ${response}\n(also I am unable to DM you!)`;
-			try{await bot.send(target,response);}catch(e){}
+			await bot.send(target,response);
 		}
-		try{await bot.removeMessageReaction(message.channel.id, message.id, emoji.name, userID);}catch(e){}
+		await bot.removeMessageReaction(message.channel.id, message.id, emoji.name, userID);
 		return;
 	}
 	if(!bot.pages[message.id] || bot.pages[message.id].user != userID || !buttons.includes(emoji.name)) return;
@@ -55,7 +55,7 @@ module.exports = async (message, emoji, userID, bot) => {
 			try {
 				return await bot.deleteMessage(message.channel.id, message.id);
 			} catch(e) {
-				return console.error(e.stack);
+				return bot.err(message, e, false);
 			}
 
 		case "\u0023\u20e3": //go to num
@@ -71,23 +71,23 @@ module.exports = async (message, emoji, userID, bot) => {
 				} else {
 					msg1.edit("Invalid number.");
 					let id = msg1.id;
-					setTimeout(() => bot.deleteMessage(message.channel.id,id), 3000);
+					setTimeout(() => bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion), 3000);
 					msg1 = null;
 				}
 			} catch(e) {
 				if(e == "timeout") {
-					msg1.edit("Timed out - canceling.");
+					msg1.edit("Timed out - canceling.").catch(ignoreDeletion);
 					let id = msg1.id;
 					setTimeout(() => {
-						bot.deleteMessage(message.channel.id,id).catch(dontCare => {});
+						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
 					},3000);
 					msg1 = null;
 				} else {
-					console.error(e.stack);
+					bot.err(message, e, false);
 				}
 			}
-			if(msg1) msg1.delete();
-			if(msg2 && msg2.channel.type != 1) msg2.delete();
+			if(msg1) msg1.delete().catch(ignoreDeletion);
+			if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
 			break;
 		case "\ud83d\udd20": //find in list
 			if(bot.dialogs[message.channel.id + userID]) return;
@@ -111,32 +111,36 @@ module.exports = async (message, emoji, userID, bot) => {
 				if(res < 0) res = searchFunc(f => f.name.toLowerCase().includes(search));
 				if(res < 0) res = searchFunc(f => f.value.toLowerCase().includes(search));
 				if(res < 0) {
-					msg1.edit("No result found.");
+					msg1.edit("No result found.").catch(ignoreDeletion);
 					let id = msg1.id;
 					setTimeout(() => {
-						bot.deleteMessage(message.channel.id,id).catch(dontCare => {});
+						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
 					},3000);
 					msg1 = null;
 				} else data.index = res;
 			} catch(e) {
 				if(e == "timeout") {
-					msg1.edit("Timed out - canceling.");
+					msg1.edit("Timed out - canceling.").catch(ignoreDeletion);
 					let id = msg1.id;
 					setTimeout(() => {
-						bot.deleteMessage(message.channel.id,id).catch(dontCare => {});
+						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
 					},3000);
 					msg1 = null;
 				} else {
-					console.error(e.stack);
+					bot.err(message, e, false);
 				}
 			}
-			if(msg1) msg1.delete();
-			if(msg2 && msg2.channel.type != 1) msg2.delete();
+			if(msg1) msg1.delete().catch(ignoreDeletion);
+			if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
 			break;
 	}
 	try {
-		await bot.editMessage(message.channel.id, message.id, data.pages[data.index]);
+		await bot.editMessage(message.channel.id, message.id, data.pages[data.index]).catch(ignoreDeletion); //ignore message already deleted
 	} catch(e) {
-		if(e.code != 10008) bot.err(message, e, false);
+		bot.err(message, e, false);
 	}
 };
+
+function ignoreDeletion(e) {
+	if(e.code != 10008) throw e;
+}
