@@ -65,7 +65,7 @@ module.exports = {
 				if(!args[2]) return "Must provide name/mention/id of channel to allow.";
 				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
 				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-				if(channels.find(ch => ch == undefined)) {
+				if(channels.some(ch => ch == undefined)) {
 					out = "Could not find these channels: ";
 					for(let i = 0; i < channels.length; i++)
 						if(!channels[i]) out += args.slice(2)[i] + " ";
@@ -89,7 +89,7 @@ module.exports = {
 				if(!args[2]) return "Must provide name/mention/id of channel to cmdblacklist.";
 				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
 				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-				if(channels.find(ch => ch == undefined)) {
+				if(channels.some(ch => ch == undefined)) {
 					out = "Could not find these channels: ";
 					for(let i = 0; i < channels.length; i++)
 						if(!channels[i]) out += args.slice(2)[i];
@@ -102,7 +102,7 @@ module.exports = {
 				if(!args[2]) return "Must provide name/mention/id of channel to allow.";
 				channels = args.slice(2).map(arg => bot.resolveChannel(msg,arg)).map(ch => { if(ch) return ch.id; else return ch; });
 				if(!channels.find(ch => ch != undefined)) return `Could not find ${channels.length > 1 ? "those channels" : "that channel"}.`;
-				if(channels.find(ch => ch == undefined)) {
+				if(channels.some(ch => ch == undefined)) {
 					out = "Could not find these channels: ";
 					for(let i = 0; i < channels.length; i++)
 						if(!channels[i]) out += args.slice(2)[i] + " ";
