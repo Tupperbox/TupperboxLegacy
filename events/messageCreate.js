@@ -7,7 +7,7 @@ module.exports = async (msg,bot) => {
 	else cfg = { id: null, prefix: "tul!", lang: "tupper"};
 	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
-		let args = content.split(/\s+/g);
+		let args = content.split(/s+/g);
 		let cmd = bot.cmds[args.shift()];
 		if(cmd && bot.checkPermissions(cmd,msg,args)) {
 			let noPerms = false;
