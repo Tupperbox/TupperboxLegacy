@@ -13,7 +13,7 @@ module.exports = {
 			let tup = (await bot.db.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [msg.author.id, args.join(" ")])).rows[0];
 			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
 
-			data = { tuppers: [tu]p, groups: []};
+			data = { tuppers: [tup], groups: []};
 		}
 
 		try {
