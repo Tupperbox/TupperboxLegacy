@@ -163,12 +163,14 @@ module.exports = {
 		console.log("ok!");
 	},
 
+	connect: () => pool.connect(),
+
 	query: (text, params, callback) => {
 		return pool.query(text, params, callback);
 	},
 
-	addMember: async (userID, name, brackets) => {
-		return await pool.query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
+	addMember: async (userID, name, brackets, client) => {
+		return await (client || pool).query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
 	},
 
 	getMember: async (userID, name) => {
@@ -228,8 +230,8 @@ module.exports = {
 		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
 	},
 
-	addGroup: async (userID, name) => {
-		return await pool.query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
+	addGroup: async (userID, name, client) => {
+		return await (client || pool).query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
 	},
 
 	updateGroup: async (userID, name, column, newVal) => {
