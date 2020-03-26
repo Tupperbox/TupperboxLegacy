@@ -19,7 +19,7 @@ module.exports = {
 			if(!args[1]) return "Missing argument 'prefix'.";
 			let prefix = args.slice(1).join(" ");
 
-			await bot.db.updateCfg(gid,"prefix",prefix);
+			await bot.db.updateCfg(gid,"prefix",prefix,bot.defaultCfg);
 			return "Prefix changed to " + prefix;
 
 		case "roles":
@@ -28,17 +28,17 @@ module.exports = {
 		case "rename":
 			if(!args[1]) return "Missing argument 'newname'";
 			let lang = args.slice(1).join(" ");
-			await bot.db.updateCfg(gid,"lang",lang);
+			await bot.db.updateCfg(gid,"lang",lang,bot.defaultCfg);
 			return "Entity name changed to " + lang;
 
 		case "log":
 			if(!args[1]) {
-				await bot.db.updateCfg(gid,"log_channel",null);
+				await bot.db.updateCfg(gid,"log_channel",null,bot.defaultCfg);
 				return "Logging channel unset. Logging is now disabled.";
 			}
 			let channel = bot.resolveChannel(msg,args[1]);
 			if(!channel) return "Channel not found.";
-			await bot.db.updateCfg(gid,"log_channel",channel.id);
+			await bot.db.updateCfg(gid,"log_channel",channel.id,bot.defaultCfg);
 			return `Logging channel set to <#${channel.id}>`;					
 
 		case "blacklist":

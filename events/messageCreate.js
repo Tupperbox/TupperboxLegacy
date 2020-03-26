@@ -1,10 +1,8 @@
 module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
 	if(bot.blacklist.includes(msg.author.id)) return;
-	let cfg;
 	let guild = msg.channel.guild;
-	if(guild) cfg = await bot.db.getCfg(guild.id);
-	else cfg = { id: null, prefix: "tul!", lang: "tupper"};
+	let cfg = await bot.getConfig(guild);
 	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");

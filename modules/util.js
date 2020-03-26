@@ -66,11 +66,11 @@ module.exports = bot => {
 			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
 				cfg.log_channel = null;
 				bot.send(msg.channel, "Warning: There is a log channel configured but it is not a text channel. Logging has been disabled.");
-				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
 			}
 			else if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
 			}
 			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 		}
@@ -89,7 +89,7 @@ module.exports = bot => {
 	};
 
 	bot.err = (msg, error, tell = true) => {
-		if(error.message.startsWith("Request timed out") || error.code == 500) return; //Internal discord errors don't need reporting
+		if(error.message.startsWith("Request timed out") || error.code == 500 || error.code == "ECONNRESET") return; //Internal discord errors don't need reporting
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
 		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`).catch(e => {});
 		bot.sentry.captureException(error);
@@ -120,7 +120,7 @@ module.exports = bot => {
 				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
 					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-					await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null);
+					await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
 				}
 				else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
 			}
@@ -184,7 +184,7 @@ module.exports = bot => {
 	};
   
 	bot.updateStatus = async () => {
-		bot.editStatus({ name: `tul!help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
+		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
 	};
 
 	bot.generatePages = async (arr, fieldGen, extra = {}) => {
@@ -282,6 +282,13 @@ module.exports = bot => {
 	bot.resolveChannel = (msg, text) => {
 		let g = msg.channel.guild;
 		return g.channels.get(/<#(\d+)>/.test(text) && text.match(/<#(\d+)>/)[1]) || g.channels.get(text) || g.channels.find(m => m.name.toLowerCase() == text.toLowerCase());
+	};
+
+	bot.getConfig = async (guild) => {
+		let cfg;
+		if(guild) cfg = await bot.db.getCfg(guild.id);
+		if(!cfg) cfg = { ...bot.defaultCfg };
+		return cfg;
 	};
 
 	bot.checkPermissions = (cmd, msg, args) => {

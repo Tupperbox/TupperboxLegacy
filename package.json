@@ -18,7 +18,7 @@
     "eris": "github:abalabahaha/eris#dev",
     "eris-sharder": "^1.9.0",
     "got": "^9.6.0",
-    "ioredis": "^4.14.1",
+    "ioredis": "^4.16.0",
     "pako": "^1.0.10",
     "pg": "^7.12.1",
     "probe-image-size": "^3.2.0",

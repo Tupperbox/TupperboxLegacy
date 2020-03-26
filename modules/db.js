@@ -1,5 +1,7 @@
 const { Pool } = require("pg");
 const fs = require("fs");
+const redis = require("ioredis");
+const cache = new redis(process.env.REDISURL);
 
 let pool = new Pool();
 
@@ -15,6 +17,7 @@ let updateBlacklist = async (serverID, id, isChannel, blockProxies, blockCommand
 };
 
 module.exports = {
+	cache,
 	init: async () => {
 		process.stdout.write("Checking postgres connection... ");
 		(await (await pool.connect()).release());
@@ -153,6 +156,11 @@ module.exports = {
 			}
 		} catch(e) { if(e.code != "MODULE_NOT_FOUND") console.log(e);}
 		if(!found) console.log("Data OK.");
+		process.stdout.write("Checking Redis connection...");
+		await cache.set('test', 1);
+		if(await cache.get('test') != 1) throw new Error("Cache integrity check failed");
+		await cache.del('test');
+		console.log("ok!");
 	},
 
 	query: (text, params, callback) => {
@@ -175,21 +183,22 @@ module.exports = {
 		return await pool.query("DELETE FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
 	},
 
-	mergeMember: async () => {
-
+	addCfg: async (serverID, cfg) => {
+		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,cfg.prefix,cfg.lang]);
 	},
 
-	addCfg: async (serverID) => {
-		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,"tul!","tupper"]);
+	getCfg: async (serverID) => {
+		let cfg = await cache.get('config/'+serverID);
+		if(cfg) { console.log(); return JSON.parse(cfg); }
+		cfg = ((await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0]);
+		if(cfg) await cache.set('config/'+serverID, JSON.stringify(cfg));
+		return cfg;
 	},
 
-	getCfg: async (serverID) => { 
-		return (((await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0]) || { id: serverID, prefix: "tul!", lang: "tupper"});
-	},
-
-	updateCfg: async (serverID, column, newVal) => {
-		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID, "tul!", "tupper"]);
-		return await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2`, [newVal,serverID]);
+	updateCfg: async (serverID, column, newVal, cfg) => {
+		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
+		let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING *`, [newVal,serverID])).rows[0];
+		if(updated) return await cache.set('config/'+serverID,JSON.stringify(updated));
 	},
 
 	deleteCfg: async (serverID) => {

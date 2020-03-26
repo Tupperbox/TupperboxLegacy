@@ -10,7 +10,6 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["register"], cfg);
 
 		//check arguments
-		// let content = msg.content.replace("tul!register ","");
 		let brackets = msg.content.slice(msg.content.indexOf(args[0], msg.content.indexOf("register")+8)+args[0].length+1).trim().split("text");
 		let name = bot.sanitizeName(args[0]);
 		let member = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
