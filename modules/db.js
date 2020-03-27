@@ -170,8 +170,8 @@ module.exports = {
 		return pool.query(text, params, callback);
 	},
 
-	addMember: async (userID, name, brackets, client) => {
-		return await (client || pool).query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,name,"https://i.imgur.com/ZpijZpg.png",brackets]);
+	addMember: async (userID, member, client) => {
+		return await (client || pool).query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,member.name,member.avatarURL || "https://i.imgur.com/ZpijZpg.png",member.brackets]);
 	},
 
 	getMember: async (userID, name) => {
