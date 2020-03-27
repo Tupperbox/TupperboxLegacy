@@ -18,7 +18,7 @@ module.exports = {
 			let amtFound = 1000;
 			let lastId = "0";
 			while(amtFound == 1000) {
-				let found = await bot.requestHandler.request("GET", require("eris/lib/rest/Endpoints").GUILD_MEMBERS(msg.channel.guild.id), true, {limit:1000,after:lastId});
+				let found = await bot.requestHandler.request("GET", `/guilds/${msg.channel.guild.id}/members`, true, {limit:1000,after:lastId});
 				amtFound = found.length;
 				if(found.length > 0) lastId = found[found.length-1].user.id;
 				targets = targets.concat(found.map(m => m.user));

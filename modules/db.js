@@ -160,6 +160,7 @@ module.exports = {
 		await cache.set('test', 1);
 		if(await cache.get('test') != 1) throw new Error("Cache integrity check failed");
 		await cache.del('test');
+		await cache.flushall();
 		console.log("ok!");
 	},
 
@@ -191,19 +192,20 @@ module.exports = {
 
 	getCfg: async (serverID) => {
 		let cfg = await cache.get('config/'+serverID);
-		if(cfg) { console.log(); return JSON.parse(cfg); }
-		cfg = ((await pool.query("SELECT * FROM Servers WHERE id = $1", [serverID])).rows[0]);
-		if(cfg) await cache.set('config/'+serverID, JSON.stringify(cfg));
+		if(cfg) { return JSON.parse(cfg); }
+		cfg = ((await pool.query("SELECT prefix, lang, lang_plural, log_channel FROM Servers WHERE id = $1", [serverID])).rows[0]);
+		if(cfg) cache.set('config/'+serverID, JSON.stringify(cfg));
 		return cfg;
 	},
 
 	updateCfg: async (serverID, column, newVal, cfg) => {
 		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
-		let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING *`, [newVal,serverID])).rows[0];
+		let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING prefix, lang, lang_plural, log_channel`, [newVal,serverID])).rows[0];
 		if(updated) return await cache.set('config/'+serverID,JSON.stringify(updated));
 	},
 
 	deleteCfg: async (serverID) => {
+		cache.del('config/'+serverID);
 		return await pool.query("DELETE FROM Servers WHERE id = $1", [serverID]);
 	},
 
