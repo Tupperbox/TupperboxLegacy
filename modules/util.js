@@ -257,7 +257,7 @@ module.exports = bot => {
 		};
 		setTimeout(() => {
 			if(!bot.pages[m.id]) return;
-			if(!msg.channel.guild || msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
+			if(msg.channel.guild && msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) throw e; });  //discard "Unknown Message" - no way to know if the message has been deleted
 			delete bot.pages[m.id];
 		}, 900000);
