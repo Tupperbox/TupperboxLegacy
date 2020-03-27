@@ -13,6 +13,8 @@ const question = q => {
 };
 
 let updateBlacklist = async (serverID, id, isChannel, blockProxies, blockCommands) => {
+	if(blockProxies !== null) cache.hset(`blacklist/${serverID}/${id}`, "proxy", blockProxies ? 1 : 0);
+	if(blockCommands !== null) cache.hset(`blacklist/${serverID}/${id}`, "command", blockCommands ? 1 : 0);
 	return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
 };
 
@@ -194,14 +196,14 @@ module.exports = {
 		let cfg = await cache.get('config/'+serverID);
 		if(cfg) { return JSON.parse(cfg); }
 		cfg = ((await pool.query("SELECT prefix, lang, lang_plural, log_channel FROM Servers WHERE id = $1", [serverID])).rows[0]);
-		if(cfg) cache.set('config/'+serverID, JSON.stringify(cfg));
+		if(cfg) cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(cfg).filter(ent => ent[1] !== null))));
 		return cfg;
 	},
 
 	updateCfg: async (serverID, column, newVal, cfg) => {
 		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
 		let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING prefix, lang, lang_plural, log_channel`, [newVal,serverID])).rows[0];
-		if(updated) return await cache.set('config/'+serverID,JSON.stringify(updated));
+		if(updated) return await cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(updated).filter(ent => ent[1] !== null))));
 	},
 
 	deleteCfg: async (serverID) => {
@@ -216,12 +218,21 @@ module.exports = {
 	updateBlacklist: updateBlacklist,
 
 	deleteBlacklist: async (serverID, id) => {
+		cache.del(`blacklist/${serverID}/${id}`);
 		return await pool.query("DELETE FROM Blacklist WHERE server_id = $1 AND id = $2", [serverID, id]);
 	},
 
 	isBlacklisted: async (serverID, id, proxy) => {
-		if(proxy) return ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0] != undefined);
-		else return ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0] != undefined);
+		let blacklisted = await cache.hget(`blacklist/${serverID}/${id}`,proxy ? "proxy" : "command");
+		if(blacklisted !== null) return blacklisted == 1;
+		if(proxy) {
+			blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0] != undefined);
+			cache.hset(`blacklist/${serverID}/${id}`,"proxy",blacklisted ? 1 : 0);
+		} else {
+			blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0] != undefined);
+			cache.hset(`blacklist/${serverID}/${id}`,"command",blacklisted ? 1 : 0);
+		}
+		return blacklisted;
 	},
 
 	getGroup: async (userID, name) => {
