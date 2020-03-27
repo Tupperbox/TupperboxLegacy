@@ -54,7 +54,7 @@ module.exports = {
 					let old = oldTups.find(tu => t.name == tu.name) || {};
 					if(!old.name) { //update existing entry
 						added++;
-						await bot.db.addMember(uid,t.name,t.brackets, client);
+						await bot.db.addMember(uid,{name: t.name,brackets: t.brackets}, client);
 					} else updated++;
 					await client.query("UPDATE Members SET avatar_url = $1, posts = $2, show_brackets = $3, birthday = $4, description = $5, tag = $6, brackets = $7 WHERE user_id = $8 AND name = $9",
 						[t.avatar_url || old.avatar_url, Math.max(old.posts || 0,t.posts || 0), t.show_brackets || false, t.birthday || null, t.description || null, t.tag || null, t.brackets || old.brackets, uid, t.name]);
@@ -99,7 +99,7 @@ module.exports = {
 					let newBrackets = (t.proxy_tags.length == 0) ? [`${t.name}:`,""] : t.proxy_tags.map(pt => [pt.prefix ||  "", pt.suffix || ""]).reduce((acc,val) => acc.concat(val),[]);
 					if(!old.name) { //update existing entry
 						added++;
-						await bot.db.addMember(uid,t.name,newBrackets,client);
+						await bot.db.addMember(uid,{name:t.name,brackets:newBrackets},client);
 					} else updated++;
 					await client.query("UPDATE Members SET avatar_url = $1, posts = $2, birthday = $3, description = $4, group_id = $5, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $5), brackets = $6::text[] WHERE user_id = $7 AND name = $8",
 						[t.avatar_url || old.avatar_url || "https://i.imgur.com/ZpijZpg.png", t.message_count || 0, t.birthday || null, t.description || null, old.group_id || systemGroup.id, newBrackets, uid, t.name]);
