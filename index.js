@@ -29,6 +29,12 @@ const init = async () => {
             guildSubscriptions: false,
 			restMode: true,
 			ratelimiterOffset: 50,
+			intents: [
+				"guilds",
+				"guildMessages",
+				"guildMessageReactions",
+				"directMessages",
+			],
 		},
 		stats: true,
 		//clusters: 2,
