@@ -35,6 +35,6 @@ module.exports = {
 
 		//update member
 		await bot.db.updateMember(msg.author.id,name,"avatar_url",url);
-		return "Avatar changed successfully." + (msg.attachments[0] ? "\nNote: if the message you just used to upload the avatar with gets deleted, the avatar will no longer appear." : "");
+		return "Avatar changed successfully." + (msg.attachments[0] ? "\nNote: if the message you just used to upload the avatar with gets deleted, the avatar will eventually no longer appear." : "");
 	}
 };

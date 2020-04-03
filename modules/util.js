@@ -11,12 +11,26 @@ module.exports = bot => {
 		if(!ignoreEvents.includes(data.t)) console.log(`Unknown Packet ${data.t}`);
 	});
 	bot.removeAllListeners('debug');
+	let discordBanned = false;
 	bot.on('debug',data => {
-		if(typeof data == "string" && data.includes(" 429 (")) console.log(data);
+		if(typeof data == "string" && data.includes(" 429 (")) {
+			if(data.includes("You are being blocked from accessing our API temporarily due to exceeding our rate limits frequently") && !discordBanned) discordBanned = true;  
+			if(!discordBanned) console.log(data);
+		}
 	});
 
 	bot.replaceMessage = async (msg, cfg, member, content, retry = true) => {
 		const hook = await bot.fetchWebhook(msg.channel);
+		let ratelimit = bot.requestHandler.ratelimits[`/webhooks/${hook.id}/:token?wait=true`];
+		if(ratelimit && ratelimit._queue.length > 5) {
+			let res = { message: "autoban",  notify: false };
+			//ratelimit._queue = [];
+			if(!ratelimit.expire || Date.now() > ratelimit.expire) {
+				ratelimit.expire = Date.now() + 10000;
+				res.notify = true;
+			}
+			throw res;
+		}
 		let groupTag;
 		if(member.group_id) groupTag = (await bot.db.query("SELECT tag FROM Groups WHERE id = $1",[member.group_id])).rows[0].tag;
 		const data = {
@@ -236,6 +250,19 @@ module.exports = bot => {
 		return out.join(" | ");
 	};
 
+	bot.findAllUsers = async guildID =>  {
+		let targets = [];
+		let amtFound = 1000;
+		let lastId = "0";
+		while(amtFound == 1000) {
+			let found = await bot.requestHandler.request("GET", `/guilds/${guildID}/members`, true, {limit:1000,after:lastId});
+			amtFound = found.length;
+			if(found.length > 0) lastId = found[found.length-1].user.id;
+			targets = targets.concat(found.map(m => m.user));
+		}
+		return targets;
+	}
+
 	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3", "\uD83D\uDD20"];
 	bot.paginate = async (msg, data) => {
 		if(!(msg.channel.type == 1)) {
@@ -336,6 +363,10 @@ module.exports = bot => {
 	bot.noVariation = word => {
 		return word.replace(/[\ufe0f]/g,"");
 	};
+
+	bot.banAbusiveUser = (userID, notifyChannelID) => {
+
+	}
 
 	bot.getMatches = (string, regex) => {
 		var matches = [];

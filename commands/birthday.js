@@ -8,13 +8,12 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
     execute: async (bot, msg, args, cfg) => {
-        if (!args[0]) return bot.cmds.help.execute(bot, msg, ["birthday"], cfg);
-		////give next 5 birthdays
-		//if(!args[0]) {
-		//	let members = (await bot.db.query("SELECT *, birthday + date_trunc('year', age(birthday + 1)) + interval '1 year' as anniversary FROM Members WHERE user_id = ANY($1) ORDER BY anniversary LIMIT 5;", [[msg.author.id].concat(msg.channel.guild ? msg.channel.guild.members.map(m => m.id) : [])])).rows.filter(t => t.anniversary != null);
-		//	if(!members[0]) return "No " + cfg.lang + "s on this server have birthdays set.";
-		//	return "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + members.map(t => (bot.checkMemberBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString("en-US",{timeZone:"UTC"})}`)).join("\n");
-		//}
+		if(!args[0]) {
+			let targets = await bot.findAllUsers(msg.channel.guild.id);
+			let members = (await bot.db.query("SELECT *, birthday + date_trunc('year', age(birthday + 1)) + interval '1 year' as anniversary FROM Members WHERE birthday IS NOT NULL AND user_id IN (select(unnest($1::text[]))) ORDER BY anniversary LIMIT 5;",[targets.map(u => u.id)])).rows;
+			if(!members[0]) return "No " + cfg.lang + "s on this server have birthdays set.";
+			return "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + members.map(t => (bot.checkMemberBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString("en-US",{timeZone:"UTC"})}`)).join("\n");
+		}
 
 		//check arguments
 		let member = await bot.db.getMember(msg.author.id,args[0]);

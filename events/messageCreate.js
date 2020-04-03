@@ -87,6 +87,10 @@ module.exports = async (msg,bot) => {
 	
 		if(replace[0] && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 			try {
+				if(replace.length > 10) {
+					console.log(`Potential abuse by ${msg.author.id} - ${replace.length} proxies at once in ${msg.channel.id}!`);
+					return bot.send(msg.channel, `Proxy refused: too many proxies in one message!`);
+				}
 				for(let r of replace) {
 					await bot.replaceMessage(...r);
 				}
@@ -97,7 +101,10 @@ module.exports = async (msg,bot) => {
 				if(e.message == "Cannot Send Empty Message") bot.send(msg.channel, "Cannot proxy empty message.");
 				else if(e.permission == "Manage Webhooks") bot.send(msg.channel, "Proxy failed because I don't have 'Manage Webhooks' permission in this channel.");
 				else if(e.message == "toolarge") bot.send(msg.channel, "Message not proxied because bots can't send attachments larger than 8mb. Sorry!");
-				else if(e.code != 10008) bot.err(msg, e); //discard "Unknown Message" errors
+				else if(e.message == "autoban") {
+					if(e.notify) bot.send(msg.channel, "Proxies refused due to spam!");
+					console.log(`Potential spam by ${msg.author.id}!`);
+				} else if(e.code != 10008) bot.err(msg, e); //discard "Unknown Message" errors
 			}
 		}
 	}

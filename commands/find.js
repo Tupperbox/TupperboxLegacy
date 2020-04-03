@@ -14,15 +14,7 @@ module.exports = {
 		if(msg.channel.type == 1)
 			targets = [msg.author.id]
 		else {
-			targets = [];
-			let amtFound = 1000;
-			let lastId = "0";
-			while(amtFound == 1000) {
-				let found = await bot.requestHandler.request("GET", `/guilds/${msg.channel.guild.id}/members`, true, {limit:1000,after:lastId});
-				amtFound = found.length;
-				if(found.length > 0) lastId = found[found.length-1].user.id;
-				targets = targets.concat(found.map(m => m.user));
-			}
+			targets = await bot.findAllUsers(msg.channel.guild.id);
 		}
 		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END)",[targets.map(u => u.id),search])).rows;
 		if(!results[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";

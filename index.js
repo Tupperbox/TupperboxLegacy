@@ -38,7 +38,7 @@ const init = async () => {
 		},
 		stats: true,
 		//clusters: 2,
-		//shards: 2,
+		shards: 160,
 		debug: true,
 		name: "Tupperbox"
 	});
