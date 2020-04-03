@@ -12,11 +12,14 @@ A Discord bot written in <a href="https://github.com/abalabahaha/eris">eris</a> 
   - tul!cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.
   - tul!cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels.
 - tul!describe  -  View or change a member's description
+- tul!export - Export your data to a file
 - tul!feedback  -  Get a link to the support server
 - tul!find  -  Find and display info about members by name
+- tul!group - View or change your groups
 - tul!help  -  Print this message, or get help for a specific command
 - tul!invite  -  Get the bot's invite URL
 - tul!list  -  Get a detailed list of yours or another user's registered members
+- tul!listng - Like list, but without showing group info
 - tul!register  -  Register a new member
 - tul!remove  -  Unregister a member
 - tul!rename  -  Change a member's name
@@ -30,6 +33,7 @@ This bot runs off of Node.js. You can download it from https://nodejs.org/en/dow
 Once node is installed, run `npm install` from the bot directory to install the bot's dependencies. If the dependencies all install successfully (note: you may have to run `npm -g install windows-build-tools` first if on Windows) then you can now run the bot by running `node index`.
 
 Additionally, the bot now requires PostgreSQL to run. You can download it from https://www.postgresql.org/download/
+The bot now also runs with Redis. Download it from https://redis.io/download
 
 # Running
 The bot expects a file in the same directory named `.env` with some data to get it started. Format should look like this:
@@ -43,10 +47,16 @@ PGDATABASE=???
 PGPASSWORD=???
 PGPORT=3456
 SENTRY_DSN=https://(key)@sentry.io/(id)
+DEFAULT_PREFIX=tul!
+DEFAULT_LANG=tupper
+USE_GUILD_SUBSCRIPTIONS=false
+REDISURL=redis://localhost:6379
 ```
 (don't worry, that token is a fake)
 The PG-prefixed variables should be filled in with the connection info to your PostgreSQL database set up during installation. You need a **database**, a **user** with associated **password** with full write access to that database, and the **host IP** of the machine running the server (localhost if it's the same machine).
 SENTRY_DSN is a link to a registered Sentry project. Make one here: https://sentry.io/ and copy the provided DSN link into that field.
+Edit DEFAULT_PREFIX, DEFAULT_LANG as desired. Setting USE_GUILD_SUBSCRIPTIONS to true will guarantee list, find, and logging functions will always give the correct username.
+Leave REDISURL alone unless you change the port Redis runs on or you host it on another machine.
 
 # Upgrading from JSON storage
 The new version of the bot runs on PostgreSQL and not JSON. If you would like to upgrade, install PostgreSQL, switch to the rewrite branch, and on startup the bot will prompt you to import your JSON databases to the Postgres server you've configured automatically. (Make a backup of these files first - it will delete them)
