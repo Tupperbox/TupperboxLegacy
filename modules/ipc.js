@@ -1,6 +1,5 @@
 const cluster = require("cluster");
 const os = require("os");
-const enqueue = require("./queue");
 
 const dhm = t => {
 	let cd = 24 * 60 * 60 * 1000, ch = 60 * 60 * 1000, cm = 60 * 1000, cs = 1000;
@@ -9,6 +8,7 @@ const dhm = t => {
 };
 
 if(cluster.isMaster) {
+	let enqueue = require("./queue");
 	module.exports = {
 		postStats: (wrk,msg,shrd) => {
 			if(!msg.channelID) return;
@@ -22,6 +22,10 @@ if(cluster.isMaster) {
 		queueDelete: (wrk, msg, shrd) => {
 			if(!msg.channelID || !msg.messageID) return;
 			enqueue(msg);
+		},
+		reloadQueue: () => {
+			delete require.cache[require.resolve('./queue')];
+			enqueue = require("./queue");
 		}
 	};
 } else {
