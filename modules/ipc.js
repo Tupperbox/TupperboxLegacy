@@ -1,5 +1,7 @@
 const cluster = require("cluster");
 const os = require("os");
+const redis = require("ioredis");
+const cache = new redis(process.env.REDISURL);
 
 const dhm = t => {
 	let cd = 24 * 60 * 60 * 1000, ch = 60 * 60 * 1000, cm = 60 * 1000, cs = 1000;
@@ -17,6 +19,9 @@ if(cluster.isMaster) {
 					`Cluster ${c.cluster+1}${c.cluster < 9 ? " " : ""} - ${c.shards} shards -- ${c.ram.toFixed(1)} MB RAM -- ${c.guilds} servers (up ${dhm(c.uptime)})`).join("\n")
 				+`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB\nTotal servers: ${guilds}\n\nRequest received on Shard ${msg.shard} (Cluster ${wrk.id})` + "```"
 			);
+		},
+		queueDelete: (wrk, msg, shrd) => {
+			if(!msg.channelID || !msg.content) return;
 		}
 	};
 } else {

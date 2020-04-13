@@ -37,13 +37,14 @@ const init = async () => {
 			],
 		},
 		stats: true,
-		//clusters: 2,
-		shards: 160,
+		//shards: 160,
+		clusters: 8,
 		debug: true,
 		name: "Tupperbox"
 	});
 
 	sharder.eris.on('debug',console.log);
+	
 
 	if(cluster.isMaster) {
 		let events = require("./modules/ipc.js");
