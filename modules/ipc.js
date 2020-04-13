@@ -1,7 +1,6 @@
 const cluster = require("cluster");
 const os = require("os");
-const redis = require("ioredis");
-const cache = new redis(process.env.REDISURL);
+const enqueue = require("./queue");
 
 const dhm = t => {
 	let cd = 24 * 60 * 60 * 1000, ch = 60 * 60 * 1000, cm = 60 * 1000, cs = 1000;
@@ -21,7 +20,8 @@ if(cluster.isMaster) {
 			);
 		},
 		queueDelete: (wrk, msg, shrd) => {
-			if(!msg.channelID || !msg.content) return;
+			if(!msg.channelID || !msg.messageID) return;
+			enqueue(msg);
 		}
 	};
 } else {
