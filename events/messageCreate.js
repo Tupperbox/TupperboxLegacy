@@ -96,7 +96,9 @@ module.exports = async (msg,bot) => {
 				}
 				let perms = msg.channel.permissionsOf(bot.user.id);
 				if(perms.has("manageMessages") && perms.has("readMessages"))
-					process.send({name: "queueDelete", channelID: msg.channel.id, messageID: msg.id}, null, { swallowErrors: true });
+					process.send({name: "queueDelete", channelID: msg.channel.id, messageID: msg.id}, null, {swallowErrors: false}, err => {
+						if(err) console.log(err)
+					});
 			} catch(e) { 
 				if(e.message == "Cannot Send Empty Message") bot.send(msg.channel, "Cannot proxy empty message.");
 				else if(e.permission == "Manage Webhooks") bot.send(msg.channel, "Proxy failed because I don't have 'Manage Webhooks' permission in this channel.");

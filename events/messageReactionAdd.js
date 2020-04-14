@@ -53,7 +53,7 @@ module.exports = async (message, emoji, userID, bot) => {
 			delete bot.pages[message.id];
 			if(message.channel.type != null && message.channel.type != 1 && !message.channel.permissionsOf(bot.user.id).has("manageMessages")) return;
 			try {
-				return await bot.deleteMessage(message.channel.id, message.id);
+				//return await bot.deleteMessage(message.channel.id, message.id);
 			} catch(e) {
 				return bot.err(message, e, false);
 			}
@@ -71,23 +71,23 @@ module.exports = async (message, emoji, userID, bot) => {
 				} else {
 					msg1.edit("Invalid number.");
 					let id = msg1.id;
-					setTimeout(() => bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion), 3000);
+					//setTimeout(() => bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion), 3000);
 					msg1 = null;
 				}
 			} catch(e) {
 				if(e == "timeout") {
 					msg1.edit("Timed out - canceling.").catch(ignoreDeletion);
 					let id = msg1.id;
-					setTimeout(() => {
+					/*setTimeout(() => {
 						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
-					},3000);
+					},3000);*/
 					msg1 = null;
 				} else {
 					bot.err(message, e, false);
 				}
 			}
-			if(msg1) msg1.delete().catch(ignoreDeletion);
-			if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
+			//if(msg1) msg1.delete().catch(ignoreDeletion);
+			//if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
 			break;
 		case "\ud83d\udd20": //find in list
 			if(bot.dialogs[message.channel.id + userID]) return;
@@ -113,25 +113,25 @@ module.exports = async (message, emoji, userID, bot) => {
 				if(res < 0) {
 					msg1.edit("No result found.").catch(ignoreDeletion);
 					let id = msg1.id;
-					setTimeout(() => {
+					/*setTimeout(() => {
 						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
-					},3000);
+					},3000);*/
 					msg1 = null;
 				} else data.index = res;
 			} catch(e) {
 				if(e == "timeout") {
 					msg1.edit("Timed out - canceling.").catch(ignoreDeletion);
 					let id = msg1.id;
-					setTimeout(() => {
+					/*setTimeout(() => {
 						bot.deleteMessage(message.channel.id,id).catch(ignoreDeletion);
-					},3000);
+					},3000);*/
 					msg1 = null;
 				} else {
 					bot.err(message, e, false);
 				}
 			}
-			if(msg1) msg1.delete().catch(ignoreDeletion);
-			if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
+			//if(msg1) msg1.delete().catch(ignoreDeletion);
+			//if(msg2 && msg2.channel.type != 1) msg2.delete().catch(ignoreDeletion);
 			break;
 	}
 	try {

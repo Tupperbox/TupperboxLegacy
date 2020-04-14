@@ -58,7 +58,7 @@ module.exports = {
 		  CREATE TABLE IF NOT EXISTS Members(
 			id SERIAL PRIMARY KEY,
 			user_id VARCHAR(32) NOT NULL,
-			name VARCHAR(32) NOT NULL,
+			name VARCHAR(80) NOT NULL,
 			position INTEGER NOT NULL,
 			avatar_url TEXT NOT NULL,
 			brackets TEXT[] NOT NULL,
