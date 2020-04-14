@@ -71,7 +71,9 @@ module.exports = {
 			group_pos INTEGER,
 			UNIQUE (user_id,name),
 			FOREIGN KEY (group_id) REFERENCES groups(id)
-		  );`);
+		  );
+		  CREATE INDEX IF NOT EXISTS members_lower_idx ON Members(lower(name));
+		  CREATE INDEX IF NOT EXISTS webhooks_channelidx ON Webhooks(channel_id);`);
 
 		console.log("ok!\nChecking for data to import...");
 		let found = false;
