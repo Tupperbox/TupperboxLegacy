@@ -10,10 +10,10 @@ module.exports = {
 			let groups = (await bot.db.query("SELECT id, name, description, tag FROM Groups WHERE user_id = $1 ORDER BY position",[msg.author.id])).rows;
 			data = { tuppers: tups, groups };
 		} else {
-			let tup = (await bot.db.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [msg.author.id, args.join(" ")])).rows;
+			let tup = (await bot.db.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [msg.author.id, args.join(" ")])).rows[0];
 			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
 
-			data = { tuppers: tup, groups: []};
+			data = { tuppers: [tup], groups: []};
 		}
 
 		try {
