@@ -16,7 +16,7 @@
     "bufferutil": "^4.0.1",
     "dotenv": "^6.2.0",
     "eris": "github:keterr/eris#dev",
-    "eris-sharder": "^1.9.0",
+    "eris-sharder": "github:discordware/eris-sharder#dependabot/npm_and_yarn/eris-0.12.0",
     "got": "^9.6.0",
     "ioredis": "^4.16.0",
     "pako": "^1.0.10",

@@ -19,7 +19,7 @@ module.exports = bot => {
 		}
 	});
 
-	bot.replaceMessage = async (msg, cfg, member, content, retry = true) => {
+	bot.replaceMessage = async (msg, cfg, member, content, retry = 2) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		let ratelimit = bot.requestHandler.ratelimits[`/webhooks/${hook.id}/:token?wait=true`];
 		if(ratelimit && ratelimit._queue.length > 5) {
@@ -70,8 +70,8 @@ module.exports = bot => {
 				await bot.db.query("DELETE FROM Webhooks WHERE channel_id = $1", [msg.channel.id]);
 				const hook = await bot.fetchWebhook(msg.channel);
 				webmsg = await bot.executeWebhook(hook.id,hook.token,data);
-			} else if(e.code == 504 && retry) {
-				return await bot.replaceMessage(msg,cfg,member,content,false);
+			} else if((e.code == 504 || e.code == "EHOSTUNREACH") && retry > 0) {
+				return await bot.replaceMessage(msg,cfg,member,content,retry-1);
 			} else throw e;
 		}
 
@@ -103,7 +103,7 @@ module.exports = bot => {
 	};
 
 	bot.err = (msg, error, tell = true) => {
-		if(error.message.startsWith("Request timed out") || error.code == 500 || error.code == "ECONNRESET") return; //Internal discord errors don't need reporting
+		if(error.message.startsWith("Request timed out") || error.code == 500 || error.code == "ECONNRESET" || error.code == "EHOSTUNREACH") return; //Internal discord errors don't need reporting
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
 		if(tell && msg.channel) bot.send(msg.channel,`There was an error performing the operation. Please report this to the support server if issues persist. (${error.code || error.message})`).catch(e => {});
 		bot.sentry.captureException(error);
@@ -338,7 +338,7 @@ module.exports = bot => {
 		});
 	};
 
-	bot.send = async (channel, message, file, retry = true, author) => {
+	bot.send = async (channel, message, file, retry = 2) => {
 		if(!channel.id) return;
 		let msg;
 		try {
@@ -348,8 +348,8 @@ module.exports = bot => {
 			}
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
-			if(e.message.startsWith("Request timed out") || e.code >= 500) {
-				if(retry) return bot.send(channel,message,file,false);
+			if(e.message.startsWith("Request timed out") || e.code >= 500 || e.code == "EHOSTUNREACH") {
+				if(retry > 0) return bot.send(channel,message,file,retry-1);
 				else return;
 			} else throw e;
 		}

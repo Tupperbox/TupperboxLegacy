@@ -87,7 +87,7 @@ module.exports = async (msg,bot) => {
 	
 		if(replace[0] && (!guild || !(await bot.db.isBlacklisted(guild.id,msg.channel.id,true)))) {
 			try {
-				if(replace.length > 3) {
+				if(replace.length > 7) {
 					//console.log(`Potential abuse by ${msg.author.id} - ${replace.length} proxies at once in ${msg.channel.id}!`);
 					return bot.send(msg.channel, `Proxy refused: too many proxies in one message! The proxy limit has been reduced to 3 due to constant abuse, sorry!`);
 				}

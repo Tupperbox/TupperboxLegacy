@@ -53,7 +53,7 @@ module.exports = async (message, emoji, userID, bot) => {
 			delete bot.pages[message.id];
 			if(message.channel.type != null && message.channel.type != 1 && !message.channel.permissionsOf(bot.user.id).has("manageMessages")) return;
 			try {
-				//return await bot.deleteMessage(message.channel.id, message.id);
+				return await bot.deleteMessage(message.channel.id, message.id);
 			} catch(e) {
 				return bot.err(message, e, false);
 			}

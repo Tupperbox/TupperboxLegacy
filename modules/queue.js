@@ -14,7 +14,14 @@ async function dequeue() {
     if(queue.length > 0) {
         //console.log("Queue size: " + queue.length);
         let msg = queue.pop();
-        bot.deleteMessage(msg.channelID, msg.messageID).catch(console.log);
+        //todo: don't
+        bot.deleteMessage(msg.channelID, msg.messageID).catch(err => {
+            bot.deleteMessage(msg.channelID, msg.messageID).catch(err2 => {
+                bot.deleteMessage(msg.channelID, msg.messageID).catch(err3 => {
+                    console.log(err3.code);
+                });
+            });
+        });
         setTimeout(dequeue, 1000/reqps);
     }
 }

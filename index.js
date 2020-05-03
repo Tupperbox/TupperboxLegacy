@@ -40,7 +40,8 @@ const init = async () => {
 		shards: 160,
 		clusters: 8,
 		debug: true,
-		name: "Tupperbox"
+		name: "Tupperbox",
+		clusterTimeout: 0.1
 	});
 
 	sharder.eris.on('debug',console.log);
