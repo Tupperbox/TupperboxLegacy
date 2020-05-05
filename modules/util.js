@@ -358,7 +358,7 @@ module.exports = bot => {
 
 	bot.sanitizeName = name => {
 		return name.trim();
-	}
+	};
 
 	bot.noVariation = word => {
 		return word.replace(/[\ufe0f]/g,"");
@@ -366,7 +366,17 @@ module.exports = bot => {
 
 	bot.banAbusiveUser = (userID, notifyChannelID) => {
 
-	}
+	};
+
+	bot.checkBlacklist = async (member, channel, proxy) => {
+		//these conditions are split up because otherwise it's very difficult to read
+		if(!channel) return false;
+		if(!channel.guild) return false;
+		if(!member) return false;
+		if(member.permission.has("manageGuild")) return false;
+		if(await bot.db.isBlacklisted(channel.guild.id,channel.id,proxy)) return true;
+		return (channel.parentID && await bot.db.isBlacklisted(channel.guild.id,channel.parentID,proxy));
+	};
 
 	bot.getMatches = (string, regex) => {
 		var matches = [];
