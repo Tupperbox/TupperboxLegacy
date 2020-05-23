@@ -8,7 +8,7 @@ module.exports = async (message, emoji, userID, bot) => {
 	} else if(emoji.name == "\u2753" && bot.recent[message.channel.id]) {
 		let recent = bot.recent[message.channel.id].find(r => message.id == r.id);
 		if(!recent) return;
-		let response = `That proxy was sent by ${recent.tag}.`;
+		let response = `That proxy was sent by ${recent.tag} (${recent.id}).`;
 		let target;
 		try {
 			target = await bot.getDMChannel(userID);
