@@ -5,6 +5,6 @@ module.exports = {
 	execute: (bot, msg, args, cfg) => {
 		if(!bot.recent[msg.channel.id])	return "No " + cfg.lang + "s have spoken in this channel since I last started up, sorry.";
 		
-		return `Last ${cfg.lang} message sent by ${bot.recent[msg.channel.id][0].rawname}, registered to ${bot.recent[msg.channel.id][0].tag}`;
+		return `Last ${cfg.lang} message sent by ${bot.recent[msg.channel.id][0].rawname}, registered to ${bot.recent[msg.channel.id][0].tag} (${bot.recent[msg.channel.id][0].id})`;
 	}
 };
