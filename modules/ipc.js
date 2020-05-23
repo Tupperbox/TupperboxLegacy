@@ -76,6 +76,12 @@ if(cluster.isMaster) {
 					}
 				}
 				console.log(`${out}`);
+			},
+
+			eval: async msg => {
+				if(!msg.code) return;
+				let result = await eval(msg.code);
+				console.log(result);
 			}
 		};
 	};

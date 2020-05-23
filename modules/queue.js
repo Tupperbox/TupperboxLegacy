@@ -18,7 +18,7 @@ async function dequeue() {
         bot.deleteMessage(msg.channelID, msg.messageID).catch(err => {
             bot.deleteMessage(msg.channelID, msg.messageID).catch(err2 => {
                 bot.deleteMessage(msg.channelID, msg.messageID).catch(err3 => {
-                    console.log(err3.code);
+                    console.log("Persistent error deleting message: " + err3.code);
                 });
             });
         });
