@@ -87,19 +87,7 @@ module.exports = bot => {
 			} else throw e;
 		}
 
-		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
-			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
-			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
-				cfg.log_channel = null;
-				bot.send(msg.channel, "Warning: There is a log channel configured but it is not a text channel. Logging has been disabled.");
-				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
-			}
-			else if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
-				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
-			}
-			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
-		}
+		bot.logProxy(msg, cfg, member, content);
 
 		bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
@@ -129,6 +117,22 @@ module.exports = bot => {
 		return -1;
 	};
 
+	bot.logProxy = (msg, cfg, member, content) => {
+		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
+			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
+			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
+				cfg.log_channel = null;
+				bot.send(msg.channel, "Warning: There is a log channel configured but it is not a text channel. Logging has been disabled.");
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
+			}
+			else if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
+				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
+				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
+			}
+			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+		}
+	}
+
 	bot.sendAttachmentsWebhook = async (msg, cfg, data, content, hook, member) => {
 		let files = [];
 		for(let i = 0; i < msg.attachments.length; i++) {
@@ -142,14 +146,7 @@ module.exports = bot => {
 		data.file = files;
 		try {
 			let webmsg = await bot.executeWebhook(hook.id,hook.token,data);
-			if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
-				let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
-				if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
-					bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-					await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
-				}
-				else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator}\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
-			}
+			bot.logProxy(msg, cfg, member, `${data.content}\n[Attachment(s): ${msg.attachments.map(at => at.url)}]`);
 			bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
