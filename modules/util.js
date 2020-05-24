@@ -117,7 +117,7 @@ module.exports = bot => {
 		return -1;
 	};
 
-	bot.logProxy = (msg, cfg, member, content) => {
+	bot.logProxy = async (msg, cfg, member, content) => {
 		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
