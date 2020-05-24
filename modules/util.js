@@ -129,7 +129,14 @@ module.exports = bot => {
 				bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
 				await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
 			}
-			else bot.send(logchannel, `Name: ${member.name}\nRegistered by: ${msg.author.username}#${msg.author.discriminator} (${msg.author.id})\nChannel: <#${msg.channel.id}>\nMessage: ${content}`);
+			else bot.send(logchannel, {embed: {
+				title: member.name,
+				description: content + "\n",
+				fields: [
+					{ name: "Registered by", value: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})` },
+					{ name: "Channel", value: `<#${msg.channel.id}>` }
+				]
+			}});
 		}
 	}
 
@@ -146,7 +153,7 @@ module.exports = bot => {
 		data.file = files;
 		try {
 			let webmsg = await bot.executeWebhook(hook.id,hook.token,data);
-			bot.logProxy(msg, cfg, member, `${data.content}\n[Attachment(s): ${msg.attachments.map(at => at.url)}]`);
+			bot.logProxy(msg, cfg, member, `${data.content}\n[Attachment(s): ${msg.attachments.map(at => at.url).join('\n')}]`);
 			bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
