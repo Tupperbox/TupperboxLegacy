@@ -87,7 +87,7 @@ module.exports = bot => {
 			} else throw e;
 		}
 
-		bot.logProxy(msg, cfg, member, content);
+		bot.logProxy(msg, cfg, member, content, webmsg);
 
 		bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 		if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages")) {
@@ -117,7 +117,7 @@ module.exports = bot => {
 		return -1;
 	};
 
-	bot.logProxy = async (msg, cfg, member, content) => {
+	bot.logProxy = async (msg, cfg, member, content, webmsg) => {
 		if(cfg.log_channel && msg.channel.guild.channels.has(cfg.log_channel)) {
 			let logchannel = msg.channel.guild.channels.get(cfg.log_channel);
 			if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
@@ -133,9 +133,15 @@ module.exports = bot => {
 				title: member.name,
 				description: content + "\n",
 				fields: [
-					{ name: "Registered by", value: `${msg.author.username}#${msg.author.discriminator} (${msg.author.id})` },
-					{ name: "Channel", value: `<#${msg.channel.id}>` }
-				]
+					{ name: "Registered by", value: `<@!${msg.author.id}> (${msg.author.id})`, inline: true},
+					{ name: "Channel", value: `<#${msg.channel.id}> (${msg.channel.id})`, inline: true },
+					{ name: "\u200b", value: "\u200b", inline: true},
+					{ name: "Original Message", value: `[jump](https://discord.com/channels/${msg.channel.guild ? msg.channel.guild.id : "@me"}/${msg.channel.id}/${webmsg.id})`, inline: true},
+					{ name: "Attachments", value: msg.attachments[0] ? msg.attachments.map((att, i) => `[link ${i+1}](${att.url})`).join(', ') : "None", inline: true},
+					{ name: "\u200b", value: "\u200b", inline: true},
+				],
+				thumbnail: {url: member.avatar_url},
+				footer: {text: `Message ID ${webmsg.id}`}
 			}});
 		}
 	}
@@ -153,7 +159,7 @@ module.exports = bot => {
 		data.file = files;
 		try {
 			let webmsg = await bot.executeWebhook(hook.id,hook.token,data);
-			bot.logProxy(msg, cfg, member, `${data.content}\n[Attachment(s): ${msg.attachments.map(at => at.url).join('\n')}]`);
+			bot.logProxy(msg, cfg, member, data.content, webmsg);
 			bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
 			if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
 				bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and " + cfg.lang + " webhook message will show.");
