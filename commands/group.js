@@ -52,6 +52,23 @@ module.exports = {
 			await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
 			return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 
+		case "addmultiple":
+			if(!args[1]) return "No group name given.";
+			if(!args[2]) return `No ${cfg.lang} name given.`;
+			group = await bot.db.getGroup(msg.author.id, args[1]);
+			if(!group) return "You don't have a group with that name.";
+			args.shift()
+			args.shift()
+			for (let i=0; i < args.length; i++ ) {
+				tup = await bot.db.getMember(msg.author.id, args[i]);
+				if(!tup) return `You don't have a registered ${cfg.lang} with the name ${args[i]}.`;
+			}
+			for (let i=0; i < args.length; i++ ) {
+				await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, await bot.db.getMember(msg.author.id, args[i]).id]);
+				console.log(i)
+			}
+			return `${proper(cfg.lang)}s added to group '${group.name}'.`;
+
 		case "remove":
 			if(!args[1]) return "No group name given.";
 			if(!args[2]) return `No ${cfg.lang} name given.`;
