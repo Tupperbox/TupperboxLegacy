@@ -72,8 +72,8 @@ module.exports = {
 			}
 			if (added.length == 0) return `No ${cfg.lang}s added to group.`;
 			if (notAdded.length == 0) return  `${proper(cfg.lang)}s added to group.`;
-			message = `${proper(cfg.lang)}s added to group: '${added[0]}'`
-			for (let i=1; i < added.length; i++) {
+			message = `${proper(cfg.lang)}s added to group:`
+			for (let i=0; i < added.length; i++) {
 				if (message.length + added[i].length < 1994)	message += ` '${added[i]}'`; else return `${message} (...)`;
 			}
 			notAddedMsg = `\n${proper(cfg.lang)}s not added to group: `
