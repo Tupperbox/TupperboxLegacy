@@ -59,28 +59,23 @@ module.exports = {
 			if(!group) return "You don't have a group with that name.";
 			args.shift()
 			args.shift()
-			let added = [];
-			let notAdded = [];
+			addedMessage = `${proper(cfg.lang)}s added to group:`
+			notAddedMessage = `${proper(cfg.lang)}s not added to group:`
+			baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
+			let addedMsg = "";
+			let notAddedMsg = "";
 			for (let i=0; i < args.length; i++ ) {
 				tup = await bot.db.getMember(msg.author.id, args[i]);
 				if (tup) {
 					await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, tup.id]);
-					added.push(args[i]);
+					if ((addedMsg.length + notAddedMsg.length + args[i].length) < baseLength) addedMsg += ` '${args[i]}'`; else addedMsg += " (...)";
 				} else {
-					notAdded.push(args[i]);
+					if ((addedMsg.length + notAddedMsg.length + args[i].length) < baseLength) notAddedMsg += ` '${args[i]}'`; else notAddedMsg += " (...)";
 				}
 			}
-			if (added.length == 0) return `No ${cfg.lang}s added to group.`;
-			if (notAdded.length == 0) return  `${proper(cfg.lang)}s added to group.`;
-			message = `${proper(cfg.lang)}s added to group:`
-			for (let i=0; i < added.length; i++) {
-				if (message.length + added[i].length < 1994)	message += ` '${added[i]}'`; else return `${message} (...)`;
-			}
-			notAddedMsg = `\n${proper(cfg.lang)}s not added to group: `
-			if ((message.length + notAddedMsg.length + notAdded[0].length + 6) < 2000) message += notAddedMsg; else return message;
-			for (let i=0; i < notAdded.length; i++) {
-				if ((message.length + notAdded[i].length) < 1994) message += `'${notAdded[i]}' `; else return `${message}(...)`;
-			}
+			if (addedMsg.length == 0) return `No ${cfg.lang}s added to group.`;
+			if (notAddedMsg.length == 0) return  `${proper(cfg.lang)}s added to group: ${addedMsg}`;
+			message = addedMessage + addedMsg + '\n' + notAddedMessage + notAddedMsg
 			return message;
 
 		case "remove":
