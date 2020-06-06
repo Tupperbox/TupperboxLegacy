@@ -59,15 +59,29 @@ module.exports = {
 			if(!group) return "You don't have a group with that name.";
 			args.shift()
 			args.shift()
+			let added = [];
+			let notAdded = [];
 			for (let i=0; i < args.length; i++ ) {
 				tup = await bot.db.getMember(msg.author.id, args[i]);
-				if(!tup) return `You don't have a registered ${cfg.lang} with the name ${args[i]}.`;
+				if (tup) {
+					await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, tup.id]);
+					added.push(args[i]);
+				} else {
+					notAdded.push(args[i]);
+				}
 			}
-			for (let i=0; i < args.length; i++ ) {
-				await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, await bot.db.getMember(msg.author.id, args[i]).id]);
-				console.log(i)
+			if (added.length == 0) return `No ${cfg.lang}s added to group.`;
+			if (notAdded.length == 0) return  `${proper(cfg.lang)}s added to group.`;
+			message = `${proper(cfg.lang)}s added to group: '${added[0]}'`
+			for (let i=1; i < added.length; i++) {
+				if (message.length + added[i].length < 1994)	message += ` '${added[i]}'`; else return `${message} (...)`;
 			}
-			return `${proper(cfg.lang)}s added to group '${group.name}'.`;
+			notAddedMsg = `\n${proper(cfg.lang)}s not added to group: `
+			if ((message.length + notAddedMsg.length + notAdded[0].length + 6) < 2000) message += notAddedMsg; else return message;
+			for (let i=0; i < notAdded.length; i++) {
+				if ((message.length + notAdded[i].length) < 1994) message += `'${notAdded[i]}' `; else return `${message}(...)`;
+			}
+			return message;
 
 		case "remove":
 			if(!args[1]) return "No group name given.";
