@@ -153,7 +153,7 @@ module.exports = bot => {
 			try {
 				head = await request.head(msg.attachments[i].url);
 			} catch(e) { }
-			if(head && head.headers["content-length"] && Number(head.headers["content-length"]) > 8000000) throw new Error("toolarge");
+			if(head && head.headers["content-length"] && Number(head.headers["content-length"]) > 8388608) throw new Error("toolarge");
 			files.push({ file: await bot.attach(msg.attachments[i].url), name: msg.attachments[i].filename });
 		}
 		data.file = files;

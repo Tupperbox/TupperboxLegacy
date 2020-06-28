@@ -2,6 +2,7 @@ module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
 	if(bot.blacklist.includes(msg.author.id)) return;
 	let guild = msg.channel.guild;
+	if(guild && bot.blacklist.includes(guild.id)) return;
 	let cfg = await bot.getConfig(guild);
 	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
@@ -89,7 +90,7 @@ module.exports = async (msg,bot) => {
 			try {
 				if(replace.length > 7) {
 					//console.log(`Potential abuse by ${msg.author.id} - ${replace.length} proxies at once in ${msg.channel.id}!`);
-					return bot.send(msg.channel, `Proxy refused: too many proxies in one message! The proxy limit has been reduced to 3 due to constant abuse, sorry!`);
+					return bot.send(msg.channel, `Proxy refused: too many proxies in one message!`);
 				}
 				for(let r of replace) {
 					await bot.replaceMessage(...r);
