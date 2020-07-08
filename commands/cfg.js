@@ -2,9 +2,9 @@ const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Configure server-specific settings",
-	usage: cfg =>  ["cfg prefix <newPrefix> - Change the bot's prefix",
-		"cfg rename <newname> - Change all instances of the default name 'member' in bot replies in this server to the specified term",
-		"cfg log <channel> - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names.",
+	usage: cfg =>  ["cfg prefix <newPrefix> - Change the bot's prefix.",
+		"cfg rename <newname> - Change all instances of the default name 'member' in bot replies in this server to the specified term.",
+		"cfg log [channel] - Enable the bot to send a log of all " + cfg.lang + " messages and some basic info like who registered them. Useful for having a searchable channel and for distinguishing between similar names. To disable logging, run with no channel argument.",
 		"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.",
 		"cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels."],
 		
@@ -20,7 +20,7 @@ module.exports = {
 			let prefix = args.slice(1).join(" ");
 
 			await bot.db.updateCfg(gid,"prefix",prefix,bot.defaultCfg);
-			return "Prefix changed to " + prefix;
+			return "Prefix changed to " + prefix + "\nThis means that all commands must now be preceded by your chosen prefix rather than `tul!`. If this was changed by mistake, run `" + prefix + "cfg prefix tul!` to return to default behavior.";
 
 		case "roles":
 			return "This feature has been disabled indefinitely.";
