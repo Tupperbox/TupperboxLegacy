@@ -21,7 +21,7 @@ module.exports = {
 			existing = await bot.db.getGroup(msg.author.id, name);
 			if(existing) return "You already have a group with that name.";
 			await bot.db.addGroup(msg.author.id, bot.noVariation(name));
-			return `Group created. Add ${cfg.lang}s to it with "${cfg.prefix}group add ${args.length < 3 ? name : "'" + name + "'"} <name>".`;
+			return `Group created. Add ${cfg.lang}s to it with "${cfg.prefix}group add ${args.length < 3 ? name : "'" + name + "'"} <name> [name...]".`;
 
 		case "delete":
 			if(!args[1]) return "No group name given.";
@@ -42,41 +42,40 @@ module.exports = {
 			if(!args[2]) return `No ${cfg.lang} name given.`;
 			group = await bot.db.getGroup(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
-			if(args[2] == "*") {
-				let tupps = (await bot.db.query("SELECT id FROM Members WHERE user_id = $1 AND group_id IS NULL ORDER BY position",[msg.author.id])).rows;
-				for(let i=0; i<tupps.length; i++) await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tupps[i].id]);
-				return "All groupless " + cfg.lang + "s assigned to group " + group.name + ".";
-			}
-			tup = await bot.db.getMember(msg.author.id, args.slice(2).join(" "));
-			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-			await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
-			return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
+			args = args.slice(2);
 
-		case "addmultiple":
-			if(!args[1]) return "No group name given.";
-			if(!args[2]) return `No ${cfg.lang} name given.`;
-			group = await bot.db.getGroup(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
-			args.shift()
-			args.shift()
+			if (args.length == 1) {
+				if (args[0] == "*") {
+					let tupps = (await bot.db.query("SELECT id FROM Members WHERE user_id = $1 AND group_id IS NULL ORDER BY position",[msg.author.id])).rows;
+					for await (tup of tupps) {
+						await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
+					}; 
+					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
+				}
+
+				tup = await bot.db.getMember(msg.author.id, args[0]);
+				if(!tup) return `You don't have a registered ${cfg.lang} with that name.`;
+				await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
+				return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
+			}
+
 			addedMessage = `${proper(cfg.lang)}s added to group:`
 			notAddedMessage = `${proper(cfg.lang)}s not added to group:`
 			baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
-			let addedMsg = "";
-			let notAddedMsg = "";
-			for (let i=0; i < args.length; i++ ) {
-				tup = await bot.db.getMember(msg.author.id, args[i]);
+			originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
+
+			for await (arg of args) {
+				tup = await bot.db.getMember(msg.author.id, arg);
 				if (tup) {
 					await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, tup.id]);
-					if ((addedMsg.length + notAddedMsg.length + args[i].length) < baseLength) addedMsg += ` '${args[i]}'`; else addedMsg += " (...)";
+					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) addedMessage += ` '${arg}'`; else addedMessage += " (...)";
 				} else {
-					if ((addedMsg.length + notAddedMsg.length + args[i].length) < baseLength) notAddedMsg += ` '${args[i]}'`; else notAddedMsg += " (...)";
+					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) notAddedMessage += ` '${arg}'`; else notAddedMessage += " (...)";
 				}
-			}
-			if (addedMsg.length == 0) return `No ${cfg.lang}s added to group.`;
-			if (notAddedMsg.length == 0) return  `${proper(cfg.lang)}s added to group: ${addedMsg}`;
-			message = addedMessage + addedMsg + '\n' + notAddedMessage + notAddedMsg
-			return message;
+			};
+			if (addedMessage.length == originalLength.addedMessage) return `No ${cfg.lang}s added to group.`;
+			if (notAddedMessage.length == originalLength.notAddedMessage) return addedMessage;
+			return `${addedMessage}\n${notAddedMessage}`;
 
 		case "remove":
 			if(!args[1]) return "No group name given.";
