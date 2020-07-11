@@ -34,6 +34,7 @@ const init = async () => {
 				"guildMessages",
 				"guildMessageReactions",
 				"directMessages",
+				"directMessageReactions"
 			],
 		},
 		stats: true,
