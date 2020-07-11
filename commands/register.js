@@ -27,7 +27,7 @@ module.exports = {
 			content: `${proper(cfg.lang)} registered!`,
 			embed: {
 				title: name,
-				description: `**Brackets:**\t${brackets[0]}text${brackets[1]}\n**Avatar URL:**\t${avatar}\n\nSample usage: \`${brackets[0]}hello${brackets[1]}\``,
+				description: `**Brackets:**\t${brackets[0]}text${brackets[1]}\n**Avatar URL:**\t${avatar}\n\nTry typing: \`${brackets[0]}hello${brackets[1]}\``,
 				footer: {
 					text: 'If the brackets look wrong, try re-registering using "quotation marks" around the name!'
 				}
