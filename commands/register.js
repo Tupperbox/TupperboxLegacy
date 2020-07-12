@@ -12,7 +12,7 @@ module.exports = {
 		//check arguments
 		let brackets = msg.content.slice(msg.content.indexOf(args[0], msg.content.indexOf("register")+8)+args[0].length+1).trim().split("text");
 		let name = bot.sanitizeName(args[0]);
-		let member = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(32)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
+		let member = (await bot.db.query("SELECT name,brackets FROM Members WHERE user_id = $1::VARCHAR(32) AND (LOWER(name) = LOWER($2::VARCHAR(76)) OR brackets = $3)",[msg.author.id,name,brackets || []])).rows[0];
 		if(!args[1]) return "Missing argument 'brackets'. Try `" + cfg.prefix + "help register` for usage details.";
 		if(name.length < 1 || name.length > 76)	return "Name must be between 1 and 76 characters.";
 		if(brackets.length < 2)	return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
@@ -27,7 +27,7 @@ module.exports = {
 			content: `${proper(cfg.lang)} registered!`,
 			embed: {
 				title: name,
-				description: `**Brackets:**\t${brackets[0]}text${brackets[1]}\n**Avatar URL:**\t${avatar}\n\nSample usage: \`${brackets[0]}hello${brackets[1]}\``,
+				description: `**Brackets:**\t${brackets[0]}text${brackets[1]}\n**Avatar URL:**\t${avatar}\n\nTry typing: \`${brackets[0]}hello${brackets[1]}\``,
 				footer: {
 					text: 'If the brackets look wrong, try re-registering using "quotation marks" around the name!'
 				}
