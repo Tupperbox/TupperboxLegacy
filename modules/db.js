@@ -84,7 +84,7 @@ module.exports = {
 			UNIQUE (user_id,name)
 		);
 		CREATE TABLE IF NOT EXISTS global_blacklist(
-			user_id PRIMARY KEY
+			user_id VARCHAR(50) PRIMARY KEY
 		);
 
 		ALTER TABLE groups
