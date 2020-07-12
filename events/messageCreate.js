@@ -6,7 +6,12 @@ module.exports = async (msg,bot) => {
 	let blacklisted = await bot.db.getGlobalBlacklisted(msg.author.id);
 	if(blacklisted) return;
 	let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
-	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
+	if(msg.content == `<@${bot.user.id}>` || msg.content == `<@!${bot.user.id}>`) {
+		await bot.send(msg.channel,
+			`Hello! ${msg.channel.guild ? "This server's" : "My"} prefix is \`${cfg.prefix}\`. Try \`${cfg.prefix}help\` for help${msg.channel.guild ? ` or \`${cfg.prefix}cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
+		);
+	}
+	if(msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
 		let cmdName = args.shift();

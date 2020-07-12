@@ -26,36 +26,49 @@ module.exports = {
 		process.stdout.write("ok!\nChecking tables...");
 		//move members after
 		await pool.query(`
-		  CREATE TABLE IF NOT EXISTS Webhooks(
+		create or replace function create_constraint_if_not_exists (
+			t_name text, c_name text, constraint_sql text
+		) 
+		returns void AS
+		$$
+		begin
+			-- Look for our constraint
+			if not exists (select constraint_name 
+							from information_schema.constraint_column_usage 
+							where table_name = t_name  and constraint_name = c_name) then
+				execute constraint_sql;
+			end if;
+		end;
+		$$ language 'plpgsql';
+
+		CREATE TABLE IF NOT EXISTS webhooks(
 			id VARCHAR(32) PRIMARY KEY,
 			channel_id VARCHAR(32) NOT NULL,
 			token VARCHAR(100) NOT NULL
-		  );
-		  CREATE TABLE IF NOT EXISTS Servers(
+		);
+		CREATE TABLE IF NOT EXISTS servers(
 			id VARCHAR(32) PRIMARY KEY,
 			prefix TEXT NOT NULL,
 			lang TEXT NOT NULL,
 			lang_plural TEXT,
 			log_channel VARCHAR(32)
-		  );
-		  CREATE TABLE IF NOT EXISTS Blacklist(
+		);
+		CREATE TABLE IF NOT EXISTS blacklist(
 			id VARCHAR(32) NOT NULL,
 			server_id VARCHAR(32) NOT NULL,
 			is_channel BOOLEAN NOT NULL,
 			block_proxies BOOLEAN NOT NULL,
 			block_commands BOOLEAN NOT NULL,
 			PRIMARY KEY (id, server_id)
-		  );
-		  CREATE TABLE IF NOT EXISTS Groups(
+		);
+		CREATE TABLE IF NOT EXISTS groups(
 			id SERIAL PRIMARY KEY,
 			user_id VARCHAR(32) NOT NULL,
 			name TEXT NOT NULL,
 			description TEXT,
-			tag VARCHAR(32),
-			position INTEGER,
-			UNIQUE (user_id, name)
-		  );
-		  CREATE TABLE IF NOT EXISTS Members(
+			tag VARCHAR(32)
+		);
+		CREATE TABLE IF NOT EXISTS members(
 			id SERIAL PRIMARY KEY,
 			user_id VARCHAR(32) NOT NULL,
 			name VARCHAR(80) NOT NULL,
@@ -68,12 +81,27 @@ module.exports = {
 			description TEXT,
 			tag VARCHAR(32),
 			group_id INTEGER,
-			group_pos INTEGER,
-			UNIQUE (user_id,name),
-			FOREIGN KEY (group_id) REFERENCES groups(id)
-		  );
-		  CREATE INDEX IF NOT EXISTS members_lower_idx ON Members(lower(name));
-		  CREATE INDEX IF NOT EXISTS webhooks_channelidx ON Webhooks(channel_id);`);
+			UNIQUE (user_id,name)
+		);
+		CREATE TABLE IF NOT EXISTS global_blacklist(
+			user_id VARCHAR(50) PRIMARY KEY
+		);
+
+		ALTER TABLE groups
+			ADD COLUMN IF NOT EXISTS position INTEGER;
+		ALTER TABLE members
+			ADD COLUMN IF NOT EXISTS group_pos INTEGER,
+			ALTER COLUMN name TYPE VARCHAR(80);
+
+		SELECT create_constraint_if_not_exists('groups','groups_user_id_name_key',
+			'ALTER TABLE groups ADD CONSTRAINT groups_user_id_name_key UNIQUE (user_id, name);'
+		);
+		SELECT create_constraint_if_not_exists('groups','members_group_id_fkey',
+			'ALTER TABLE members ADD CONSTRAINT members_group_id_fkey FOREIGN KEY (group_id) REFERENCES groups(id);'
+		);`);
+
+		await pool.query('CREATE INDEX CONCURRENTLY IF NOT EXISTS members_lower_idx ON members(lower(name))');
+		await pool.query('CREATE INDEX CONCURRENTLY IF NOT EXISTS webhooks_channelidx ON webhooks(channel_id);');
 
 		console.log("ok!\nChecking for data to import...");
 		let found = false;

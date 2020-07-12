@@ -39,7 +39,7 @@ const init = async () => {
 		},
 		stats: true,
 		debug: true,
-		shards: 192,
+		shards: process.env.SHARDS,
 		name: "Tupperbox",
 		clusterTimeout: 0.1
 	});
