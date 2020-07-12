@@ -31,6 +31,8 @@ module.exports = bot => {
 		if(packet.op != 0 && packet.op != 11) console.log(`Shard ${shard} received: ${JSON.stringify(packet)}`);
 	});
 
+	bot.cooldowns = {};
+
 	bot.replaceMessage = async (msg, cfg, member, content, retry = 2) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		let ratelimit = bot.requestHandler.ratelimits[`/webhooks/${hook.id}/:token?wait=true`];
@@ -223,6 +225,10 @@ module.exports = bot => {
 		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
 	};
 
+	bot.ageOf = user => {
+		return (Date.now() - user.createdAt)/(1000*60*60*24);
+	};
+
 	bot.generatePages = async (arr, fieldGen, extra = {}) => {
 		let embeds = [];
 		let current = { embed: {
@@ -297,8 +303,6 @@ module.exports = bot => {
 			}
 		}
 		let m = await bot.send(msg.channel, data[0]);
-		for(let i=0; i<buttons.length; i++)
-			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]).catch(e => { if(e.code != 10008) throw e; });
 		bot.pages[m.id] = {
 			user: msg.author.id,
 			pages: data,
@@ -310,6 +314,8 @@ module.exports = bot => {
 				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) throw e; });  //discard "Unknown Message" - no way to know if the message has been deleted
 			delete bot.pages[m.id];
 		}, 900000);
+		for(let i=0; i<buttons.length; i++)
+			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]).catch(e => { if(e.code != 10008) throw e; });
 	};
 
 	bot.checkMemberBirthday = member => {
@@ -370,7 +376,7 @@ module.exports = bot => {
 			}
 			msg = await channel.createMessage(message, file);
 		} catch(e) {
-			if(e.message.startsWith("Request timed out") || e.code >= 500 || e.code == "EHOSTUNREACH") {
+			if(e.message.startsWith("Request timed out") || (e.code >= 500 && e.code <= 599) || e.code == "EHOSTUNREACH") {
 				if(retry > 0) return bot.send(channel,message,file,retry-1);
 				else return;
 			} else throw e;
@@ -386,8 +392,15 @@ module.exports = bot => {
 		return word.replace(/[\ufe0f]/g,"");
 	};
 
-	bot.banAbusiveUser = (userID, notifyChannelID) => {
-
+	bot.banAbusiveUser = async (userID, notifyChannelID) => {
+		if(userID == bot.user.id) return;
+		let membersDeleted = await bot.db.query("DELETE FROM members WHERE user_id = $1",[userID]);
+		let blacklistedNum = 0;
+		try {
+			blacklistedNum = await bot.db.query("INSERT INTO global_blacklist values($1::VARCHAR(50))",[userID]);
+		} catch(e) { console.log(e); }
+		console.log(`blacklisted ${blacklistedNum} user ${userID} and deleted ${membersDeleted.rows.length} tuppers`);
+		bot.createMessage(notifyChannelID,`User <@${userID}> (${userID}) is now blacklisted for abuse.`);
 	};
 
 	bot.checkBlacklist = async (member, channel, proxy) => {

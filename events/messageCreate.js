@@ -1,14 +1,21 @@
 module.exports = async (msg,bot) => {
 	if(msg.author.bot) return;
-	if(bot.blacklist.includes(msg.author.id)) return;
 	let guild = msg.channel.guild;
 	if(guild && bot.blacklist.includes(guild.id)) return;
 	let cfg = await bot.getConfig(guild);
+	let blacklisted = await bot.db.getGlobalBlacklisted(msg.author.id);
+	if(blacklisted) return;
+	let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
 	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
-		let cmd = bot.cmds[args.shift()];
+		let cmdName = args.shift();
+		let cmd = bot.cmds[cmdName];
 		if(cmd && bot.checkPermissions(cmd,msg,args)) {
+			let cooldownKey = msg.author.id + cmdName;
+			if(bot.cooldowns[cooldownKey]) {
+				return bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
+			}
 			let noPerms = false;
 			if(msg.channel.type != 1) {
 				let perms = msg.channel.permissionsOf(bot.user.id);
@@ -27,7 +34,12 @@ module.exports = async (msg,bot) => {
 				}
 			}
 			try {
-				let output = await cmd.execute(bot, msg, args, cfg);
+				let output = await cmd.execute(bot, msg, args, cfg, members);
+				if(cmd.cooldown) {
+					let cd = cmd.cooldown(msg);
+					setTimeout(() => bot.cooldowns[cooldownKey] = null,cd);
+					bot.cooldowns[cooldownKey] = Date.now()+cd;
+				}
 				if(output && (typeof output == "string" || output.embed)) {
 					if(noPerms) {
 						let add = "This message sent to you in DM because I am lacking permissions to send messages in the original channel.";
@@ -51,7 +63,6 @@ module.exports = async (msg,bot) => {
 		delete bot.dialogs[msg.channel.id+msg.author.id];
 	}
 	if(msg.channel.guild && (!msg.channel.permissionsOf(bot.user.id).has("readMessages") || !msg.channel.permissionsOf(bot.user.id).has("sendMessages"))) return;
-	let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
 	if(members[0] && !(msg.channel.type == 1)) {
 		let clean = msg.cleanContent || msg.content;
 		clean = clean.replace(/(<a?:.+?:\d+?>)|(<@!?\d+?>)/,"cleaned");

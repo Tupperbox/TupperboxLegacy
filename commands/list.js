@@ -2,7 +2,7 @@ module.exports = {
 	help: cfg => "Get a detailed list of yours or another user's registered " + cfg.lang + "s",
 	usage: cfg =>  ["list [user] - Sends a list of the user's registered " + cfg.lang + "s, their brackets, post count, and birthday (if set). If user is not specified it defaults to the message author. If 'all' or '*' is given, gives a short form list of all tuppers in the server."],
 	permitted: () => true,
-	execute: async (bot, msg, args, cfg, ng = false) => {
+	execute: async (bot, msg, args, cfg, _members, ng = false) => {
 		////short list of all tuppers in server
 		//if(args[0] == "all" || args[0] == "*") {
 		//	if(!msg.channel.guild) return "Cannot retrieve server-wide list in DMs.";

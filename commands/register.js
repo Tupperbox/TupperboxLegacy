@@ -6,7 +6,7 @@ module.exports = {
 	desc: cfg => "Upload an image when using this command to quickly set that image as the avatar!\n\nExample use: `register Test >text<` - registers " + article(cfg) + " " + cfg.lang + " named 'Test' that is triggered by messages surrounded by ><\nBrackets can be anything, one sided or both. For example `text<<` and `T:text` are both valid\nNote that you can enter multi-word names by surrounding the full name in single or double quotes `'like this'` or `\"like this\"`.",
 	permitted: () => true,
 	groupArgs: true,
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, members) => {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["register"], cfg);
 
 		//check arguments
@@ -19,6 +19,9 @@ module.exports = {
 		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
 		if(member && member.name.toLowerCase() == name.toLowerCase())	return proper(cfg.lang) + " with that name under your user account already exists.";
 		if(member && member.brackets[0] == brackets[0] && member.brackets[1] == brackets[1]) return proper(cfg.lang) + " with those brackets under your user account already exists.";
+		if(members.length >= 5000) return `Maximum ${cfg.lang}s reached.`;
+		let daysOld = bot.ageOf(msg.author);
+		if((daysOld < 30 && members.Length >= 500) || (daysOld < 14 && members.Length >= 100)) return `Maximum ${cfg.lang}s reached for your account age.`;
 		let avatar = msg.attachments[0] ? msg.attachments[0].url : "https://i.imgur.com/ZpijZpg.png";
 
 		//add member

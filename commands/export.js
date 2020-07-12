@@ -3,6 +3,7 @@ module.exports = {
 	usage: cfg =>  ["export - Get a .json file of your data that you can import to compatible bots"],
 	permitted: () => true,
 	groupArgs: true,
+	cooldown: msg => 600000,
 	execute: async (bot, msg, args, cfg) => {
 		let data;
 		if(!args[0]) {
@@ -12,13 +13,12 @@ module.exports = {
 		} else {
 			let tup = (await bot.db.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [msg.author.id, args.join(" ")])).rows[0];
 			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-
 			data = { tuppers: [tup], groups: []};
 		}
-
 		try {
 			let channel = await msg.author.getDMChannel(); //get the user's DM channel
-			return await bot.send(channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
+			await bot.send(channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
+			return "Sent you a DM!";
 		} catch (e) {
 			return bot.send(msg.channel,"I couldn't access your DMs; sending publicly: ",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))});
 		}

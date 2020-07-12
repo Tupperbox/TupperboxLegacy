@@ -237,6 +237,10 @@ module.exports = {
 		return blacklisted;
 	},
 
+	getGlobalBlacklisted: async (id) => {
+		return (await pool.query("SELECT * FROM global_blacklist WHERE user_id = $1", [id])).rows[0];
+	},
+
 	getGroup: async (userID, name) => {
 		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
 	},
