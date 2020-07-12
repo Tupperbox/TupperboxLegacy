@@ -4,7 +4,12 @@ module.exports = async (msg,bot) => {
 	let guild = msg.channel.guild;
 	if(guild && bot.blacklist.includes(guild.id)) return;
 	let cfg = await bot.getConfig(guild);
-	if (msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
+	if(msg.content == `<@${bot.user.id}>` || msg.content == `<@!${bot.user.id}>`) {
+		await bot.send(msg.channel,
+			`Hello! ${msg.channel.guild ? "This server's" : "My"} prefix is \`${cfg.prefix}\`. Try \`${cfg.prefix}help\` for help${msg.channel.guild ? ` or \`${cfg.prefix}cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
+		);
+	}
+	if(msg.content.startsWith(cfg.prefix) && (!guild || (!(await bot.db.isBlacklisted(guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
 		let cmd = bot.cmds[args.shift()];
