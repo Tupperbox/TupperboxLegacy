@@ -20,7 +20,7 @@
     "got": "^9.6.0",
     "ioredis": "^4.16.0",
     "pako": "^1.0.10",
-    "pg": "^7.12.1",
+    "pg": "^8.2.1",
     "probe-image-size": "^3.2.0",
     "sodium-native": "^2.4.6",
     "string-length": "^2.0.0",
