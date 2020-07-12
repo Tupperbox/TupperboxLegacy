@@ -60,7 +60,7 @@ module.exports = {
 			}
 
 			addedMessage = `${proper(cfg.lang)}s added to group:`
-			notAddedMessage = `${proper(cfg.lang)}s not added to group:`
+			notAddedMessage = `${proper(cfg.lang)}s not found:`
 			baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
 			originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
 
