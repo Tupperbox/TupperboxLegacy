@@ -222,7 +222,7 @@ module.exports = bot => {
 	};
   
 	bot.updateStatus = async () => {
-		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count} registered`});
+		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${((await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count).toLocaleString()} registered`});
 	};
 
 	bot.ageOf = user => {
