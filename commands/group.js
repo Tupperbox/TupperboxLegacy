@@ -59,10 +59,10 @@ module.exports = {
 				return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 			}
 
-			addedMessage = `${proper(cfg.lang)}s added to group:`
-			notAddedMessage = `${proper(cfg.lang)}s not found:`
-			baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
-			originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
+			let addedMessage = `${proper(cfg.lang)}s added to group:`
+			let notAddedMessage = `${proper(cfg.lang)}s not found:`
+			let baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
+			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
 
 			for await (arg of args) {
 				tup = await bot.db.getMember(msg.author.id, arg);
