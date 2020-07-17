@@ -9,7 +9,7 @@ module.exports = {
 	groupArgs: true,
     execute: async (bot, msg, args, cfg) => {
 		if(!args[0]) {
-			let targets = await bot.findAllUsers(msg.channel.guild.id);
+			let targets = msg.channel.guild ? await bot.findAllUsers(msg.channel.guild.id) : [msg.author];
 			let members = (await bot.db.query("SELECT *, birthday + date_trunc('year', age(birthday + 1)) + interval '1 year' as anniversary FROM Members WHERE birthday IS NOT NULL AND user_id IN (select(unnest($1::text[]))) ORDER BY anniversary LIMIT 5;",[targets.map(u => u.id)])).rows;
 			if(!members[0]) return "No " + cfg.lang + "s on this server have birthdays set.";
 			return "Here are the next few upcoming " + cfg.lang + " birthdays in this server (UTC):\n" + members.map(t => (bot.checkMemberBirthday(t) ? `${t.name}: Birthday today! \uD83C\uDF70` : `${t.name}: ${t.anniversary.toLocaleDateString("en-US",{timeZone:"UTC"})}`)).join("\n");
