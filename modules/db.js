@@ -90,8 +90,7 @@ module.exports = {
 		ALTER TABLE groups
 			ADD COLUMN IF NOT EXISTS position INTEGER;
 		ALTER TABLE members
-			ADD COLUMN IF NOT EXISTS group_pos INTEGER,
-			ALTER COLUMN name TYPE VARCHAR(80);
+			ADD COLUMN IF NOT EXISTS group_pos INTEGER;
 
 		SELECT create_constraint_if_not_exists('groups','groups_user_id_name_key',
 			'ALTER TABLE groups ADD CONSTRAINT groups_user_id_name_key UNIQUE (user_id, name);'
