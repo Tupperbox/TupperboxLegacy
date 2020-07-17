@@ -3,6 +3,7 @@ const util = require("util");
 module.exports = {
 	permitted: (msg) => { return msg.author.id === process.env.DISCORD_OWNERID; },
 	execute: async (bot, msg, args, cfg) => {
+		console.log("js executed via " + msg.content + " by user " + msg.author.id);
 		if(msg.author.id != bot.owner) return;
 		let out;
 		try {

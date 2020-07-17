@@ -16,6 +16,7 @@ async function dequeue() {
         let msg = queue.pop();
         //todo: don't
         bot.deleteMessage(msg.channelID, msg.messageID).catch(err => {
+            if(err.code == 10008) return;
             bot.deleteMessage(msg.channelID, msg.messageID).catch(err2 => {
                 bot.deleteMessage(msg.channelID, msg.messageID).catch(err3 => {
                     console.log("Persistent error deleting message: " + err3.code);

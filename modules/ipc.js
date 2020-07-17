@@ -26,6 +26,10 @@ if(cluster.isMaster) {
 		reloadQueue: () => {
 			delete require.cache[require.resolve('./queue')];
 			enqueue = require("./queue");
+		},
+		restartCluster: (wrk,msg,shrd) => {
+			if(msg.id == null) return;
+			cluster.workers[shrd.clusters.get(msg.id).workerID].kill();
 		}
 	};
 } else {

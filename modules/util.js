@@ -397,9 +397,9 @@ module.exports = bot => {
 		let membersDeleted = await bot.db.query("DELETE FROM members WHERE user_id = $1",[userID]);
 		let blacklistedNum = 0;
 		try {
-			blacklistedNum = await bot.db.query("INSERT INTO global_blacklist values($1::VARCHAR(50))",[userID]);
-		} catch(e) { console.log(e); }
-		console.log(`blacklisted ${blacklistedNum} user ${userID} and deleted ${membersDeleted.rows.length} tuppers`);
+			blacklistedNum = (await bot.db.query("INSERT INTO global_blacklist values($1::VARCHAR(50))",[userID])).rowCount;
+		} catch(e) { console.log(e.message); }
+		console.log(`blacklisted ${blacklistedNum} user ${userID} and deleted ${membersDeleted.rowCount} tuppers`);
 		bot.createMessage(notifyChannelID,`User <@${userID}> (${userID}) is now blacklisted for abuse.`);
 	};
 
