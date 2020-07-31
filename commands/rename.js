@@ -16,7 +16,7 @@ module.exports = {
 		let newMember = await bot.db.getMember(msg.author.id,newname);
 		if(newname.length < 1 || newname.length > 76) return "New name must be between 1 and 76 characters.";
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(newMember) return "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
+		if(newMember && newMember.id != member.id) return "You already have " + article(cfg) + " " + cfg.lang + " with that new name.";
 		
 		//update member
 		await bot.db.updateMember(msg.author.id,args[0],"name",newname);
