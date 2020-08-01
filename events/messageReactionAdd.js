@@ -1,7 +1,7 @@
 let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3", "\ud83d\udd20"];
 
 module.exports = async (message, emoji, userID, bot) => {
-	if (message.author.bot) return;
+	if(emoji.user && emoji.user.bot) return;
 	if(emoji.name == "\u274c" && bot.recent[message.channel.id] && bot.recent[message.channel.id].find(r => r.user_id == userID && message.id == r.id)) {
 		if(!message.channel.guild || message.channel.permissionsOf(bot.user.id).has("manageMessages"))
 			bot.deleteMessage(message.channel.id,message.id);
