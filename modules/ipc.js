@@ -15,7 +15,7 @@ if(cluster.isMaster) {
 			let guilds = shrd.stats.stats.clusters.reduce((a,b)=>a+b.guilds,0);
 			shrd.eris.createMessage(msg.channelID,
 				"```"+shrd.stats.stats.clusters.sort((a,b) => a.cluster-b.cluster).map(c => 
-					`Cluster ${c.cluster+1}${c.cluster < 9 ? " " : ""} - ${c.shards} shards -- ${c.ram.toFixed(1)} MB RAM -- ${c.guilds} servers (up ${dhm(c.uptime)})`).join("\n")
+					`Cluster ${c.cluster}${c.cluster < 9 ? " " : ""} - ${c.shards} shards -- ${c.ram.toFixed(1)} MB RAM -- ${c.guilds} servers (up ${dhm(c.uptime)})`).join("\n")
 				+`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB\nTotal servers: ${guilds}\n\nRequest received on Shard ${msg.shard} (Cluster ${wrk.id})` + "```"
 			);
 		},

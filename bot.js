@@ -39,7 +39,7 @@ class Tupperbox extends Base {
 			if(bot.ipc[message.name]) bot.ipc[message.name](message);
 		});
 
-		setInterval(bot.updateStatus,3600000); //every hour
+		setInterval(() => bot.updateStatus(),3600000); //every hour
 		bot.updateStatus();
 	
 		if (!process.env.DISCORD_INVITE) {

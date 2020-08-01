@@ -6,31 +6,6 @@ let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 let ignoreEvents = ['INVITE_CREATE','INVITE_DELETE'];
 
 module.exports = bot => {  
-	bot.removeAllListeners('unknown');
-	bot.on('unknown',data => {
-		if(!ignoreEvents.includes(data.t)) console.log(`Unknown Packet ${data.t}`);
-	});
-	bot.removeAllListeners('debug');
-	let discordBanned = false;
-	bot.on('debug',(data,shard) => {
-		if(typeof data != "string") return console.log(data);
-		if(data.includes('op":')) {
-			if(!data.includes('op":1')) return console.log(`Shard ${shard} sent: ${data.replace(bot.token, "##TOKEN##")}`);
-		}
-		if(data.includes(" 429 (")) {
-			if(data.includes("You are being blocked from accessing our API temporarily due to exceeding our rate limits frequently") && !discordBanned) discordBanned = true;  
-			if(!discordBanned) console.log(data);
-		}
-		if(data.includes("left | Reset")) return;
-		if(data.includes("close") || data.includes("reconnect")) {
-			console.log(`Shard ${shard} ${data}`);
-		}
-	});
-	bot.removeAllListeners('rawWS');
-	bot.on('rawWS', (packet, shard) => {
-		if(packet.op != 0 && packet.op != 11) console.log(`Shard ${shard} received: ${JSON.stringify(packet)}`);
-	});
-
 	bot.cooldowns = {};
 
 	bot.replaceMessage = async (msg, cfg, member, content, retry = 2) => {

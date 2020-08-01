@@ -36,10 +36,11 @@ const init = async () => {
 				"directMessages",
 				"directMessageReactions"
 			],
+			maxConcurrency: "auto"
 		},
 		stats: true,
 		debug: true,
-		shards: process.env.SHARDS,
+		shards: +process.env.SHARDS,
 		name: "Tupperbox",
 		clusterTimeout: 0.1
 	});
