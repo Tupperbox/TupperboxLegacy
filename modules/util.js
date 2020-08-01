@@ -311,7 +311,7 @@ module.exports = bot => {
 
 	bot.resolveChannel = (msg, text) => {
 		let g = msg.channel.guild;
-		return g.channels.get(/<#(\d+)>/.test(text) && text.match(/<#(\d+)>/)[1]) || g.channels.get(text) || g.channels.find(m => m.name.toLowerCase() == text.toLowerCase());
+		return g.channels.get(/<#(\d+)>/.test(text) && text.match(/<#(\d+)>/)[1]) || g.channels.get(text); /*|| g.channels.find(m => m.name.toLowerCase() == text.toLowerCase())*/
 	};
 
 	bot.getConfig = async (guild) => {
