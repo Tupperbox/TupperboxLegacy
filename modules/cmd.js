@@ -1,44 +1,44 @@
-module.exports = async (ctx) => {
-	if(ctx.msg.content == `<@${ctx.bot.user.id}>` || ctx.msg.content == `<@!${ctx.bot.user.id}>`) {
-		ctx.bot.send(ctx.msg.channel,
-			`Hello! ${ctx.msg.channel.guild ? "This server's" : "My"} prefix is \`${ctx.cfg.prefix}\`. Try \`${ctx.cfg.prefix}help\` for help${ctx.msg.channel.guild ? ` or \`${ctx.cfg.prefix}ctx.cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
+module.exports = async ({msg,bot,members,cfg}) => {
+	if(msg.content == `<@${bot.user.id}>` || msg.content == `<@!${bot.user.id}>`) {
+		bot.send(msg.channel,
+			`Hello! ${msg.channel.guild ? "This server's" : "My"} prefix is \`${cfg.prefix}\`. Try \`${cfg.prefix}help\` for help${msg.channel.guild ? ` or \`${cfg.prefix}cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
 		);
 		return false;
 	}
-	if(ctx.msg.content.startsWith(ctx.cfg.prefix) && (!ctx.msg.channel.guild || (!(await ctx.bot.db.isBlacklisted(ctx.msg.channel.guild.id,ctx.msg.channel.id,false)) || ctx.msg.member.permission.has("manageGuild")))) {
-		let content = ctx.msg.content.substr(ctx.cfg.prefix.length).trim();
+	if(msg.content.startsWith(cfg.prefix) && (!msg.channel.guild || (!(await bot.db.isBlacklisted(msg.channel.guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
+		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
 		let cmdName = args.shift();
-		let cmd = ctx.bot.cmds[cmdName];
-		if(cmd && ctx.bot.checkPermissions(cmd,ctx.msg,args)) {
-			let cooldownKey = ctx.msg.author.id + cmdName;
-			if(ctx.bot.cooldowns[cooldownKey]) {
-				ctx.bot.send(ctx.msg.channel,`You're using that too quickly! Try again in ${Math.ceil((ctx.bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
+		let cmd = bot.cmds[cmdName];
+		if(cmd && bot.checkPermissions(cmd,msg,args)) {
+			let cooldownKey = msg.author.id + cmdName;
+			if(bot.cooldowns[cooldownKey]) {
+				bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
 				return false;
 			}
 			let noPerms = false;
-			if(ctx.msg.channel.type != 1) {
-				let perms = ctx.msg.channel.permissionsOf(ctx.bot.user.id);
+			if(msg.channel.type != 1) {
+				let perms = msg.channel.permissionsOf(bot.user.id);
 				if(!perms.has("readMessages") || !perms.has("sendMessages")) {
 					noPerms = true;
 				}
 			}
-			if(cmd.groupArgs) args = ctx.bot.getMatches(content,/“(.+?)”|‘(.+?)’|"(.+?)"|'(.+?)'|(\S+)/gi).slice(1);
-			let targetChannel = ctx.msg.channel;
+			if(cmd.groupArgs) args = bot.getMatches(content,/“(.+?)”|‘(.+?)’|"(.+?)"|'(.+?)'|(\S+)/gi).slice(1);
+			let targetChannel = msg.channel;
 			if(noPerms) {
 				try {
-					targetChannel = await ctx.bot.getDMChannel(ctx.msg.author.id);
+					targetChannel = await bot.getDMChannel(msg.author.id);
 				} catch(e) {
-					if(e.code != 50007) ctx.bot.err(ctx.msg,e,false);
+					if(e.code != 50007) bot.err(msg,e,false);
 					return false;
 				}
 			}
 			try {
-				let output = await cmd.execute(ctx.bot, ctx.msg, args, ctx.cfg, ctx.members);
+				let output = await cmd.execute(bot, msg, args, cfg, members);
 				if(cmd.cooldown) {
-					let cd = cmd.cooldown(ctx.msg);
-					setTimeout(() => ctx.bot.cooldowns[cooldownKey] = null,cd);
-					ctx.bot.cooldowns[cooldownKey] = Date.now()+cd;
+					let cd = cmd.cooldown(msg);
+					setTimeout(() => bot.cooldowns[cooldownKey] = null,cd);
+					bot.cooldowns[cooldownKey] = Date.now()+cd;
 				}
 				if(output && (typeof output == "string" || output.embed)) {
 					if(noPerms) {
@@ -47,20 +47,20 @@ module.exports = async (ctx) => {
 						else output += "\n" + add;
 					}
 					try {
-						await ctx.bot.send(targetChannel,output,null,true,ctx.msg.author);
+						await bot.send(targetChannel,output,null,true,msg.author);
 					} catch(e) {
 						if(e.code != 50013) throw e;
 					}
 				}
 			} catch(e) { 
-				ctx.bot.err(ctx.msg,e);
+				bot.err(msg,e);
 			}
 		}
 		return false;
 	}
-	if(ctx.bot.dialogs[ctx.msg.channel.id + ctx.msg.author.id]) {
-		ctx.bot.dialogs[ctx.msg.channel.id+ctx.msg.author.id](ctx.msg);
-		delete ctx.bot.dialogs[ctx.msg.channel.id+ctx.msg.author.id];
+	if(bot.dialogs[msg.channel.id + msg.author.id]) {
+		bot.dialogs[msg.channel.id+msg.author.id](msg);
+		delete bot.dialogs[msg.channel.id+msg.author.id];
 	}
 	return true;
 }
