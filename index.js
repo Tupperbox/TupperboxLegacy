@@ -21,7 +21,6 @@ const init = async () => {
 				GUILD_BAN_REMOVE: true,
 				MESSAGE_DELETE: true,
 				MESSAGE_DELETE_BULK: true,
-				MESSAGE_UPDATE: true,
 				TYPING_START: true,
 				VOICE_STATE_UPDATE: true
 			},

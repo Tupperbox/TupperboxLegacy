@@ -14,6 +14,8 @@ class Tupperbox extends Base {
 		bot.base = this;
 		bot.sentry = Sentry;
 		bot.db = require("./modules/db");
+		bot.cmd = require("./modules/cmd");
+		bot.proxy = require("./modules/proxy");
 		bot.recent = {};
 		bot.pages = {};
 		bot.cmds = {};
@@ -24,6 +26,16 @@ class Tupperbox extends Base {
 		catch(e) { bot.blacklist = []; }
 		require("./modules/ipc")(bot);
 		require("./modules/util")(bot);
+
+		bot.getMessageContext = async (msg) => {
+			if(msg.author.bot) return { done: true };
+			if(msg.channel.guild && bot.blacklist.includes(msg.channel.guild.id)) return { done : true };
+			if(await bot.db.getGlobalBlacklisted(msg.author.id)) return { done: true };
+		
+			let cfg = await bot.getConfig(msg.channel.guild);
+			let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+			return { msg: msg, bot: bot, cfg: cfg, members: members };
+		}
 
 		let files = fs.readdirSync("./commands");
 		files.forEach(file => {
