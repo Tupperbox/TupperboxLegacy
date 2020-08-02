@@ -3,6 +3,7 @@ module.exports = async (ctx) => {
 		await ctx.bot.send(ctx.msg.channel,
 			`Hello! ${ctx.msg.channel.guild ? "This server's" : "My"} prefix is \`${ctx.cfg.prefix}\`. Try \`${ctx.cfg.prefix}help\` for help${ctx.msg.channel.guild ? ` or \`${ctx.cfg.prefix}ctx.cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
 		);
+		return false;
 	}
 	if(ctx.msg.content.startsWith(ctx.cfg.prefix) && (!ctx.msg.channel.guild || (!(await ctx.bot.db.isBlacklisted(ctx.msg.channel.guild.id,ctx.msg.channel.id,false)) || ctx.msg.member.permission.has("manageGuild")))) {
 		let content = ctx.msg.content.substr(ctx.cfg.prefix.length).trim();
@@ -12,7 +13,8 @@ module.exports = async (ctx) => {
 		if(cmd && ctx.bot.checkPermissions(cmd,ctx.msg,args)) {
 			let cooldownKey = ctx.msg.author.id + cmdName;
 			if(ctx.bot.cooldowns[cooldownKey]) {
-				return ctx.bot.send(ctx.msg.channel,`You're using that too quickly! Try again in ${Math.ceil((ctx.bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
+				ctx.bot.send(ctx.msg.channel,`You're using that too quickly! Try again in ${Math.ceil((ctx.bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
+				return false;
 			}
 			let noPerms = false;
 			if(ctx.msg.channel.type != 1) {
@@ -28,7 +30,7 @@ module.exports = async (ctx) => {
 					targetChannel = await ctx.bot.getDMChannel(ctx.msg.author.id);
 				} catch(e) {
 					if(e.code != 50007) ctx.bot.err(ctx.msg,e,false);
-					return;
+					return false;
 				}
 			}
 			try {
@@ -54,10 +56,11 @@ module.exports = async (ctx) => {
 				ctx.bot.err(ctx.msg,e);
 			}
 		}
-		return;
+		return false;
 	}
 	if(ctx.bot.dialogs[ctx.msg.channel.id + ctx.msg.author.id]) {
 		ctx.bot.dialogs[ctx.msg.channel.id+ctx.msg.author.id](ctx.msg);
 		delete ctx.bot.dialogs[ctx.msg.channel.id+ctx.msg.author.id];
 	}
+	return true;
 }
