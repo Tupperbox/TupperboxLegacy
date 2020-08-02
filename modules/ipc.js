@@ -67,6 +67,12 @@ if(cluster.isMaster) {
 							case "blacklist":
 								bot.blacklist = require("../modules/blacklist.json");
 								break;
+							case "cmd":
+								bot.cmd = require("../modules/cmd");
+								break;
+							case "proxy":
+								bot.proxy = require("../modules/proxy");
+								break;
 							}
 						} else if(msg.type == "event") {
 							bot.removeAllListeners(arg);

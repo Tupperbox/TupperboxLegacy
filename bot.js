@@ -14,6 +14,8 @@ class Tupperbox extends Base {
 		bot.base = this;
 		bot.sentry = Sentry;
 		bot.db = require("./modules/db");
+		bot.cmd = require("./modules/cmd");
+		bot.proxy = require("./modules/proxy");
 		bot.recent = {};
 		bot.pages = {};
 		bot.cmds = {};

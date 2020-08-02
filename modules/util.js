@@ -8,6 +8,16 @@ let ignoreEvents = ['INVITE_CREATE','INVITE_DELETE'];
 module.exports = bot => {  
 	bot.cooldowns = {};
 
+	bot.getMessageContext = async (msg) => {
+		if(msg.author.bot) return { done: true };
+		if(msg.channel.guild && bot.blacklist.includes(msg.channel.guild.id)) return { done : true };
+		if(await bot.db.getGlobalBlacklisted(msg.author.id)) return { done: true };
+	
+		let cfg = await bot.getConfig(msg.channel.guild);
+		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+		return { msg, bot, cfg, members };
+	}
+
 	bot.replaceMessage = async (msg, cfg, member, content, retry = 2) => {
 		const hook = await bot.fetchWebhook(msg.channel);
 		let ratelimit = bot.requestHandler.ratelimits[`/webhooks/${hook.id}/:token?wait=true`];
