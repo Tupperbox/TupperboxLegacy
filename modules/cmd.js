@@ -1,6 +1,6 @@
 module.exports = async (ctx) => {
 	if(ctx.msg.content == `<@${ctx.bot.user.id}>` || ctx.msg.content == `<@!${ctx.bot.user.id}>`) {
-		await ctx.bot.send(ctx.msg.channel,
+		ctx.bot.send(ctx.msg.channel,
 			`Hello! ${ctx.msg.channel.guild ? "This server's" : "My"} prefix is \`${ctx.cfg.prefix}\`. Try \`${ctx.cfg.prefix}help\` for help${ctx.msg.channel.guild ? ` or \`${ctx.cfg.prefix}ctx.cfg prefix ${process.env.DEFAULT_PREFIX}\` to reset the prefix.` : "."}`
 		);
 		return false;
