@@ -46,11 +46,7 @@ module.exports = async ({msg,bot,members,cfg}) => {
 						if(output.embed) output.content = add;
 						else output += "\n" + add;
 					}
-					try {
-						await bot.send(targetChannel,output,null,true,msg.author);
-					} catch(e) {
-						if(e.code != 50013) throw e;
-					}
+					bot.send(targetChannel,output,null,true,msg.author);
 				}
 			} catch(e) { 
 				bot.err(msg,e);
