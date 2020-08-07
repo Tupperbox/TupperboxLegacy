@@ -34,12 +34,12 @@ module.exports = async ({msg,bot,members,cfg}) => {
 				}
 			}
 			try {
-				let output = await cmd.execute(bot, msg, args, cfg, members);
 				if(cmd.cooldown) {
 					let cd = cmd.cooldown(msg);
 					setTimeout(() => bot.cooldowns[cooldownKey] = null,cd);
 					bot.cooldowns[cooldownKey] = Date.now()+cd;
 				}
+				let output = await cmd.execute(bot, msg, args, cfg, members);
 				if(output && (typeof output == "string" || output.embed)) {
 					if(noPerms) {
 						let add = "This message sent to you in DM because I am lacking permissions to send messages in the original channel.";
