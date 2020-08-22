@@ -4,34 +4,6 @@ module.exports = {
 	permitted: () => true,
 	cooldown: msg => 60000,
 	execute: async (bot, msg, args, cfg, _members, ng = false) => {
-		////short list of all tuppers in server
-		//if(args[0] == "all" || args[0] == "*") {
-		//	if(!msg.channel.guild) return "Cannot retrieve server-wide list in DMs.";
-		//	let tups = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY id, position", [msg.channel.guild.members.map(m => m.id)])).rows;
-		//	let all = {};
-		//	tups.forEach(t => {
-		//		if(!all[t.user_id]) all[t.user_id] = [];
-		//		all[t.user_id].push(t);
-		//	});
-		//	let extra = { 
-		//		title: `${tups.length} total registered ${cfg.lang}s in this server`,
-		//		author: {
-		//			name: msg.channel.guild.name,
-		//			icon_url: msg.channel.guild.iconURL
-		//		}
-		//	};
-		//	let embeds = bot.generatePages(Object.keys(all), id => {
-		//		let user = bot.users.get(id);
-		//		let field = {
-		//			name: `${user.username}#${user.discriminator} (${all[id].length} registered)`,
-		//			value: all[id].map(mem => mem.name).join(", ")
-		//		};
-		//		if(field.value.length > 1000) field.value = field.value.slice(0,1000) + "...";
-		//		return field;
-		//	}, extra);
-		//	if(embeds[1]) return bot.paginate(msg, embeds);
-		//	return embeds[0];
-		//}
 
 		//get target list
 		let target;
