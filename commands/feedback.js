@@ -3,6 +3,6 @@ module.exports = {
 	usage: cfg => ["feedback - get a link to the support server"],
 	permitted: msg => true,
 	execute: (bot, msg, args, cfg) => {
-		return "https://discord.gg/rHxMbt2";
+		return process.env.SUPPORT_INVITE;
 	}
 };

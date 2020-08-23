@@ -78,7 +78,7 @@ module.exports = {
 			}
 		} else if(data.switches) { //pluralkit file
 			if(data.members.length > 3000) {
-				return "Data too large for import. Please visit the support server for assistance: https://discord.gg/6WF6Z5m";
+				return "Data too large for import. Please visit the support server for assistance. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : '';
 			}
 			let client;
 			try {
@@ -117,6 +117,6 @@ module.exports = {
 			} finally {
 				if(client) client.release();
 			}
-		} else return "Unknown file format. Please notify the creator by joining the support server.";
+		} else return "Unknown file format. Please notify the creator by joining the support server. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : '';
 	}
 };

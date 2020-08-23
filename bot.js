@@ -43,10 +43,13 @@ class Tupperbox extends Base {
 
 		setInterval(() => bot.updateStatus(),3600000); //every hour
 		bot.updateStatus();
-	
-		if (!process.env.DISCORD_INVITE) {
+
+		if (!process.env.BOT_INVITE)
 			delete bot.cmds.invite;
-		}
+
+		if (!process.env.SUPPORT_INVITE)
+			delete bot.cmds.feedback;
+
 	}
 }
 
