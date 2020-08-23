@@ -1,4 +1,3 @@
-const {article,proper} = require("../modules/lang");
 
 module.exports = {
 	help: cfg => "Configure server-specific settings",
@@ -43,7 +42,7 @@ module.exports = {
 
 		case "blacklist":
 			if(!args[1]) {
-				let blacklist = (await bot.db.blacklist.get(gid)).filter(bl => bl.is_channel && bl.block_proxies);
+				let blacklist = (await bot.db.blacklist.getAll(gid)).filter(bl => bl.is_channel && bl.block_proxies);
 				if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
 				return "No channels currently blacklisted.";
 			}
@@ -80,7 +79,7 @@ module.exports = {
 
 		case "cmdblacklist":
 			if(!args[1]) {
-				let blacklist = (await bot.db.blacklist.get(gid)).filter(bl => bl.is_channel && bl.block_commands);
+				let blacklist = (await bot.db.blacklist.getAll(gid)).filter(bl => bl.is_channel && bl.block_commands);
 				if(blacklist[0]) return `Currently blacklisted channels: ${blacklist.map(bl => "<#"+bl.id+">").join(" ")}`;
 				return "No channels currently cmdblacklisted.";
 			}
