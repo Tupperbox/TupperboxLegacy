@@ -1,6 +1,5 @@
 const request = require("got");
 const strlen = require("string-length");
-const { PermissionsError, EmptyError } = require("./errors");
 
 let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 let ignoreEvents = ['INVITE_CREATE','INVITE_DELETE'];
