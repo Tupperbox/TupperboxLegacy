@@ -249,5 +249,24 @@ module.exports = {
             } 
             else if(e.code != 10008) bot.err(msg, e); //discard "Unknown Message" errors
         }
-    }
+    },
+
+    sendMsgInfo: async (bot, message) => {
+
+        let recent = bot.recent[message.channel.id].find(r => message.id == r.id);
+		if(!recent) return;
+		let response = { content: `That proxy was sent by <@!${recent.user_id}> (tag at time of sending: ${recent.tag} - id: ${recent.user_id}).`, allowedMentions: { users: false } };
+		let target;
+		try {
+			target = await bot.getDMChannel(userID);
+			await bot.send(target,response);
+		} catch(e) {
+			target = message.channel;
+			response.content = `<@${userID}>: ${response.content}\n(also I am unable to DM you!)`;
+			await bot.send(target,response);
+		}
+		await bot.removeMessageReaction(message.channel.id, message.id, emoji.name, userID);
+		return;
+
+    },
 }
