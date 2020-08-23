@@ -214,47 +214,6 @@ module.exports = bot => {
 		return (Date.now() - user.createdAt)/(1000*60*60*24);
 	};
 
-	bot.generatePages = async (arr, fieldGen, extra = {}) => {
-		let embeds = [];
-		let current = { embed: {
-			title: extra.title,
-			author: extra.author,
-			description: extra.description,
-			footer: extra.footer,
-			fields: []
-		}};
-		
-		for(let i=0; i<arr.length; i++) {
-			if(current.embed.fields.length < 5) {
-				current.embed.fields.push(await fieldGen(arr[i],embeds.length+1));
-			} else {
-				embeds.push(current);
-				current = { embed: {
-					title: extra.title,
-					author: extra.author,
-					description: extra.description,
-					footer: extra.footer,
-					fields: [await fieldGen(arr[i],embeds.length+1)]
-				}};
-			}
-		}
-		embeds.push(current);
-		if(embeds.length > 1) {
-			for(let i = 0; i < embeds.length; i++)
-				embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${arr.length} total)`;
-		}
-		return embeds;
-	};
-
-	bot.generateMemberField = (member,group = null,add = 0) => {
-		let out = {
-			name: member.name.trim().length < 1 ? member.name + "\u200b" : member.name,
-			value: `${(group != null) ? "Group: " + group.name + "\n" : ""}${member.tag ? ("Tag: " + member.tag + "\n") : ""}Brackets: ${bot.getBrackets(member)}\nAvatar URL: ${member.avatar_url}${member.birthday ? ("\nBirthday: "+member.birthday.toDateString()) : ""}\nTotal messages sent: ${member.posts}${member.description ? ("\n"+member.description) : ""}`
-		};
-		if(out.value.length + add > 1023) out.value = out.value.slice(0,1020-add) + "...";
-		return out;
-	};
-
 	bot.getBrackets = member => {
 		let out = [];
 		for(let i=0; i<member.brackets.length; i+=2) {
@@ -275,33 +234,6 @@ module.exports = bot => {
 		}
 		return targets;
 	}
-
-	let buttons = ["\u23ea", "\u2b05", "\u27a1", "\u23e9", "\u23f9", "\u0023\u20e3", "\uD83D\uDD20"];
-	bot.paginate = async (msg, data) => {
-		if(!(msg.channel.type == 1)) {
-			let perms = msg.channel.permissionsOf(bot.user.id);
-			if(!perms.has("readMessages") || !perms.has("sendMessages") || !perms.has("embedLinks")) return;
-			if(!perms.has("addReactions") || !perms.has("readMessageHistory")) {
-				await bot.send(msg.channel, data[0]);
-				if(!perms.has("addReactions")) return "'Add Reactions' permission missing, cannot use reaction buttons. Only first page shown.";
-				else return "'Read Message History' permission missing, cannot use reaction buttons. (Discord requires this permission to add reactions.) Only first page shown.";
-			}
-		}
-		let m = await bot.send(msg.channel, data[0]);
-		bot.pages[m.id] = {
-			user: msg.author.id,
-			pages: data,
-			index: 0
-		};
-		setTimeout(() => {
-			if(!bot.pages[m.id]) return;
-			if(msg.channel.guild && msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
-				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) throw e; });  //discard "Unknown Message" - no way to know if the message has been deleted
-			delete bot.pages[m.id];
-		}, 900000);
-		for(let i=0; i<buttons.length; i++)
-			await bot.addMessageReaction(msg.channel.id,m.id,buttons[i]).catch(e => { if(e.code != 10008) throw e; });
-	};
 
 	bot.checkMemberBirthday = member => {
 		if(!member.birthday) return false;
@@ -406,5 +338,10 @@ module.exports = bot => {
 		}
 		return matches;
 	};
+
+	bot.ignoreDeletion = (e) => {
+		if(e.code != 10008) throw e;
+	}
+	
 
 };

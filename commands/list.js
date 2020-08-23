@@ -29,7 +29,7 @@ module.exports = {
 					},
 					description: `Group: ${groups[i].name}${groups[i].tag ? "\nTag: " + groups[i].tag : ""}${groups[i].description ? "\n" + groups[i].description : ""}`
 				};
-				let add = await bot.generatePages(members.filter(t => t.group_id == groups[i].id), t => bot.generateMemberField(t),extra);
+				let add = await bot.paginator.generatePages(bot, members.filter(t => t.group_id == groups[i].id), t => bot.paginator.generateMemberField(bot, t),extra);
 				if(add[add.length-1].embed.fields.length < 5 && groups[i+1]) add[add.length-1].embed.fields.push({
 					name: "\u200b",
 					value: `Next page: group ${groups[i+1].name}`
@@ -42,7 +42,7 @@ module.exports = {
 				if(embeds.length > 1) embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${members.length} total)`;
 			}
 
-			if(embeds[1]) return bot.paginate(msg,embeds);
+			if(embeds[1]) return bot.paginator.paginate(bot, msg,embeds);
 			return embeds[0];
 		}
 		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
@@ -57,12 +57,12 @@ module.exports = {
 			}
 		};
 		
-		let embeds = await bot.generatePages(members, async t => {
+		let embeds = await bot.paginator.generatePages(bot, members, async t => {
 			let group = null;
 			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
-			return bot.generateMemberField(t,group);
+			return bot.paginator.generateMemberField(bot, t,group);
 		}, extra);
-		if(embeds[1]) return bot.paginate(msg, embeds);
+		if(embeds[1]) return bot.paginator.paginate(bot, msg, embeds);
 		return embeds[0];
 	}
 };

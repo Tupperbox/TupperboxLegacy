@@ -16,8 +16,8 @@ class Tupperbox extends Base {
 		bot.db = require("./modules/db");
 		bot.cmd = require("./modules/cmd");
 		bot.proxy = require("./modules/proxy");
+		bot.paginator = require("./modules/paginator");
 		bot.recent = {};
-		bot.pages = {};
 		bot.cmds = {};
 		bot.dialogs = {};
 		bot.owner = process.env.DISCORD_OWNERID;

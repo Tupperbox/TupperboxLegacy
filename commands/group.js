@@ -104,7 +104,7 @@ module.exports = {
 			};
 			if(members.find(t => !t.group_id))
 				groups.push({name: "No Group", id: null});
-			let embeds = await bot.generatePages(groups,g => {
+			let embeds = await bot.paginator.generatePages(bot, groups,g => {
 				let field = {
 					name: g.name,
 					value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""}Members: ${members.filter(t => t.group_id == g.id).map(t => t.name).join(", ")}`
@@ -113,7 +113,7 @@ module.exports = {
 				return field;
 			},extra);
                 
-			if(embeds[1]) return bot.paginate(msg, embeds);                
+			if(embeds[1]) return bot.paginator.paginate(bot, msg, embeds);                
 			return embeds[0];
 
 		case "tag":
