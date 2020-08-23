@@ -92,7 +92,7 @@ module.exports = {
 		case "list":
 			let groups = await bot.db.groups.getAll(msg.author.id);
 			if(!groups[0]) return `You have no groups. Try \`${cfg.prefix}group create <name>\` to make one.`;
-			let members = bot.db.members.getAll(msg.author.id);
+			let members = await bot.db.members.getAll(msg.author.id);
 			let extra = {
 				title: `${msg.author.username}#${msg.author.discriminator}'s registered groups`,
 				author: {
