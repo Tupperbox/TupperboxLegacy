@@ -22,11 +22,11 @@ module.exports = {
 		setTimeout(() => {
 			if(!module.exports.cache[m.id]) return;
 			if(msg.channel.guild && msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
-				bot.removeMessageReactions(msg.channel.id,m.id).catch(e => { if(e.code != 10008) throw e; });  //discard "Unknown Message" - no way to know if the message has been deleted
+				bot.removeMessageReactions(msg.channel.id,m.id).catch(bot.ignoreDeletion);  //discard "Unknown Message" - no way to know if the message has been deleted
 			delete module.exports.cache[m.id];
 		}, 900000);
 		for(let i=0; i<module.exports.buttons.length; i++)
-			await bot.addMessageReaction(msg.channel.id,m.id,module.exports.buttons[i]).catch(e => { if(e.code != 10008) throw e; });
+			await bot.addMessageReaction(msg.channel.id,m.id,module.exports.buttons[i]).catch(bot.ignoreDeletion);
 	},
 
     generatePages: async (bot, arr, fieldGen, extra = {}) => {
