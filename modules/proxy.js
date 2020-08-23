@@ -1,5 +1,6 @@
 const request = require("got");
 const strlen = require("string-length");
+const { crypto_stream_PRIMITIVE } = require("sodium-native");
 let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 
 module.exports = {
@@ -14,7 +15,7 @@ module.exports = {
 
     fetchWebhook: async (bot, channel) => {
         let q = await bot.db.webhooks.get(channel.id);
-        if(q.rows[0]) {
+        if(q) {
             try {
                 if (await bot.getWebhook(q.id, q.token)) return q;
             } catch (e) {

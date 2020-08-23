@@ -6,8 +6,8 @@ module.exports = bot => {
 		if(msg.channel.guild && bot.blacklist.includes(msg.channel.guild.id)) return { done : true };
 		if(await bot.db.getGlobalBlacklisted(msg.author.id)) return { done: true };
 	
-		let cfg = guild ? (await bot.db.config.get(guild.id) ?? { ...bot.defaultCfg }) : { ...bot.defaultCfg };
-		let members = bot.db.members.getAll(msg.author.id);
+		let cfg = msg.channel.guild ? (await bot.db.config.get(msg.channel.guild.id) ?? { ...bot.defaultCfg }) : { ...bot.defaultCfg };
+		let members = await bot.db.members.getAll(msg.author.id);
 		return { msg, bot, cfg, members };
 	}
 
