@@ -1,3 +1,3 @@
 module.exports = (guild,bot) => {
-	bot.db.deleteCfg(guild.id);
+	bot.db.config.delete(guild.id);
 };

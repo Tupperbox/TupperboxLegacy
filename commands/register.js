@@ -26,7 +26,7 @@ module.exports = {
 		let avatar = msg.attachments[0] ? msg.attachments[0].url : "https://i.imgur.com/ZpijZpg.png";
 
 		//add member
-		await bot.db.addMember(msg.author.id,{name,avatarURL:avatar,brackets:brackets.slice(0,2)});
+		await bot.db.members.add(msg.author.id,{name,avatarURL:avatar,brackets:brackets.slice(0,2)});
 		return {
 			content: `${proper(cfg.lang)} registered!`,
 			embed: {

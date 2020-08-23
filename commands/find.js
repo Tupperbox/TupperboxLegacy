@@ -24,7 +24,7 @@ module.exports = {
 			let t = results[0];
 			let host = targets.find(u => u.id == t.user_id);
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			if(t.group_id) group = bot.db.groups.getById(t.group_id);
 			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
 			let embed = { embed: {
 				author: {
@@ -52,7 +52,7 @@ module.exports = {
 				}};
 			}
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			if(t.group_id) group = await bot.db.groups.getById(t.group_id);
 			let host = targets.find(u => u.id == t.user_id);
 			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
 			current.embed.fields.push({name: t.name, value: val + bot.paginator.generateMemberField(bot, t,group,val.length).value});

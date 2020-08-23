@@ -9,11 +9,11 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["togglebrackets"], cfg);
 		
 		//check arguments
-		let member = await bot.db.getMember(msg.author.id,args[0]);
+		let member = await bot.db.members.get(msg.author.id,args[0]);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		
 		//update member
-		await bot.db.updateMember(msg.author.id,args[0],"show_brackets",!member.show_brackets);
+		await bot.db.members.update(msg.author.id,args[0],"show_brackets",!member.show_brackets);
 		return `Now ${member.show_brackets ? "hiding" : "showing"} brackets in proxied messages for ${member.name}.`;
 	}
 };

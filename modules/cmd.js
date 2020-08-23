@@ -5,7 +5,7 @@ module.exports = async ({msg,bot,members,cfg}) => {
 		);
 		return false;
 	}
-	if(msg.content.startsWith(cfg.prefix) && (!msg.channel.guild || (!(await bot.db.isBlacklisted(msg.channel.guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
+	if(msg.content.startsWith(cfg.prefix) && (!msg.channel.guild || (!(await bot.db.blacklist.check(msg.channel.guild.id,msg.channel.id,false)) || msg.member.permission.has("manageGuild")))) {
 		let content = msg.content.substr(cfg.prefix.length).trim();
 		let args = content.split(" ");
 		let cmdName = args.shift();

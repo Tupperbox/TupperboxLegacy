@@ -18,44 +18,42 @@ module.exports = {
 		case "create":
 			if(!args[1]) return "No group name given.";
 			name = args.slice(1).join(" ");
-			existing = await bot.db.getGroup(msg.author.id, name);
+			existing = await bot.db.groups.get(msg.author.id, name);
 			if(existing) return "You already have a group with that name.";
-			await bot.db.addGroup(msg.author.id, bot.noVariation(name));
+			await bot.db.groups.add(msg.author.id, bot.noVariation(name));
 			return `Group created. Add ${cfg.lang}s to it with "${cfg.prefix}group add ${args.length < 3 ? name : "'" + name + "'"} <name> [name...]".`;
 
 		case "delete":
 			if(!args[1]) return "No group name given.";
 			if(args[1] == "*") {
-				await bot.db.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1",[msg.author.id]);
-				await bot.db.query("DELETE FROM Groups WHERE user_id = $1",[msg.author.id]);
+				await bot.db.groups.deleteAll(msg.author.id);
 				return "All groups deleted and members set to no group.";
 			}
 			name = args.slice(1).join(" ");
-			existing = await bot.db.getGroup(msg.author.id, name);
+			existing = await bot.db.groups.get(msg.author.id, name);
 			if(!existing) return "You don't have a group with that name.";
-			await bot.db.query("UPDATE Members SET group_id = null, group_pos = null WHERE group_id = $1", [existing.id]);
-			await bot.db.deleteGroup(msg.author.id, name);
+			await bot.db.groups.delete(existing.id);
 			return "Group deleted, members have been set to no group.";
 
 		case "add":
 			if(!args[1]) return "No group name given.";
 			if(!args[2]) return `No ${cfg.lang} name given.`;
-			group = await bot.db.getGroup(msg.author.id, args[1]);
+			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			args = args.slice(2);
 
 			if (args.length == 1) {
 				if (args[0] == "*") {
-					let tupps = (await bot.db.query("SELECT id FROM Members WHERE user_id = $1 AND group_id IS NULL ORDER BY position",[msg.author.id])).rows;
+					let tupps = bot.db.members.getAll(msg.author.id);
 					for await (tup of tupps) {
-						await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
+						await bot.db.groups.addMember(group.id,tup.id);
 					}; 
 					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
 				}
 
-				tup = await bot.db.getMember(msg.author.id, args[0]);
+				tup = await bot.db.members.get(msg.author.id, args[0]);
 				if(!tup) return `You don't have a registered ${cfg.lang} with that name.`;
-				await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id,tup.id]);
+				await bot.db.groups.addMember(group.id,tup.id);
 				return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 			}
 
@@ -65,9 +63,9 @@ module.exports = {
 			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
 
 			for await (arg of args) {
-				tup = await bot.db.getMember(msg.author.id, arg);
+				tup = await bot.db.members.get(msg.author.id, arg);
 				if (tup) {
-					await bot.db.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [group.id, tup.id]);
+					await bot.db.groups.addMember(group.id,tup.id);
 					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) addedMessage += ` '${arg}'`; else addedMessage += " (...)";
 				} else {
 					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) notAddedMessage += ` '${arg}'`; else notAddedMessage += " (...)";
@@ -80,21 +78,21 @@ module.exports = {
 		case "remove":
 			if(!args[1]) return "No group name given.";
 			if(!args[2]) return `No ${cfg.lang} name given.`;
-			group = await bot.db.getGroup(msg.author.id, args[1]);
+			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			if(args[2] == "*") {
-				await bot.db.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1 AND group_id = $2", [msg.author.id,group.id]);
+				await bot.db.groups.removeMembers(group.id);
 				return "All members removed from the group.";
 			}
-			tup = await bot.db.getMember(msg.author.id, args.slice(2).join(" "));
+			tup = await bot.db.members.get(msg.author.id, args.slice(2).join(" "));
 			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-			await bot.db.query("UPDATE Members SET group_id = null, group_pos = null WHERE id = $1", [tup.id]);
+			await bot.db.members.removeGroup(tup.id);
 			return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 
 		case "list":
-			let groups = (await bot.db.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+			let groups = await bot.db.groups.getAll(msg.author.id);
 			if(!groups[0]) return `You have no groups. Try \`${cfg.prefix}group create <name>\` to make one.`;
-			let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [msg.author.id])).rows;
+			let members = bot.db.members.getAll(msg.author.id);
 			let extra = {
 				title: `${msg.author.username}#${msg.author.discriminator}'s registered groups`,
 				author: {
@@ -118,40 +116,40 @@ module.exports = {
 
 		case "tag":
 			if(!args[1]) return "No group name given.";
-			group = await bot.db.getGroup(msg.author.id, args[1]);
+			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			if(!args[2]) return group.tag ? "Current tag: " + group.tag + "\nTo remove it, try " + cfg.prefix + "group tag " + group.name + " clear" : "No tag currently set.";
 			if(["clear","remove","none","delete"].includes(args[2])) {
-				await bot.db.updateGroup(msg.author.id,group.name,"tag",null);
+				await bot.db.groups.update(msg.author.id,group.name,"tag",null);
 				return "Tag cleared.";
 			}
 			let tag = args.slice(2).join(" ").trim();
 			if(tag.length > 25) return "That tag is far too long. Please pick one shorter than 25 characters.";
-			await bot.db.updateGroup(msg.author.id, group.name, "tag", bot.noVariation(args.slice(2).join(" ")));
+			await bot.db.groups.update(msg.author.id, group.name, "tag", bot.noVariation(args.slice(2).join(" ")));
 			return "Tag set. Group members will attempt to have their group tags displayed when proxying, if there's enough room.";
 
 		case "rename":
 			if(!args[1]) return "No group name given.";
-			group = await bot.db.getGroup(msg.author.id, args[1]);
+			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			if(!args[2]) return "No new name given.";
 			let newname = args.slice(2).join(" ").trim();
-			let group2 = await bot.db.getGroup(msg.author.id, newname);
+			let group2 = await bot.db.groups.get(msg.author.id, newname);
 			if(group2) return "There is already a group with that name.";
-			await bot.db.updateGroup(msg.author.id, group.name, "name", bot.noVariation(newname));
+			await bot.db.groups.update(msg.author.id, group.name, "name", bot.noVariation(newname));
 			return "Group renamed to '" + newname + "'.";
 
 		case "describe":
 			if(!args[1]) return "No group name given.";
-			group = await bot.db.getGroup(msg.author.id, args[1]);
+			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			if(!args[2]) return group.description ? "Current description: " + group.description + "\nTo remove it, try " + cfg.prefix + "group describe " + group.name + " clear" : "No description currently set.";
 			if(["clear","remove","none","delete"].includes(args[2])) {
-				await bot.db.updateGroup(msg.author.id,group.name,"description",null);
+				await bot.db.groups.update(msg.author.id,group.name,"description",null);
 				return "Description cleared.";
 			}
 			let description = args.slice(2).join(" ").trim();
-			await bot.db.updateGroup(msg.author.id, group.name, "description", description.slice(0,2000));
+			await bot.db.groups.update(msg.author.id, group.name, "description", description.slice(0,2000));
 			if(description.length > 2000) return "Description updated, but was cut to 2000 characters to fit within Discord embed limits.";
 			return "Description updated.";
 

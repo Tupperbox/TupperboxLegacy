@@ -14,9 +14,9 @@ module.exports = {
 		if(!target) return "User not found.";
 
 		//generate paginated list with groups
-		let groups = (await bot.db.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		let groups = await bot.db.groups.getAll(target.id);
 		if(groups[0] && !ng) {
-			let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
+			let members = await bot.db.members.getAll(target.id);
 			if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 			if(members.find(t => !t.group_id)) groups.push({name: "Ungrouped", id: null});
 			let embeds = [];
@@ -45,7 +45,7 @@ module.exports = {
 			if(embeds[1]) return bot.paginator.paginate(bot, msg,embeds);
 			return embeds[0];
 		}
-		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		let members = await bot.db.members.getAll(target.id);
 		if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 
 		//generate paginated list
@@ -59,7 +59,7 @@ module.exports = {
 		
 		let embeds = await bot.paginator.generatePages(bot, members, async t => {
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			if(t.group_id) group = await bot.db.groups.getById(t.group_id);
 			return bot.paginator.generateMemberField(bot, t,group);
 		}, extra);
 		if(embeds[1]) return bot.paginator.paginate(bot, msg, embeds);

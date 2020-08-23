@@ -13,8 +13,8 @@ module.exports = bot => {
 		if(msg.channel.guild && bot.blacklist.includes(msg.channel.guild.id)) return { done : true };
 		if(await bot.db.getGlobalBlacklisted(msg.author.id)) return { done: true };
 	
-		let cfg = guild ? (await bot.db.getCfg(guild.id) ?? { ...bot.defaultCfg }) : { ...bot.defaultCfg };
-		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
+		let cfg = guild ? (await bot.db.config.get(guild.id) ?? { ...bot.defaultCfg }) : { ...bot.defaultCfg };
+		let members = bot.db.members.getAll(msg.author.id);
 		return { msg, bot, cfg, members };
 	}
 
@@ -26,7 +26,7 @@ module.exports = bot => {
 	};
 
 	bot.updateStatus = async () => {
-		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(+(await bot.db.query("SELECT COUNT(*) FROM Members")).rows[0].count).toLocaleString()} registered`});
+		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(+(await bot.db.members.count()).toLocaleString())} registered`});
 	};
 
 	bot.ageOf = user => {
@@ -119,7 +119,7 @@ module.exports = bot => {
 
 	bot.banAbusiveUser = async (userID, notifyChannelID) => {
 		if(userID == bot.user.id) return;
-		let membersDeleted = await bot.db.query("DELETE FROM members WHERE user_id = $1",[userID]);
+		let membersDeleted = await bot.db.members.clear(userID);
 		let blacklistedNum = 0;
 		try {
 			blacklistedNum = (await bot.db.query("INSERT INTO global_blacklist values($1::VARCHAR(50))",[userID])).rowCount;

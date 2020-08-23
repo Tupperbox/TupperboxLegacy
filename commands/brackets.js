@@ -13,7 +13,7 @@ module.exports = {
 
 		//check arguments
 		let name = (args[0] == "add" || args[0] == "remove") ? args[1] : args[0];
-		let member = await bot.db.getMember(msg.author.id,name);
+		let member = await bot.db.members.get(msg.author.id,name);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		if(!args[1]) return `Brackets for ${args[0]}: ${bot.getBrackets(member)}`;
 		let brackets = msg.content.slice(msg.content.indexOf(name)+name.length+1).trim().split("text");
@@ -21,7 +21,7 @@ module.exports = {
 		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
 		if(args[0] == "add") {
 			member.brackets = member.brackets.concat(brackets);
-			await bot.db.updateMember(msg.author.id,member.name,"brackets",member.brackets);
+			await bot.db.members.update(msg.author.id,member.name,"brackets",member.brackets);
 			return "Brackets added.";
 		} else if(args[0] == "remove") {
 			let index = -1;
@@ -34,12 +34,12 @@ module.exports = {
 			if(index < 0) return "No matching brackets found.";
 			if(member.brackets.length < 3) return "Cannot remove last brackets.";
 			member.brackets = member.brackets.slice(0,index).concat(member.brackets.slice(index+2));
-			await bot.db.updateMember(msg.author.id,member.name,"brackets",member.brackets);
+			await bot.db.members.update(msg.author.id,member.name,"brackets",member.brackets);
 			return "Brackets removed.";
 		}
 
 		//update member
-		await bot.db.updateMember(msg.author.id,member.name,"brackets",brackets);
+		await bot.db.members.update(msg.author.id,member.name,"brackets",brackets);
 		return "Brackets set successfully.";
 	}
 };

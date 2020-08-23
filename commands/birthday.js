@@ -16,18 +16,18 @@ module.exports = {
 		}
 
 		//check arguments
-		let member = await bot.db.getMember(msg.author.id,args[0]);
+		let member = await bot.db.members.get(msg.author.id,args[0]);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		if(!args[1]) return member.birthday ? "Current birthday: " + member.birthday.toDateString() + "\nTo remove it, try " + cfg.prefix + "birthday " + member.name + " clear" : "No birthday currently set for " + args[0];
 		if(["clear","remove","none","delete"].includes(args[1])) {
-			await bot.db.updateMember(msg.author.id,member.name,"birthday",null);
+			await bot.db.members.update(msg.author.id,member.name,"birthday",null);
 			return "Birthday cleared.";
 		}
 		if(!(new Date(args[1]).getTime())) return "I can't understand that date. Please enter in the form MM/DD/YYYY with no spaces.";
 
 		//update member
 		let date = new Date(args[1]);
-		await bot.db.updateMember(msg.author.id,args[0],"birthday",date);
+		await bot.db.members.update(msg.author.id,args[0],"birthday",date);
 		return `${proper(cfg.lang)} '${args[0]}' birthday set to ${date.toDateString()}.`;
 	}
 };

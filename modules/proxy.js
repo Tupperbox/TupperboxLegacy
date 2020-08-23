@@ -13,13 +13,13 @@ module.exports = {
 	},
 
     fetchWebhook: async (bot, channel) => {
-        let q = await await bot.db.query("SELECT * FROM Webhooks WHERE channel_id = $1", [channel.id]);
+        let q = await bot.db.webhooks.get(channel.id);
         if(q.rows[0]) {
             try {
-                if (await bot.getWebhook(q.rows[0].id, q.rows[0].token)) return q.rows[0];
+                if (await bot.getWebhook(q.id, q.token)) return q;
             } catch (e) {
                 if (e.code != 10015) throw e;
-                await bot.db.query("remove from Webhooks where channel_id = $1", [channel.id]);
+                await bot.db.webhooks.delete(channel.id);
                 return await module.exports.fetchWebhook(bot, channel);
             }
         }
@@ -40,7 +40,7 @@ module.exports = {
                 } else if(e.code != 10003) throw e;
             }
             let wbhk = { id: hook.id, channel_id: channel.id, token: hook.token };
-            await bot.db.query("insert into Webhooks values ($1, $2, $3)", [hook.id,channel.id,hook.token]);
+            await bot.db.webhooks.set(wbhk);
             return wbhk;
         }
     },
@@ -92,11 +92,11 @@ module.exports = {
             if(logchannel.type != 0 || typeof(logchannel.createMessage) != "function") {
                 cfg.log_channel = null;
                 bot.send(msg.channel, "Warning: There is a log channel configured but it is not a text channel. Logging has been disabled.");
-                await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
+                await bot.db.config.update(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
             }
             else if(!logchannel.permissionsOf(bot.user.id).has("sendMessages") || !logchannel.permissionsOf(bot.user.id).has("readMessages")) {
                 bot.send(msg.channel, "Warning: There is a log channel configured but I do not have permission to send messages to it. Logging has been disabled.");
-                await bot.db.updateCfg(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
+                await bot.db.config.update(msg.channel.guild.id,"log_channel",null,bot.defaultCfg);
             }
             else bot.send(logchannel, {embed: {
                 title: member.name,
@@ -164,7 +164,7 @@ module.exports = {
     
         module.exports.logProxy(bot, msg, cfg, member, content, webmsg);
     
-        bot.db.updateMember(member.user_id,member.name,"posts",member.posts+1);
+        bot.db.members.update(member.user_id,member.name,"posts",member.posts+1);
     
         if(!bot.recent[msg.channel.id] && !msg.channel.permissionsOf(bot.user.id).has("manageMessages"))
             bot.send(msg.channel, "Warning: I do not have permission to delete messages. Both the original message and proxied message will show.");
