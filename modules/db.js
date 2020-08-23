@@ -12,6 +12,13 @@ const question = q => {
 	});
 };
 
+const blacklistBitfield = (blockProxies, blockCommands) => {
+	let blacklist = 0;
+	if (blockCommands) blacklist |= 1;
+	if (blockProxies) blacklist |= 2;
+	return blacklist;
+}
+
 module.exports = {
 	cache,
 	init: async () => {
@@ -300,34 +307,35 @@ module.exports = {
 	},	
 
 	blacklist: {
-		get: async (serverID) => {
+		get: async (channel) => {
+			if (!channel.guild) return 2; // DM channel: commands OK, proxy NO
+			let blacklistCache = await cache.hget("blacklist", channel.id);
+			if (blacklistCache) return blacklistCache;
+
+			let blacklist;
+
+			dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
+			if (dbBlacklist.length == 0) blacklist = 0;
+			
+			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_commands).length > 0, dbBlacklist.filter(x => x.block_proxies).length > 0);
+			cache.hset("blacklist", channel.id, blacklist);
+			return blacklist;
+		},
+
+		getAll: async (serverID) => {
 			return (await pool.query("SELECT * FROM Blacklist WHERE server_id = $1", [serverID])).rows;
 		},
 
 		update: async (serverID, id, isChannel, blockProxies, blockCommands) => {
-			if(blockProxies !== null) cache.hset(`blacklist/${serverID}/${id}`, "proxy", blockProxies ? 1 : 0);
-			if(blockCommands !== null) cache.hset(`blacklist/${serverID}/${id}`, "command", blockCommands ? 1 : 0);
+			cache.blacklist.set(id, blacklistBitfield(blockProxies, blockCommands));
 			return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
 		},
 
-		delete: async (serverID, id) => {
-			cache.del(`blacklist/${serverID}/${id}`);
-			return await pool.query("DELETE FROM Blacklist WHERE server_id = $1 AND id = $2", [serverID, id]);
+		delete: async (guildID, channelID) => {
+			cache.blacklist.delete(channelID);
+			return await module.exports.query("delete from Blacklist where server_id = $1 and id = $2", [guildID, channelID]);	
 		},
 
-		check: async (serverID, id, proxy) => {
-			let blacklisted = await cache.hget(`blacklist/${serverID}/${id}`,proxy ? "proxy" : "command");
-			if(blacklisted !== null) return blacklisted == 1;
-			if(proxy) {
-				blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0] != undefined);
-				cache.hset(`blacklist/${serverID}/${id}`,"proxy",blacklisted ? 1 : 0);
-			} else {
-				blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0] != undefined);
-				cache.hset(`blacklist/${serverID}/${id}`,"command",blacklisted ? 1 : 0);
-			}
-			return blacklisted;
-		},
-	
 	},
 
 	webhooks: {

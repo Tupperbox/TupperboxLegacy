@@ -1,16 +1,6 @@
 module.exports = bot => {  
 	bot.cooldowns = {};
 
-	bot.getMessageContext = async (msg) => {
-		if(msg.author.bot) return { done: true };
-		if(msg.channel.guild && bot.blacklist.includes(msg.channel.guild.id)) return { done : true };
-		if(await bot.db.getGlobalBlacklisted(msg.author.id)) return { done: true };
-	
-		let cfg = msg.channel.guild ? (await bot.db.config.get(msg.channel.guild.id) ?? { ...bot.defaultCfg }) : { ...bot.defaultCfg };
-		let members = await bot.db.members.getAll(msg.author.id);
-		return { msg, bot, cfg, members };
-	}
-
 	bot.err = (msg, error, tell = true) => {
 		if(error.message.startsWith("Request timed out") || error.code == 500 || error.code == "ECONNRESET" || error.code == "EHOSTUNREACH") return; //Internal discord errors don't need reporting
 		console.error(`[ERROR ch:${msg.channel.id} usr:${msg.author ? msg.author.id : "UNKNOWN"}]\n(${error.code}) ${error.stack} `);
