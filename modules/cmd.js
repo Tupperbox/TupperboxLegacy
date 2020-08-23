@@ -1,4 +1,6 @@
-let dialogStuff = (bot, msg) => {
+const cache = require("../modules/redis");
+
+const dialogStuff = (bot, msg) => {
 	if(bot.dialogs[msg.channel.id + msg.author.id]) {
 		bot.dialogs[msg.channel.id+msg.author.id](msg);
 		delete bot.dialogs[msg.channel.id+msg.author.id];
@@ -25,16 +27,10 @@ module.exports = async ({msg,bot,members,cfg,dmChannel}) => {
 
 	if (!(cmd && bot.checkPermissions(cmd,msg,args))) return false;
 
-	let cooldownKey = msg.author.id + cmdName;
-	if(bot.cooldowns[cooldownKey]) {
-		bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((bot.cooldowns[cooldownKey] - Date.now())/1000)} seconds`);
-		return false;
-	}
-	if(cmd.cooldown) {
-		let cd = cmd.cooldown(msg);
-		setTimeout(() => bot.cooldowns[cooldownKey] = null,cd);
-		bot.cooldowns[cooldownKey] = Date.now()+cd;
-	}
+	let key = msg.author.id + cmdName;
+	let cd = await cache.cooldowns.get(key);
+	if (cd) return bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((cd - Date.now())/1000)} seconds`);
+	if(cmd.cooldown) cache.cooldowns.set(key, cmd.cooldown(msg));
 
 	if(cmd.groupArgs) args = bot.getMatches(content,/“(.+?)”|‘(.+?)’|"(.+?)"|'(.+?)'|(\S+)/gi).slice(1);
 

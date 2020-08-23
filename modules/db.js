@@ -1,7 +1,6 @@
 const { Pool } = require("pg");
 const fs = require("fs");
-const redis = require("ioredis");
-const cache = new redis(process.env.REDISURL);
+const cache = require("./redis");
 
 let pool = new Pool();
 
@@ -20,7 +19,7 @@ const blacklistBitfield = (blockProxies, blockCommands) => {
 }
 
 module.exports = {
-	cache,
+
 	init: async () => {
 		process.stdout.write("Checking postgres connection... ");
 		(await (await pool.connect()).release());
@@ -189,10 +188,10 @@ module.exports = {
 		} catch(e) { if(e.code != "MODULE_NOT_FOUND") console.log(e);}
 		if(!found) console.log("Data OK.");
 		process.stdout.write("Checking Redis connection...");
-		await cache.set('test', 1);
-		if(await cache.get('test') != 1) throw new Error("Cache integrity check failed");
-		await cache.del('test');
-		await cache.flushall();
+		await cache.redis.set('test', 1);
+		if(await cache.redis.get('test') != 1) throw new Error("Cache integrity check failed");
+		await cache.redis.del('test');
+		await cache.redis.flushall();
 		console.log("ok!");
 	},
 
@@ -285,23 +284,23 @@ module.exports = {
 		add: async (serverID, cfg) => {
 			return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,cfg.prefix,cfg.lang]);
 		},
-	
+
 		get: async (serverID) => {
-			let cfg = await cache.get('config/'+serverID);
-			if(cfg) { return JSON.parse(cfg); }
+			let cfg = await cache.config.get(serverID);
+			if(cfg) return cfg;
 			cfg = ((await pool.query("SELECT prefix, lang, lang_plural, log_channel FROM Servers WHERE id = $1", [serverID])).rows[0]);
-			if(cfg) cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(cfg).filter(ent => ent[1] !== null))));
+			if(cfg) cache.config.set(serverID, cfg);
 			return cfg;
 		},
-	
+
 		update: async (serverID, column, newVal, cfg) => {
 			await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
 			let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING prefix, lang, lang_plural, log_channel`, [newVal,serverID])).rows[0];
-			if(updated) return await cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(updated).filter(ent => ent[1] !== null))));
+			if(updated) return await cache.config.set(serverID, updated);
 		},
-	
+
 		delete: async (serverID) => {
-			cache.del('config/'+serverID);
+			cache.config.delete(serverID);
 			return await pool.query("DELETE FROM Servers WHERE id = $1", [serverID]);
 		},
 	},	
@@ -309,7 +308,7 @@ module.exports = {
 	blacklist: {
 		get: async (channel) => {
 			if (!channel.guild) return 2; // DM channel: commands OK, proxy NO
-			let blacklistCache = await cache.hget("blacklist", channel.id);
+			let blacklistCache = await cache.blacklist.get(channel.id);
 			if (blacklistCache) return blacklistCache;
 
 			let blacklist;
@@ -318,7 +317,7 @@ module.exports = {
 			if (dbBlacklist.length == 0) blacklist = 0;
 			
 			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_commands).length > 0, dbBlacklist.filter(x => x.block_proxies).length > 0);
-			cache.hset("blacklist", channel.id, blacklist);
+			cache.blacklist.set(channel.id, blacklist);
 			return blacklist;
 		},
 
