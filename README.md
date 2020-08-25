@@ -16,7 +16,7 @@ The bot expects a file in the same directory named `.env` with its configuration
 
 * SENTRY_DSN is a link to a registered Sentry project. See https://sentry.io/ for more information on Sentry. <br> This is **optional**.
 
-* Edit `DEFAULT_PREFIX`, `DEFAULT_LANG` as desired. Setting `USE_GUILD_SUBSCRIPTIONS` to true will guarantee list, find, and logging functions will always give the correct username.
+* Edit `DEFAULT_PREFIX`, `DEFAULT_LANG` as desired.
 
 * `BOT_INVITE` is the bot's user ID, used in the `tul!invite` command. `SUPPORT_INVITE` is the invite ID (**not invite link**) to the bot's support server, used in the `tul!feedback` command. <br> Remove either of these to remove the respective bot commands.
 
