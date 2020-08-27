@@ -8,7 +8,10 @@ module.exports = {
             await redis.get(`cooldowns/${key}`),
 
         set: async (key, time) =>
-            await redis.set(`cooldowns/${key}`, Date.now() + time, "px", time)
+            await redis.set(`cooldowns/${key}`, Date.now() + time, "px", time),
+        
+        update: async (key, time) =>
+            await redis.pexpire(`cooldowns/${key}`, time),
     },
 
     config: {
