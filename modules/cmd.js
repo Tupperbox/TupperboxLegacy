@@ -8,7 +8,7 @@ module.exports = async ({msg, bot, members, cfg, dmChannel}) => {
 	let cmdName = args.shift();
 	let cmd = bot.cmds[cmdName];
 
-	if (!cmd) return;
+	if (!cmd || !bot.checkPermissions(bot, cmd, msg, args)) return;
 
 	let key = msg.author.id + cmdName;
 	let cd = await cache.cooldowns.get(key);

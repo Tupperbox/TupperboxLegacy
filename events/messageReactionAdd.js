@@ -7,7 +7,7 @@ module.exports = async (message, emoji, userID, bot) => {
 			bot.deleteMessage(message.channel.id,message.id);
 		return;
 	}
-	else if(emoji.name == "\u2753" && bot.recent[message.channel.id]) return await bot.proxy.sendMsgInfo(bot, message);
+	else if(emoji.name == "\u2753" && bot.recent[message.channel.id]) return await bot.proxy.sendMsgInfo(bot, message, emoji, useriD);
 
 	if(!bot.paginator.cache[message.id] || bot.paginator.cache[message.id].user != userID || !bot.paginator.buttons.includes(emoji.name)) return;
 

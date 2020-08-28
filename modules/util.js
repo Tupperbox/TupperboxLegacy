@@ -58,9 +58,8 @@ module.exports = bot => {
 		return g.channels.get(/<#(\d+)>/.test(text) && text.match(/<#(\d+)>/)[1]) || g.channels.get(text); /*|| g.channels.find(m => m.name.toLowerCase() == text.toLowerCase())*/
 	};
 
-	bot.checkPermissions = (cmd, msg, args) => {
-		return (msg.author.id === bot.owner) || (cmd.permitted(msg,args));
-	};
+	bot.checkPermissions = (bot, cmd, msg, args) =>
+		(msg.author.id === bot.owner) || (cmd.permitted(bot,msg,args));
 
 	bot.waitMessage = (msg) => {
 		return new Promise((res, rej) => {

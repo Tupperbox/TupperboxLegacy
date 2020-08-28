@@ -126,7 +126,7 @@ module.exports = {
 
     replaceMessage: async (bot, msg, cfg, member, content, retry = 2) => {
     
-        if (retry = 0) return;
+        if (retry == 0) return;
     
         const hook = await module.exports.fetchWebhook(bot, msg.channel);
     
@@ -252,7 +252,7 @@ module.exports = {
         }
     },
 
-    sendMsgInfo: async (bot, message) => {
+    sendMsgInfo: async (bot, message, emoji, userID) => {
 
         let recent = bot.recent[message.channel.id].find(r => message.id == r.id);
 		if(!recent) return;

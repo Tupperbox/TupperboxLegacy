@@ -8,7 +8,7 @@ module.exports = {
 	execute: async (bot, msg, args, cfg) => {
 		//help for a specific command
 		if(args[0]) {
-			if(bot.cmds[args[0]] && bot.checkPermissions(bot.cmds[args[0]],msg,args) && bot.cmds[args[0]].usage) {
+			if(bot.cmds[args[0]] && bot.checkPermissions(bot, bot.cmds[args[0]],msg,args) && bot.cmds[args[0]].usage) {
 				let output = { embed: {
 					title: "Bot Command | " + args[0],
 					description: bot.cmds[args[0]].help(cfg) + "\n\n**Usage:**\n",

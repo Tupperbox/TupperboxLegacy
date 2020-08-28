@@ -273,8 +273,8 @@ module.exports = {
 		},
 
 		deleteAll: async (id) => {
-			groups = module.exports.groups.getAll(id);
-			for await (g of groups) {
+			let groups = module.exports.groups.getAll(id);
+			for await (let g of groups) {
 				await module.exports.groups.delete(g.id);
 			}
 		},
@@ -313,7 +313,7 @@ module.exports = {
 
 			let blacklist;
 
-			dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
+			let dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
 			if (dbBlacklist.length == 0) blacklist = 0;
 			
 			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_commands).length > 0, dbBlacklist.filter(x => x.block_proxies).length > 0);

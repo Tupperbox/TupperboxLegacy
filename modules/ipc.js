@@ -7,7 +7,7 @@ const dhm = t => {
 	return `${d}d ${h}h ${m}m ${s}s`;
 };
 
-masterExports = (enqueue) => {
+let masterExports = (enqueue) => {
   this.postStats = (wrk,msg,shrd) => {
     if(!msg.channelID) return;
     let guilds = shrd.stats.stats.clusters.reduce((a,b)=>a+b.guilds,0);
@@ -39,7 +39,7 @@ masterExports = (enqueue) => {
 const types = ['command', 'module', 'event'];
 const modules = ['blacklist', 'cmd', 'db', 'msg', 'paginator', 'proxy', 'redis'];
 
-botExports = (bot) => {
+let botExports = (bot) => {
 
   this.reload = async msg => {
  

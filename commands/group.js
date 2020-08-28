@@ -62,8 +62,8 @@ module.exports = {
 			let baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
 			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
 
-			for await (arg of args) {
-				tup = await bot.db.members.get(msg.author.id, arg);
+			for await (let arg of args) {
+				let tup = await bot.db.members.get(msg.author.id, arg);
 				if (tup) {
 					await bot.db.groups.addMember(group.id,tup.id);
 					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) addedMessage += ` '${arg}'`; else addedMessage += " (...)";

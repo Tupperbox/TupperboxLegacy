@@ -1,7 +1,7 @@
 const util = require("util");
 
 module.exports = {
-    permitted: (msg) => msg.author.id == bot.owner,
+    permitted: (msg, bot) => msg.author.id == bot.owner,
     execute: async (bot, msg, args, cfg) => {
         switch(args.shift()) {
             case "eval":
