@@ -3,6 +3,7 @@ const util = require("util");
 module.exports = {
     permitted: (msg, bot) => msg.author.id == bot.owner,
     execute: async (bot, msg, args, cfg) => {
+        if (msg.author.id != bot.owner) return;
         switch(args.shift()) {
             case "eval":
                 let out;
