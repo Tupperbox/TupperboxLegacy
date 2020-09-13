@@ -4,34 +4,6 @@ module.exports = {
 	permitted: () => true,
 	cooldown: msg => 60000,
 	execute: async (bot, msg, args, cfg, _members, ng = false) => {
-		////short list of all tuppers in server
-		//if(args[0] == "all" || args[0] == "*") {
-		//	if(!msg.channel.guild) return "Cannot retrieve server-wide list in DMs.";
-		//	let tups = (await bot.db.query("SELECT * FROM Members WHERE user_id = ANY ($1) ORDER BY id, position", [msg.channel.guild.members.map(m => m.id)])).rows;
-		//	let all = {};
-		//	tups.forEach(t => {
-		//		if(!all[t.user_id]) all[t.user_id] = [];
-		//		all[t.user_id].push(t);
-		//	});
-		//	let extra = { 
-		//		title: `${tups.length} total registered ${cfg.lang}s in this server`,
-		//		author: {
-		//			name: msg.channel.guild.name,
-		//			icon_url: msg.channel.guild.iconURL
-		//		}
-		//	};
-		//	let embeds = bot.generatePages(Object.keys(all), id => {
-		//		let user = bot.users.get(id);
-		//		let field = {
-		//			name: `${user.username}#${user.discriminator} (${all[id].length} registered)`,
-		//			value: all[id].map(mem => mem.name).join(", ")
-		//		};
-		//		if(field.value.length > 1000) field.value = field.value.slice(0,1000) + "...";
-		//		return field;
-		//	}, extra);
-		//	if(embeds[1]) return bot.paginate(msg, embeds);
-		//	return embeds[0];
-		//}
 
 		//get target list
 		let target;
@@ -42,9 +14,9 @@ module.exports = {
 		if(!target) return "User not found.";
 
 		//generate paginated list with groups
-		let groups = (await bot.db.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		let groups = await bot.db.groups.getAll(target.id);
 		if(groups[0] && !ng) {
-			let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY group_pos, position", [target.id])).rows;
+			let members = await bot.db.members.getAll(target.id);
 			if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 			if(members.find(t => !t.group_id)) groups.push({name: "Ungrouped", id: null});
 			let embeds = [];
@@ -57,7 +29,7 @@ module.exports = {
 					},
 					description: `Group: ${groups[i].name}${groups[i].tag ? "\nTag: " + groups[i].tag : ""}${groups[i].description ? "\n" + groups[i].description : ""}`
 				};
-				let add = await bot.generatePages(members.filter(t => t.group_id == groups[i].id), t => bot.generateMemberField(t),extra);
+				let add = await bot.paginator.generatePages(bot, members.filter(t => t.group_id == groups[i].id), t => bot.paginator.generateMemberField(bot, t),extra);
 				if(add[add.length-1].embed.fields.length < 5 && groups[i+1]) add[add.length-1].embed.fields.push({
 					name: "\u200b",
 					value: `Next page: group ${groups[i+1].name}`
@@ -70,10 +42,10 @@ module.exports = {
 				if(embeds.length > 1) embeds[i].embed.title += ` (page ${i+1}/${embeds.length}, ${members.length} total)`;
 			}
 
-			if(embeds[1]) return bot.paginate(msg,embeds);
+			if(embeds[1]) return bot.paginator.paginate(bot, msg,embeds);
 			return embeds[0];
 		}
-		let members = (await bot.db.query("SELECT * FROM Members WHERE user_id = $1 ORDER BY position", [target.id])).rows;
+		let members = await bot.db.members.getAll(target.id);
 		if(!members[0]) return (target.id == msg.author.id) ? "You have not registered any " + cfg.lang + "s." : "That user has not registered any " + cfg.lang + "s.";
 
 		//generate paginated list
@@ -85,12 +57,12 @@ module.exports = {
 			}
 		};
 		
-		let embeds = await bot.generatePages(members, async t => {
+		let embeds = await bot.paginator.generatePages(bot, members, async t => {
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
-			return bot.generateMemberField(t,group);
+			if(t.group_id) group = await bot.db.groups.getById(t.group_id);
+			return bot.paginator.generateMemberField(bot, t,group);
 		}, extra);
-		if(embeds[1]) return bot.paginate(msg, embeds);
+		if(embeds[1]) return bot.paginator.paginate(bot, msg, embeds);
 		return embeds[0];
 	}
 };

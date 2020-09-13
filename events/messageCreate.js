@@ -1,5 +1,3 @@
 module.exports = async (msg,bot) => {
-	let ctx = await bot.getMessageContext(msg);
-	if (ctx.done) return;
-	if (await bot.cmd(ctx) && msg.channel.guild) bot.proxy(ctx);
+	bot.msg(bot, msg);
 };

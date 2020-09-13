@@ -12,7 +12,7 @@ module.exports = {
 		let search = args.join(" ").toLowerCase();
 		let targets; 
 		if(msg.channel.type == 1)
-			targets = [msg.author.id]
+			targets = [msg.author]
 		else {
 			targets = await bot.findAllUsers(msg.channel.guild.id);
 		}
@@ -24,14 +24,14 @@ module.exports = {
 			let t = results[0];
 			let host = targets.find(u => u.id == t.user_id);
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			if(t.group_id) group = bot.db.groups.getById(t.group_id);
 			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
 			let embed = { embed: {
 				author: {
 					name: t.name,
 					icon_url: t.url
 				},
-				description: val + bot.generateMemberField(t,group,val.length).value,
+				description: val + bot.paginator.generateMemberField(bot, t,group,val.length).value,
 			}};
 			return embed;
 		}
@@ -52,17 +52,17 @@ module.exports = {
 				}};
 			}
 			let group = null;
-			if(t.group_id) group = (await bot.db.query("SELECT name FROM Groups WHERE id = $1",[t.group_id])).rows[0];
+			if(t.group_id) group = await bot.db.groups.getById(t.group_id);
 			let host = targets.find(u => u.id == t.user_id);
 			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
-			current.embed.fields.push({name: t.name, value: val + bot.generateMemberField(t,group,val.length).value});
+			current.embed.fields.push({name: t.name, value: val + bot.paginator.generateMemberField(bot, t,group,val.length).value});
 		}
 
 		embeds.push(current);
 		if(embeds.length > 1) {
 			for(let i = 0; i < embeds.length; i++)
 				embeds[i].embed.title += ` (page ${i+1}/${embeds.length} of ${results.length} results)`;
-			return bot.paginate(msg, embeds);
+			return bot.paginator.paginate(bot, msg, embeds);
 		}
 		return embeds[0];
 	}

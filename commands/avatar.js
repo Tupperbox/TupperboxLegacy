@@ -20,7 +20,7 @@ module.exports = {
 
 		//check arguments
 		let name = msg.attachments[0] ? args.join(" ") : args[0];
-		let member = await bot.db.getMember(msg.author.id, name);
+		let member = await bot.db.members.get(msg.author.id, name);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		if(!args[1] && !msg.attachments[0]) return member.avatar_url;
 
@@ -49,7 +49,7 @@ module.exports = {
 		}
 
 		//update member
-		await bot.db.updateMember(msg.author.id,name,"avatar_url",url);
+		await bot.db.members.update(msg.author.id,name,"avatar_url",url);
 		return `Avatar ${clear ? "cleared" : "changed"} successfully.` + (msg.attachments[0] ? "\nNote: if the message you just used to upload the avatar with gets deleted, the avatar will eventually no longer appear." : "");
 	}
 };

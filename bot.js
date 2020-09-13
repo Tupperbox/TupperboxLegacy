@@ -14,10 +14,11 @@ class Tupperbox extends Base {
 		bot.base = this;
 		bot.sentry = Sentry;
 		bot.db = require("./modules/db");
+		bot.msg = require("./modules/msg");
 		bot.cmd = require("./modules/cmd");
 		bot.proxy = require("./modules/proxy");
+		bot.paginator = require("./modules/paginator");
 		bot.recent = {};
-		bot.pages = {};
 		bot.cmds = {};
 		bot.dialogs = {};
 		bot.owner = process.env.DISCORD_OWNERID;
@@ -43,10 +44,13 @@ class Tupperbox extends Base {
 
 		setInterval(() => bot.updateStatus(),3600000); //every hour
 		bot.updateStatus();
-	
-		if (!process.env.DISCORD_INVITE) {
+
+		if (!process.env.BOT_INVITE)
 			delete bot.cmds.invite;
-		}
+
+		if (!process.env.SUPPORT_INVITE)
+			delete bot.cmds.feedback;
+
 		if(!fs.existsSync("privacy.txt")) {
 			console.log("no privacy");
 			delete bot.cmds.privacy;

@@ -1,7 +1,6 @@
 const { Pool } = require("pg");
 const fs = require("fs");
-const redis = require("ioredis");
-const cache = new redis(process.env.REDISURL);
+const cache = require("./redis");
 
 let pool = new Pool();
 
@@ -12,14 +11,15 @@ const question = q => {
 	});
 };
 
-let updateBlacklist = async (serverID, id, isChannel, blockProxies, blockCommands) => {
-	if(blockProxies !== null) cache.hset(`blacklist/${serverID}/${id}`, "proxy", blockProxies ? 1 : 0);
-	if(blockCommands !== null) cache.hset(`blacklist/${serverID}/${id}`, "command", blockCommands ? 1 : 0);
-	return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
-};
+const blacklistBitfield = (blockProxies, blockCommands) => {
+	let blacklist = 0;
+	if (blockCommands) blacklist |= 1;
+	if (blockProxies) blacklist |= 2;
+	return blacklist;
+}
 
 module.exports = {
-	cache,
+
 	init: async () => {
 		process.stdout.write("Checking postgres connection... ");
 		(await (await pool.connect()).release());
@@ -176,8 +176,8 @@ module.exports = {
 					conn.query("INSERT INTO Servers VALUES ($1,$2,$3,$4,$5)", [id,cfg.prefix,cfg.lang,null,cfg.log || null])
 						.catch(e => { console.error(e); })
 						.then(async () => {
-							if(cfg.blacklist) for(let bl of cfg.blacklist) await updateBlacklist(id,bl,true,true,null).then(() => console.log(`${id} - blacklist updated`));
-							if(cfg.cmdblacklist) for(let bl of cfg.cmdblacklist) await updateBlacklist(id,bl,true,null,true).then(() => console.log(`${id} - blacklist updated`));
+							if(cfg.blacklist) for(let bl of cfg.blacklist) await module.exports.blacklist.update(id,bl,true,true,null).then(() => console.log(`${id} - blacklist updated`));
+							if(cfg.cmdblacklist) for(let bl of cfg.cmdblacklist) await module.exports.blacklist.update(id,bl,true,null,true).then(() => console.log(`${id} - blacklist updated`));
 							conn.release();
 						}).catch(e => { throw e; });
 				}
@@ -188,105 +188,166 @@ module.exports = {
 		} catch(e) { if(e.code != "MODULE_NOT_FOUND") console.log(e);}
 		if(!found) console.log("Data OK.");
 		process.stdout.write("Checking Redis connection...");
-		await cache.set('test', 1);
-		if(await cache.get('test') != 1) throw new Error("Cache integrity check failed");
-		await cache.del('test');
-		await cache.flushall();
+		await cache.redis.set('test', 1);
+		if(await cache.redis.get('test') != 1) throw new Error("Cache integrity check failed");
+		await cache.redis.del('test');
+		await cache.redis.flushall();
 		console.log("ok!");
 	},
 
 	connect: () => pool.connect(),
+	end: async () => { return await pool.end(); },
 
 	query: (text, params, callback) => {
 		return pool.query(text, params, callback);
 	},
 
-	addMember: async (userID, member, client) => {
-		return await (client || pool).query("INSERT INTO Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Members WHERE user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID,member.name,member.avatarURL || "https://i.imgur.com/ZpijZpg.png",member.brackets]);
+	members: {
+		add: async (userID, member, client) => 
+			await (client || module.exports).query("insert into Members (user_id, name, position, avatar_url, brackets, posts, show_brackets) values ($1::VARCHAR(32), $2, (select greatest(count(position), max(position)+1) from Members where user_id = $1::VARCHAR(32)), $3, $4, 0, false)", [userID, member.name, member.avatarURL || "https://i.imgur.com/ZpijZpg.png",member.brackets]),
+
+		get: async (userID, name) =>
+			(await module.exports.query("select * from Members where user_id = $1 and lower(name) = lower($2)", [userID, name])).rows[0],
+
+		getAll: async (userID) =>
+			(await module.exports.query("select * from Members where user_id = $1 order by group_pos, position", [userID])).rows,
+
+		count: async () => 
+			(await module.exports.query("SELECT COUNT(*) FROM Members")).rows[0].count,
+
+		export: async (userID, name) =>
+			(await module.exports.query("select name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos from Members where user_id = $1 and lower(name) = lower($2)", [userID, name])).rows[0],
+
+		update: async (userID, name, column, newVal) =>
+			await module.exports.query(`update Members set ${column} = $1 where user_id = $2 and lower(name) = lower($3)`, [newVal, userID, name]),
+
+		removeGroup: async (memberID) =>
+			await module.exports.query("update Members set group_id = null, group_pos = null where id = $1", [memberID]),
+
+		removeAllTags: async (userID) =>
+			await module.exports.query("update Members set tag = null where user_id = $1", [userID]),
+
+		delete: async (userID, name) =>
+			await module.exports.query("delete from Members where user_id = $1 and lower(name) = lower($2)", [userID, name]),
+
+		clearTags: async (userID) =>
+			await module.exports.query("update Members set tag = null where user_id = $1", [userID]),
+
+		clear: async (userID) =>
+			await module.exports.query("delete from Members where user_id = $1", [userID]),
 	},
 
-	getMember: async (userID, name) => {
-		return (await pool.query("SELECT * FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
+	groups: {
+		get: async (userID, name) => {
+			return (await pool.query("SELECT * FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
+		},
+
+		getById: async (id) => {
+			return (await pool.query("select * from Groups where id = $1", [id])).rows[0];
+		},
+
+		getAll: async (userID) => {
+			return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
+		},
+
+		memberCount: async (groupID) =>
+			(await module.exports.query("select count(name) from Members where group_id = $1", [groupID])).rows[0].count,
+
+		add: async (userID, name, client) => {
+			return await (client || pool).query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
+		},
+
+		addMember: async (groupID, memberID) =>
+			await module.exports.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE id = $2", [groupID,memberID]),
+
+		update: async (userID, name, column, newVal) => {
+			return await pool.query(`UPDATE Groups SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
+		},
+
+		removeMembers: async (id) =>
+			await pool.query("update Members set group_id = null, group_pos = null where group_id = $1", [id]),
+
+		delete: async (id) => {
+			await module.exports.groups.removeMembers(id);
+			await pool.query("DELETE FROM Groups WHERE id = $1", [id]);			
+		},
+
+		deleteAll: async (userID) => {
+			await pool.query("DELETE FROM Groups WHERE user_id = $1", [userID]);
+                        await pool.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1", [userID]);
+		},
 	},
 
-	updateMember: async (userID, name, column, newVal) => {
-		return await pool.query(`UPDATE Members SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
+	config: {
+		add: async (serverID, cfg) => {
+			return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,cfg.prefix,cfg.lang]);
+		},
+
+		get: async (serverID) => {
+			let cfg = await cache.config.get(serverID);
+			if(cfg) return cfg;
+			cfg = ((await pool.query("SELECT prefix, lang, lang_plural, log_channel FROM Servers WHERE id = $1", [serverID])).rows[0]);
+			if(cfg) cache.config.set(serverID, cfg);
+			return cfg;
+		},
+
+		update: async (serverID, column, newVal, cfg) => {
+			await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
+			let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING prefix, lang, lang_plural, log_channel`, [newVal,serverID])).rows[0];
+			if(updated) return await cache.config.set(serverID, updated);
+		},
+
+		delete: async (serverID) => {
+			cache.config.delete(serverID);
+			return await pool.query("DELETE FROM Servers WHERE id = $1", [serverID]);
+		},
+	},	
+
+	blacklist: {
+		get: async (channel) => {
+			if (!channel.guild) return 2; // DM channel: commands OK, proxy NO
+			let blacklistCache = await cache.blacklist.get(channel.id);
+			if (blacklistCache) return blacklistCache;
+
+			let blacklist;
+
+			let dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
+			if (dbBlacklist.length == 0) blacklist = 0;
+			
+			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_proxies).length > 0, dbBlacklist.filter(x => x.block_commands).length > 0);
+			cache.blacklist.set(channel.id, blacklist);
+			return blacklist;
+		},
+
+		getAll: async (serverID) => {
+			return (await pool.query("SELECT * FROM Blacklist WHERE server_id = $1", [serverID])).rows;
+		},
+
+		update: async (serverID, id, isChannel, blockProxies, blockCommands) => {
+			cache.blacklist.set(id, blacklistBitfield(blockProxies, blockCommands));
+			return await pool.query("INSERT INTO Blacklist VALUES ($1,$2,$3,CASE WHEN $4::BOOLEAN IS NULL THEN false ELSE $4::BOOLEAN END,CASE WHEN $5::BOOLEAN IS NULL THEN false ELSE $5::BOOLEAN END) ON CONFLICT (id,server_id) DO UPDATE SET block_proxies = (CASE WHEN $4::BOOLEAN IS NULL THEN Blacklist.block_proxies ELSE EXCLUDED.block_proxies END), block_commands = (CASE WHEN $5::BOOLEAN IS NULL THEN Blacklist.block_commands ELSE EXCLUDED.block_commands END)",[id,serverID,isChannel,blockProxies,blockCommands]);
+		},
+
+		delete: async (guildID, channelID) => {
+			cache.blacklist.delete(channelID);
+			return await module.exports.query("delete from Blacklist where server_id = $1 and id = $2", [guildID, channelID]);	
+		},
+
 	},
 
-	deleteMember: async (userID, name) => {
-		return await pool.query("DELETE FROM Members WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
-	},
+	webhooks: {
+		get: async (channelID) =>
+			(await module.exports.query("select * from Webhooks where channel_id = $1", [channelID])).rows[0],
 
-	addCfg: async (serverID, cfg) => {
-		return await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3)", [serverID,cfg.prefix,cfg.lang]);
-	},
+		set: async (hook) =>
+			await module.exports.query("insert into Webhooks values ($1, $2, $3)", [hook.id, hook.channel_id, hook.token]),
 
-	getCfg: async (serverID) => {
-		let cfg = await cache.get('config/'+serverID);
-		if(cfg) { return JSON.parse(cfg); }
-		cfg = ((await pool.query("SELECT prefix, lang, lang_plural, log_channel FROM Servers WHERE id = $1", [serverID])).rows[0]);
-		if(cfg) cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(cfg).filter(ent => ent[1] !== null))));
-		return cfg;
-	},
-
-	updateCfg: async (serverID, column, newVal, cfg) => {
-		await pool.query("INSERT INTO Servers(id, prefix, lang) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;",[serverID,cfg.prefix,cfg.lang]);
-		let updated = (await pool.query(`UPDATE Servers SET ${column} = $1 WHERE id = $2 RETURNING prefix, lang, lang_plural, log_channel`, [newVal,serverID])).rows[0];
-		if(updated) return await cache.set('config/'+serverID, JSON.stringify(Object.fromEntries(Object.entries(updated).filter(ent => ent[1] !== null))));
-	},
-
-	deleteCfg: async (serverID) => {
-		cache.del('config/'+serverID);
-		return await pool.query("DELETE FROM Servers WHERE id = $1", [serverID]);
-	},
-
-	getBlacklist: async (serverID) => {
-		return (await pool.query("SELECT * FROM Blacklist WHERE server_id = $1", [serverID])).rows;
-	},
-
-	updateBlacklist: updateBlacklist,
-
-	deleteBlacklist: async (serverID, id) => {
-		cache.del(`blacklist/${serverID}/${id}`);
-		return await pool.query("DELETE FROM Blacklist WHERE server_id = $1 AND id = $2", [serverID, id]);
-	},
-
-	isBlacklisted: async (serverID, id, proxy) => {
-		let blacklisted = await cache.hget(`blacklist/${serverID}/${id}`,proxy ? "proxy" : "command");
-		if(blacklisted !== null) return blacklisted == 1;
-		if(proxy) {
-			blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_proxies = true", [serverID, id])).rows[0] != undefined);
-			cache.hset(`blacklist/${serverID}/${id}`,"proxy",blacklisted ? 1 : 0);
-		} else {
-			blacklisted = ((await pool.query("SELECT block_proxies, block_commands FROM Blacklist WHERE server_id = $1 AND id = $2 AND block_commands = true", [serverID, id])).rows[0] != undefined);
-			cache.hset(`blacklist/${serverID}/${id}`,"command",blacklisted ? 1 : 0);
-		}
-		return blacklisted;
+		delete: async (channelID) =>
+			await module.exports.query("delete from Webhooks where channel_id = $1", [channelID]),
 	},
 
 	getGlobalBlacklisted: async (id) => {
 		return (await pool.query("SELECT * FROM global_blacklist WHERE user_id = $1", [id])).rows[0];
 	},
 
-	getGroup: async (userID, name) => {
-		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name])).rows[0];
-	},
-
-	getGroups: async(userID) => {
-		return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
-	},
-
-	addGroup: async (userID, name, client) => {
-		return await (client || pool).query("INSERT INTO Groups (user_id, name, position) VALUES ($1::VARCHAR(32), $2, (SELECT GREATEST(COUNT(position),MAX(position)+1) FROM Groups WHERE user_id = $1::VARCHAR(32)))", [userID, name]);
-	},
-
-	updateGroup: async (userID, name, column, newVal) => {
-		return await pool.query(`UPDATE Groups SET ${column} = $1 WHERE user_id = $2 AND LOWER(name) = LOWER($3)`, [newVal, userID, name]);
-	},
-
-	deleteGroup: async (userID, name) => {
-		return await pool.query("DELETE FROM Groups WHERE user_id = $1 AND LOWER(name) = LOWER($2)", [userID, name]);
-	},
-
-	end: async () => { return await pool.end(); }
 };

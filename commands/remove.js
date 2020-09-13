@@ -19,15 +19,15 @@ module.exports = {
 				if(e == "timeout") return "Response timed out. Canceling.";
 				else throw e;
 			}
-			await bot.db.query("DELETE FROM Members WHERE user_id = $1",[msg.author.id]);
+			await bot.db.members.clear(msg.author.id);
 			return `All ${cfg.lang}s removed.`;
 		}
 		let name = args.join(" ");
-		let member = await bot.db.getMember(msg.author.id,name);
+		let member = await bot.db.members.get(msg.author.id,name);
 		if(!member) return "Could not find " + cfg.lang + " with that name registered under your account.";
 		
 		//delete
-		await bot.db.deleteMember(msg.author.id,name);
+		await bot.db.members.delete(msg.author.id,name);
 		return proper(cfg.lang) + " unregistered.";
 	}
 };

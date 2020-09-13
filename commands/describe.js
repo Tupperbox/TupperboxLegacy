@@ -10,18 +10,18 @@ module.exports = {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["describe"], cfg);
 		
 		//check arguments
-		let member = await bot.db.getMember(msg.author.id,args[0]);
+		let member = await bot.db.members.get(msg.author.id,args[0]);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
 		if(!args[1]) return member.description ? "Current description: " + member.description + "\nTo remove it, try " + cfg.prefix + "describe " + member.name + " clear" : "No description currently set for " + member.name;
 		if(["clear","remove","none","delete"].includes(args[1])) {
-			await bot.db.updateMember(msg.author.id,member.name,"description",null);
+			await bot.db.members.update(msg.author.id,member.name,"description",null);
 			return "Description cleared.";
 		}
 		
 		//update member
 		let temp = msg.content.slice(msg.content.indexOf(args[0]) + args[0].length);
 		let desc = temp.slice(temp.indexOf(args[1]));
-		await bot.db.updateMember(msg.author.id,args[0],"description",desc.slice(0,1023));
+		await bot.db.members.update(msg.author.id,args[0],"description",desc.slice(0,1023));
 		if(desc.length > 1023) return "Description updated, but was truncated due to Discord embed limits.";
 		return "Description updated successfully.";
 	}
