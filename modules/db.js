@@ -247,7 +247,7 @@ module.exports = {
 		},
 
 		getAll: async (userID) => {
-			return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
+			return (await pool.query("SELECT * FROM Groups WHERE user_id = $1 ORDER BY position", [userID])).rows;
 		},
 
 		memberCount: async (groupID) =>

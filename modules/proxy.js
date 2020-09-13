@@ -149,7 +149,7 @@ module.exports = {
     
 		if(msg.attachments[0]) data.file = await module.exports.getAttachments(msg);
 
-		if(data.content.trim().length == 0 && !data.attachments) throw { message: "empty" };
+		if(data.content.trim().length == 0 && !data.file) throw { message: "empty" };
     
 		let webmsg;
 		try {
@@ -235,9 +235,7 @@ module.exports = {
 			}
 			let perms = msg.channel.permissionsOf(bot.user.id);
 			if(perms.has("manageMessages") && perms.has("readMessages"))
-				process.send({name: "queueDelete", channelID: msg.channel.id, messageID: msg.id}, null, {swallowErrors: false}, err => {
-					if(err) console.log(err);
-				});
+				msg.delete().catch(bot.ignoreDeletion);
 			return true;
 		} catch(e) { 
 			if(e.message == "empty") bot.send(msg.channel, "Cannot proxy empty message.");

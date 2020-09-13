@@ -27,7 +27,7 @@ const init = async () => {
 			messageLimit: 0,
 			guildSubscriptions: false,
 			restMode: true,
-			ratelimiterOffset: 50,
+			ratelimiterOffset: 5,
 			intents: [
 				"guilds",
 				"guildMessages",
@@ -40,6 +40,7 @@ const init = async () => {
 		stats: true,
 		debug: true,
 		shards: +process.env.SHARDS,
+		clusters: +process.env.CLUSTERS,
 		name: "Tupperbox",
 		clusterTimeout: 0.1
 	});

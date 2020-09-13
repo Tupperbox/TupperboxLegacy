@@ -1,7 +1,7 @@
 const Eris = require("eris");
 const bot = new Eris.Client("Bot " + process.env.DISCORD_TOKEN);
 
-const reqps = 100;
+const reqps = 300;
 console.log("Loaded queue");
 let queue = [];
 module.exports = req => {
