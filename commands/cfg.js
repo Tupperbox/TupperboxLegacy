@@ -7,7 +7,7 @@ module.exports = {
 		"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.",
 		"cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels."],
 		
-	permitted: (msg) => (msg.member && msg.member.permission.has("administrator")),
+	permitted: (msg) => (msg.member && msg.member.permission.has("manageServer")),
 	execute: async (bot, msg, args, cfg) => {
 		if(msg.channel.type == 1) return "This command cannot be used in private messages.";
 
@@ -19,7 +19,7 @@ module.exports = {
 			let prefix = args.slice(1).join(" ");
 
 			await bot.db.config.update(gid,"prefix",prefix,bot.defaultCfg);
-			return "Prefix changed to " + prefix + "\nThis means that all commands must now be preceded by your chosen prefix rather than `tul!`. If this was changed by mistake, run `" + prefix + "cfg prefix tul!` to return to default behavior.";
+			return `Prefix changed to ${prefix}\nThis means that all commands must now be preceded by your chosen prefix rather than \`${cfg.prefix}\`. If this was changed by mistake, run \`${prefix}cfg prefix ${process.env.DEFAULT_PREFIX}\` to return to default behavior.`;
 
 		case "roles":
 			return "This feature has been disabled indefinitely.";

@@ -9,7 +9,7 @@ module.exports = bot => {
 	};
 
 	bot.updateStatus = async () => {
-		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(+(await bot.db.members.count()).toLocaleString())} registered`});
+		bot.editStatus({ name: `${bot.defaultCfg.prefix}help | ${(+(await bot.db.members.count())).toLocaleString()} registered`});
 	};
 
 	bot.ageOf = user => {
@@ -59,7 +59,7 @@ module.exports = bot => {
 	};
 
 	bot.checkPermissions = (bot, cmd, msg, args) =>
-		(msg.author.id === bot.owner) || (cmd.permitted(bot,msg,args));
+		(msg.author.id === bot.owner) || (cmd.permitted(msg));
 
 	bot.waitMessage = (msg) => {
 		return new Promise((res, rej) => {

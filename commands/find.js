@@ -12,7 +12,7 @@ module.exports = {
 		let search = args.join(" ").toLowerCase();
 		let targets; 
 		if(msg.channel.type == 1)
-			targets = [msg.author.id]
+			targets = [msg.author]
 		else {
 			targets = await bot.findAllUsers(msg.channel.guild.id);
 		}

@@ -77,7 +77,7 @@ module.exports = {
     },
 
     getName: async (bot, member) => 
-        `${member.name}${member.tag ? " " + member.tag : ""}${bot.checkMemberBirthday(member) ? "\uD83C\uDF70" : ""}${member.group_id ? " " + (await bot.db.groups.getByID(member.group_id)).tag : ""}`.trim(),
+        `${member.name}${member.tag ? " " + member.tag : ""}${bot.checkMemberBirthday(member) ? "\uD83C\uDF70" : ""}${member.group_id ? " " + ((await bot.db.groups.getById(member.group_id)).tag ?? "") : ""}`.trim(),
 
     getRecentMentions: (bot, msg, content) =>
         bot.recent[msg.channel.id] ? content.replace(tagRegex,match => {

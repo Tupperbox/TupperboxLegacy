@@ -246,7 +246,7 @@ module.exports = {
 			return (await pool.query("select * from Groups where id = $1", [id])).rows[0];
 		},
 
-		getAll: async(userID) => {
+		getAll: async (userID) => {
 			return (await pool.query("SELECT * FROM Groups WHERE user_id = $1", [userID])).rows;
 		},
 
@@ -272,11 +272,9 @@ module.exports = {
 			await pool.query("DELETE FROM Groups WHERE id = $1", [id]);			
 		},
 
-		deleteAll: async (id) => {
-			let groups = module.exports.groups.getAll(id);
-			for await (let g of groups) {
-				await module.exports.groups.delete(g.id);
-			}
+		deleteAll: async (userID) => {
+			await pool.query("DELETE FROM Groups WHERE user_id = $1", [userID]);
+                        await pool.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1", [userID]);
 		},
 	},
 
