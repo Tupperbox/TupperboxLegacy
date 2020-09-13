@@ -149,7 +149,7 @@ module.exports = {
     
 		if(msg.attachments[0]) data.file = await module.exports.getAttachments(msg);
 
-		if(data.content.trim().length == 0 && !data.attachments) throw { message: "empty" };
+		if(data.content.trim().length == 0 && !data.file) throw { message: "empty" };
     
 		let webmsg;
 		try {
