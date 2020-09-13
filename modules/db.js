@@ -314,7 +314,7 @@ module.exports = {
 			let dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
 			if (dbBlacklist.length == 0) blacklist = 0;
 			
-			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_commands).length > 0, dbBlacklist.filter(x => x.block_proxies).length > 0);
+			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_proxies).length > 0, dbBlacklist.filter(x => x.block_commands).length > 0);
 			cache.blacklist.set(channel.id, blacklist);
 			return blacklist;
 		},

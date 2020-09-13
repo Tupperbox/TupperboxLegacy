@@ -59,7 +59,7 @@ module.exports = bot => {
 	};
 
 	bot.checkPermissions = (bot, cmd, msg, args) =>
-		(msg.author.id === bot.owner) || (cmd.permitted(msg));
+		(msg.author.id === bot.owner) || (cmd.permitted(msg,bot));
 
 	bot.waitMessage = (msg) => {
 		return new Promise((res, rej) => {

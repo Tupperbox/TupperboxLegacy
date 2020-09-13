@@ -7,7 +7,7 @@ module.exports = {
 		"cfg blacklist <add|remove> <channel(s)> - Add or remove channels to the bot's proxy blacklist - users will be unable to proxy in blacklisted channels.",
 		"cfg cmdblacklist <add|remove> <channel(s)> - Add or remove channels to the bot's command blacklist - users will be unable to issue commands in blacklisted channels."],
 		
-	permitted: (msg) => (msg.member && msg.member.permission.has("manageServer")),
+	permitted: (msg) => (msg.member && msg.member.permission.has("manageGuild")),
 	execute: async (bot, msg, args, cfg) => {
 		if(msg.channel.type == 1) return "This command cannot be used in private messages.";
 
