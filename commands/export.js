@@ -15,7 +15,7 @@ module.exports = {
 			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
 			data = { tuppers: [tup], groups: []};
 		}
-                if(data.tuppers.length == 0 && data.groups.length == 0) return "You don't have anything to export.";
+		if(data.tuppers.length == 0 && data.groups.length == 0) return "You don't have anything to export.";
 		try {
 			let channel = await msg.author.getDMChannel(); //get the user's DM channel
 			await bot.send(channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs

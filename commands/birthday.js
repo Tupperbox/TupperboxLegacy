@@ -7,7 +7,7 @@ module.exports = {
 	desc: cfg => "Date must be given in format MM/DD/YY and are stored in UTC.",
 	permitted: () => true,
 	groupArgs: true,
-    execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg) => {
 		if(!args[0]) {
 			let targets = msg.channel.guild ? await bot.findAllUsers(msg.channel.guild.id) : [msg.author];
 			let members = (await bot.db.query("SELECT *, birthday + date_trunc('year', age(birthday + 1)) + interval '1 year' as anniversary FROM Members WHERE birthday IS NOT NULL AND user_id IN (select(unnest($1::text[]))) ORDER BY anniversary LIMIT 5;",[targets.map(u => u.id)])).rows;

@@ -40,7 +40,7 @@ module.exports = {
 				let updated = 0;
 				let oldGroups = (await client.query("SELECT id, name, description, tag FROM Groups WHERE user_id = $1 ORDER BY position",[msg.author.id])).rows;
 				let oldTups = (await client.query("SELECT name, avatar_url, brackets, posts, show_brackets, birthday, description, tag, group_id, group_pos FROM Members WHERE user_id = $1 ORDER BY position", [msg.author.id])).rows;
-				await client.query('BEGIN');
+				await client.query("BEGIN");
 				for(let i=0; i<groups.length; i++) {
 					let g = groups[i];
 					let old = oldGroups.find(gr => g.name == gr.name) || {};
@@ -67,18 +67,18 @@ module.exports = {
 							await client.query("UPDATE Members SET group_id = $1, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $1) WHERE user_id = $2 AND name = $3", [validGroup.id,uid, t.name]);
 					}
 				}
-				await client.query('COMMIT');
+				await client.query("COMMIT");
 				return `Import successful. Added ${added} entries and updated ${updated} entries.`;
 			} catch(e) {
 				bot.err(msg,e,false);
-				if(client) await client.query('ROLLBACK');
+				if(client) await client.query("ROLLBACK");
 				return `Something went wrong importing your data. This may have resulted in a partial import. Please check the data and try again. (${e.code || e.message})`;
 			} finally {
 				if(client) client.release();
 			}
 		} else if(data.switches) { //pluralkit file
 			if(data.members.length > 3000) {
-				return "Data too large for import. Please visit the support server for assistance. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : '';
+				return "Data too large for import. Please visit the support server for assistance. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : "";
 			}
 			let client;
 			try {
@@ -94,7 +94,7 @@ module.exports = {
 				let added = 0;
 				let updated = 0;
 				let oldTups = await bot.db.members.getAll(msg.author.id);
-				await client.query('BEGIN');
+				await client.query("BEGIN");
 				for(let i=0; i<tups.length; i++) {
 					let t = tups[i];
 					let old = oldTups.find(tu => t.name == tu.name) || {};
@@ -106,17 +106,17 @@ module.exports = {
 					await client.query("UPDATE Members SET avatar_url = $1, posts = $2, birthday = $3, description = $4, group_id = $5, group_pos = (SELECT GREATEST(COUNT(group_pos),MAX(group_pos)+1) FROM Members WHERE group_id = $5), brackets = $6::text[] WHERE user_id = $7 AND name = $8",
 						[t.avatar_url || old.avatar_url || "https://i.imgur.com/ZpijZpg.png", t.message_count || 0, t.birthday || null, t.description || null, old.group_id || systemGroup.id, newBrackets, uid, t.name]);
 				}
-				await client.query('COMMIT');
+				await client.query("COMMIT");
 				let systemGroupTups = await bot.db.groups.memberCount(systemGroup.id);
 				if(systemGroupTups == 0) await bot.db.groups.delete(uid,systemGroup.id);
 				return `Import successful. Added ${added} entries and updated ${updated} entries.`;
 			} catch(e) {
 				bot.err(msg,e,false);
-				if(client) await client.query('ROLLBACK');
+				if(client) await client.query("ROLLBACK");
 				return `Something went wrong importing your data. This may have resulted in a partial import. Please check the data and try again. (${e.code || e.message})`;
 			} finally {
 				if(client) client.release();
 			}
-		} else return "Unknown file format. Please notify the creator by joining the support server. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : '';
+		} else return "Unknown file format. Please notify the creator by joining the support server. " + process.env.SUPPORT_INVITE ? `https://discord.gg/${process.env.SUPPORT_INVITE}` : "";
 	}
 };

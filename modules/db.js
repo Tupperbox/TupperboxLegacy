@@ -16,7 +16,7 @@ const blacklistBitfield = (blockProxies, blockCommands) => {
 	if (blockCommands) blacklist |= 1;
 	if (blockProxies) blacklist |= 2;
 	return blacklist;
-}
+};
 
 module.exports = {
 
@@ -99,8 +99,8 @@ module.exports = {
 			'ALTER TABLE members ADD CONSTRAINT members_group_id_fkey FOREIGN KEY (group_id) REFERENCES groups(id);'
 		);`);
 
-		await pool.query('CREATE INDEX CONCURRENTLY IF NOT EXISTS members_lower_idx ON members(lower(name))');
-		await pool.query('CREATE INDEX CONCURRENTLY IF NOT EXISTS webhooks_channelidx ON webhooks(channel_id);');
+		await pool.query("CREATE INDEX CONCURRENTLY IF NOT EXISTS members_lower_idx ON members(lower(name))");
+		await pool.query("CREATE INDEX CONCURRENTLY IF NOT EXISTS webhooks_channelidx ON webhooks(channel_id);");
 
 		console.log("ok!\nChecking for data to import...");
 		let found = false;
@@ -188,9 +188,9 @@ module.exports = {
 		} catch(e) { if(e.code != "MODULE_NOT_FOUND") console.log(e);}
 		if(!found) console.log("Data OK.");
 		process.stdout.write("Checking Redis connection...");
-		await cache.redis.set('test', 1);
-		if(await cache.redis.get('test') != 1) throw new Error("Cache integrity check failed");
-		await cache.redis.del('test');
+		await cache.redis.set("test", 1);
+		if(await cache.redis.get("test") != 1) throw new Error("Cache integrity check failed");
+		await cache.redis.del("test");
 		await cache.redis.flushall();
 		console.log("ok!");
 	},
@@ -274,7 +274,7 @@ module.exports = {
 
 		deleteAll: async (userID) => {
 			await pool.query("DELETE FROM Groups WHERE user_id = $1", [userID]);
-                        await pool.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1", [userID]);
+			await pool.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1", [userID]);
 		},
 	},
 
@@ -311,7 +311,7 @@ module.exports = {
 
 			let blacklist;
 
-			let dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows
+			let dbBlacklist = (await module.exports.query("select * from blacklist where server_id = $1 and id = $2", [channel.guild.id, channel.id])).rows;
 			if (dbBlacklist.length == 0) blacklist = 0;
 			
 			blacklist = blacklistBitfield(dbBlacklist.filter(x => x.block_proxies).length > 0, dbBlacklist.filter(x => x.block_commands).length > 0);

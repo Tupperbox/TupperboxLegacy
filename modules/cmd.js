@@ -31,4 +31,4 @@ module.exports = async ({msg, bot, members, cfg, dmChannel}) => {
 		bot.err(msg,e);
 	}
 
-}
+};

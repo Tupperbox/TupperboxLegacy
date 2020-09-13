@@ -47,7 +47,7 @@ module.exports = {
 					let tupps = bot.db.members.getAll(msg.author.id);
 					for await (tup of tupps) {
 						await bot.db.groups.addMember(group.id,tup.id);
-					}; 
+					} 
 					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
 				}
 
@@ -57,10 +57,10 @@ module.exports = {
 				return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 			}
 
-			let addedMessage = `${proper(cfg.lang)}s added to group:`
-			let notAddedMessage = `${proper(cfg.lang)}s not found:`
-			let baseLength = 2000 - (addedMessage.length + notAddedMessage.length)
-			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, }
+			let addedMessage = `${proper(cfg.lang)}s added to group:`;
+			let notAddedMessage = `${proper(cfg.lang)}s not found:`;
+			let baseLength = 2000 - (addedMessage.length + notAddedMessage.length);
+			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, };
 
 			for await (let arg of args) {
 				let tup = await bot.db.members.get(msg.author.id, arg);
@@ -70,7 +70,7 @@ module.exports = {
 				} else {
 					if ((addedMessage.length + notAddedMessage.length + arg.length) < baseLength) notAddedMessage += ` '${arg}'`; else notAddedMessage += " (...)";
 				}
-			};
+			}
 			if (addedMessage.length == originalLength.addedMessage) return `No ${cfg.lang}s added to group.`;
 			if (notAddedMessage.length == originalLength.notAddedMessage) return addedMessage;
 			return `${addedMessage}\n${notAddedMessage}`;

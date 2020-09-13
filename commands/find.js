@@ -5,14 +5,14 @@ module.exports = {
 	usage: cfg =>  ["find <name> - Attempts to find " + article(cfg) + " " + cfg.lang + " with exactly the given name, and if none are found, tries to find " + cfg.lang + "s with names containing the given name."],
 	permitted: (msg) => true,
 	groupArgs: true,
-    execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg) => {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search
 		let search = args.join(" ").toLowerCase();
 		let targets; 
 		if(msg.channel.type == 1)
-			targets = [msg.author]
+			targets = [msg.author];
 		else {
 			targets = await bot.findAllUsers(msg.channel.guild.id);
 		}

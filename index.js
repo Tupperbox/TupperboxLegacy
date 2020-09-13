@@ -24,8 +24,8 @@ const init = async () => {
 				TYPING_START: true,
 				VOICE_STATE_UPDATE: true
 			},
-            messageLimit: 0,
-            guildSubscriptions: false,
+			messageLimit: 0,
+			guildSubscriptions: false,
 			restMode: true,
 			ratelimiterOffset: 50,
 			intents: [
@@ -44,7 +44,7 @@ const init = async () => {
 		clusterTimeout: 0.1
 	});
 
-	sharder.eris.on('debug',console.log);
+	sharder.eris.on("debug",console.log);
 	
 
 	if(cluster.isMaster) {

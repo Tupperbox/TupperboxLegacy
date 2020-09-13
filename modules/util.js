@@ -35,7 +35,7 @@ module.exports = bot => {
 			targets = targets.concat(found.map(m => m.user));
 		}
 		return targets;
-	}
+	};
 
 	bot.checkMemberBirthday = member => {
 		if(!member.birthday) return false;
@@ -43,14 +43,14 @@ module.exports = bot => {
 		return member.birthday.getUTCDate() == now.getUTCDate() && member.birthday.getUTCMonth() == now.getUTCMonth();
 	};
 
-    bot.resolveUser = async (msg, text) => {
-        let uid = /<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1] || text;
-        if (/^\d+$/.test(uid)) {
+	bot.resolveUser = async (msg, text) => {
+		let uid = /<@!?(\d+)>/.test(text) && text.match(/<@!?(\d+)>/)[1] || text;
+		if (/^\d+$/.test(uid)) {
 			let target = null;
-			target = await bot.getRESTUser(uid).catch(e => { if(e.code != 10013) throw e; return null }); //return null if user wasn't found, otherwise throw
-            if (target && target.user) target = target.user;
-            return target;
-        } else return null;
+			target = await bot.getRESTUser(uid).catch(e => { if(e.code != 10013) throw e; return null; }); //return null if user wasn't found, otherwise throw
+			if (target && target.user) target = target.user;
+			return target;
+		} else return null;
 	};
 
 	bot.resolveChannel = (msg, text) => {
@@ -108,7 +108,7 @@ module.exports = bot => {
 		} catch(e) { console.log(e.message); }
 		console.log(`blacklisted ${blacklistedNum} user ${userID} and deleted ${membersDeleted.rowCount} tuppers`);
 		bot.createMessage(notifyChannelID,`User <@${userID}> (${userID}) is now blacklisted for abuse.`);
-	}
+	};
 
 	bot.getMatches = (string, regex) => {
 		var matches = [];
@@ -121,6 +121,6 @@ module.exports = bot => {
 
 	bot.ignoreDeletion = (e) => {
 		if(e.code != 10008) throw e;
-	}
+	};
 
-}
+};

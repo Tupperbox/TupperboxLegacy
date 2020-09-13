@@ -1,3 +1,3 @@
 module.exports = async bot => {
-	console.log(`Bot disconnected!`);
+	console.log("Bot disconnected!");
 };

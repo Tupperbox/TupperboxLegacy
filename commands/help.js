@@ -45,7 +45,7 @@ module.exports = {
 			if(bot.cmds[cmd].help)
 				output.embed.description += `**${cfg.prefix + cmd}**  -  ${bot.cmds[cmd].help(cfg)}\n`;
 		}
-		output.embed.fields = [{ name: "\u200b", value: `Single or double quotes can be used in any command to specify multi-word arguments!\n\nProxy tips:\nReact with \u274c to a recent proxy to delete it (if you sent it)!\nReact with \u2753 to a recent proxy to show who sent it in DM!\n\n${process.env.SUPPORT_INVITE ? 'Questions? Join the support server: [invite](https://discord.gg/' + process.env.SUPPORT_INVITE + ')' : '' }\nNow accepting donations to cover server costs! [patreon](https://www.patreon.com/tupperbox)\nInvite the bot to your server --> [click](https://discord.com/oauth2/authorize?client_id=${process.env.BOT_INVITE}&scope=bot&permissions=536996928)`}];
+		output.embed.fields = [{ name: "\u200b", value: `Single or double quotes can be used in any command to specify multi-word arguments!\n\nProxy tips:\nReact with \u274c to a recent proxy to delete it (if you sent it)!\nReact with \u2753 to a recent proxy to show who sent it in DM!\n\n${process.env.SUPPORT_INVITE ? "Questions? Join the support server: [invite](https://discord.gg/" + process.env.SUPPORT_INVITE + ")" : "" }\nNow accepting donations to cover server costs! [patreon](https://www.patreon.com/tupperbox)\nInvite the bot to your server --> [click](https://discord.com/oauth2/authorize?client_id=${process.env.BOT_INVITE}&scope=bot&permissions=536996928)`}];
 		return output;
 	}
 };
