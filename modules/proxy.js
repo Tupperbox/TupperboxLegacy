@@ -1,6 +1,5 @@
 const request = require("got");
 const strlen = require("string-length");
-const { crypto_stream_PRIMITIVE } = require("sodium-native");
 let tagRegex = /(@[\s\S]+?#0000|@\S+)/g;
 
 module.exports = {
