@@ -51,6 +51,10 @@ class Tupperbox extends Base {
 		if (!process.env.SUPPORT_INVITE)
 			delete bot.cmds.feedback;
 
+		if(!fs.existsSync("privacy.txt")) {
+			console.log("no privacy");
+			delete bot.cmds.privacy;
+		}
 	}
 }
 
