@@ -44,8 +44,8 @@ module.exports = {
 
 			if (args.length == 1) {
 				if (args[0] == "*") {
-					let tupps = bot.db.members.getAll(msg.author.id);
-					for await (tup of tupps) {
+					let tupps = await bot.db.members.getAll(msg.author.id);
+					for (tup of tupps) {
 						await bot.db.groups.addMember(group.id,tup.id);
 					} 
 					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
@@ -62,7 +62,7 @@ module.exports = {
 			let baseLength = 2000 - (addedMessage.length + notAddedMessage.length);
 			let originalLength = { addedMessage: addedMessage.length, notAddedMessage: notAddedMessage.length, };
 
-			for await (let arg of args) {
+			for (let arg of args) {
 				let tup = await bot.db.members.get(msg.author.id, arg);
 				if (tup) {
 					await bot.db.groups.addMember(group.id,tup.id);
