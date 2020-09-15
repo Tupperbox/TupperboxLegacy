@@ -273,8 +273,8 @@ module.exports = {
 		},
 
 		deleteAll: async (userID) => {
-			await pool.query("DELETE FROM Groups WHERE user_id = $1", [userID]);
 			await pool.query("UPDATE Members SET group_id = null, group_pos = null WHERE user_id = $1", [userID]);
+			await pool.query("DELETE FROM Groups WHERE user_id = $1", [userID]);
 		},
 	},
 
