@@ -45,7 +45,7 @@ module.exports = {
 			if (args.length == 1) {
 				if (args[0] == "*") {
 					let tupps = await bot.db.members.getAll(msg.author.id);
-					for (tup of tupps) {
+					for (tup of tupps.filter(t => t.group_id == null)) {
 						await bot.db.groups.addMember(group.id,tup.id);
 					} 
 					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
