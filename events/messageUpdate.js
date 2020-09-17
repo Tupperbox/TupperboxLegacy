@@ -3,5 +3,5 @@ module.exports = async (msg,_,bot) => {
 	if (!msg.author) return;
         // ignore messages sent more than 10 minutes ago
         if (Date.now() - msg.timestamp > 1000*60*10) return;
-        bot.msg(bot, msg);
+        bot.msg(bot, msg, true);
 };
