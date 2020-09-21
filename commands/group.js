@@ -104,9 +104,10 @@ module.exports = {
 			if(members.find(t => !t.group_id))
 				groups.push({name: "No Group", id: null});
 			let embeds = await bot.paginator.generatePages(bot, groups,g => {
+				let mms = members.filter(t => t.group_id == g.id).map(t => t.name).join(", ");
 				let field = {
 					name: g.name,
-					value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""}Members: ${members.filter(t => t.group_id == g.id).map(t => t.name).join(", ")}`
+					value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""} ${mms ? `Members: ${mms}` : 'No members.'}`
 				};
 				if(field.value.length > 1020) field.value = field.value.slice(0,1020) + "...";
 				return field;
