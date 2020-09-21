@@ -5,15 +5,17 @@ module.exports = {
 	groupArgs: true,
 	cooldown: msg => 600000,
 	execute: async (bot, msg, args, cfg) => {
-		let data;
+		let data = { tuppers: [], groups: []};
 		if(!args[0]) {
 			let tups = await bot.db.members.getAll(msg.author.id);
 			let groups = await bot.db.groups.getAll(msg.author.id);
 			data = { tuppers: tups, groups };
 		} else {
-			let tup = await bot.db.members.get(msg.author.id, args.join(" "));
-			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-			data = { tuppers: [tup], groups: []};
+			for await (let arg of args) {
+				let tup = await bot.db.members.get(msg.author.id, arg);
+				if(!tup) return `You don't have a registered ${cfg.lang} with the name '${arg}'.`;
+				data.tuppers.push(tup);
+			}
 		}
 		if(data.tuppers.length == 0 && data.groups.length == 0) return "You don't have anything to export.";
 		try {
@@ -23,7 +25,7 @@ module.exports = {
 			if (msg.channel.guild) return "Sent you a DM!";
 		} catch (e) {
 			if (e.code != 50007) throw e;
-			return bot.send(msg.channel,"I couldn't access your DMs; sending publicly: ",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))});
+			return `<${(await bot.send(msg.channel,"I couldn't access your DMs; sending publicly: ",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))})).attachments[0].url}>`;
 		}
 	}
 };

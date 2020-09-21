@@ -17,10 +17,29 @@ module.exports = {
 			await bot.db.members.clear(msg.author.id);
 			return `All ${cfg.lang}s removed.`;
 		}
-		let name = args.join(" ");
-		let member = await bot.db.members.get(msg.author.id,name);
-		if(!member) return "Could not find " + cfg.lang + " with that name registered under your account.";
-		
+		else if (args.length == 1) {
+			let name = args.join(" ");
+			let member = await bot.db.members.get(msg.author.id,name);
+			if(!member) return "Could not find " + cfg.lang + " with that name registered under your account.";
+		} else {
+			let removedMessage = `${proper(cfg.lang)}s removed:`
+			let notRemovedMessage = `${proper(cfg.lang)}s not found:`
+			let baseLength = 2000 - (removedMessage.length + notRemovedMessage.length)
+			let rOriginalLength = { removedMessage: removedMessage.length, notRemovedMessage: notRemovedMessage.length, }
+
+			for await (let arg of args) {
+				tup = await bot.db.members.get(msg.author.id, arg);
+				if (tup) {
+					await bot.db.members.delete(msg.author.id, arg);
+					if ((removedMessage.length + notRemovedMessage.length + arg.length) < baseLength) removedMessage += ` '${arg}'`; else removedMessage += " (...)";
+				} else {
+					if ((removedMessage.length + notRemovedMessage.length + arg.length) < baseLength) notRemovedMessage += ` '${arg}'`; else notRemovedMessage += " (...)";
+				}
+			};
+			if (removedMessage.length == rOriginalLength.removedMessage) return `No ${cfg.lang}s found.`;
+			if (notRemovedMessage.length == rOriginalLength.notRemovedMessage) return removedMessage;
+			return `${removedMessage}\n${notRemovedMessage}`;
+		}
 		//delete
 		await bot.db.members.delete(msg.author.id,name);
 		return proper(cfg.lang) + " unregistered.";

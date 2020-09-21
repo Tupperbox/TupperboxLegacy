@@ -80,15 +80,32 @@ module.exports = {
 			if(!args[2]) return `No ${cfg.lang} name given.`;
 			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
-			if(args[2] == "*") {
-				if ((await bot.db.groups.getAll(msg.author.id)).length == 0) return "You don't have any groups to remove.";
-				await bot.db.groups.removeMembers(group.id);
-				return "All members removed from the group.";
+			args = args.slice(2);
+
+			if (args.length == 1) {
+				tup = await bot.db.members.get(msg.author.id, args[0]);
+				if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
+				await bot.db.members.removeGroup(tup.id);
+				return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 			}
-			tup = await bot.db.members.get(msg.author.id, args.slice(2).join(" "));
-			if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
-			await bot.db.members.removeGroup(tup.id);
-			return `${proper(cfg.lang)} '${tup.name}' group unset.`;
+
+			let removedMessage = `${proper(cfg.lang)}s removed from group:`
+			let notRemovedMessage = `${proper(cfg.lang)}s not found:`
+			let rBaseLength = 2000 - (removedMessage.length + notRemovedMessage.length)
+			let rOriginalLength = { removedMessage: removedMessage.length, notRemovedMessage: notRemovedMessage.length, }
+
+			for await (let arg of args) {
+				tup = await bot.db.members.get(msg.author.id, arg);
+				if (tup) {
+					await bot.db.members.removeGroup(tup.id);
+					if ((removedMessage.length + notRemovedMessage.length + arg.length) < rBaseLength) removedMessage += ` '${arg}'`; else removedMessage += " (...)";
+				} else {
+					if ((removedMessage.length + notRemovedMessage.length + arg.length) < rBaseLength) notRemovedMessage += ` '${arg}'`; else notRemovedMessage += " (...)";
+				}
+			};
+			if (removedMessage.length == rOriginalLength.removedMessage) return `No ${cfg.lang}s found that could be removed from this group.`;
+			if (notRemovedMessage.length == rOriginalLength.notRemovedMessage) return removedMessage;
+			return `${removedMessage}\n${notRemovedMessage}`;
 
 		case "list":
 			let groups = await bot.db.groups.getAll(msg.author.id);
