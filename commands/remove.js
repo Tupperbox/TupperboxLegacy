@@ -8,17 +8,11 @@ module.exports = {
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["remove"], cfg);
-		
+
 		//check arguments
 		if(args[0] == "*") {
-			try {
-				await bot.send(msg.channel, `Warning: This will remove ALL of your ${cfg.lang}s. Reply 'yes' to continue or anything else to cancel.`);
-				let response = await bot.waitMessage(msg);
-				if(response.content.toLowerCase() != "yes") return "Canceling operation.";
-			} catch(e) {
-				if(e == "timeout") return "Response timed out. Canceling.";
-				else throw e;
-			}
+			let confirm = await bot.confirm(msg, `Warning: This will remove ALL of your ${cfg.lang}s. Reply 'yes' to continue or anything else to cancel.`);
+			if (confirm !== true) return confirm;
 			await bot.db.members.clear(msg.author.id);
 			return `All ${cfg.lang}s removed.`;
 		}

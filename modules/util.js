@@ -73,6 +73,19 @@ module.exports = bot => {
 		});
 	};
 
+	bot.confirm = async (msg, text) => {
+		let response;
+		try {
+			await bot.send(msg.channel, text);
+			response = await bot.waitMessage(msg);
+			if(response.content.toLowerCase() != "yes") return "Canceling operation.";
+		} catch(e) {
+			if(e == "timeout") return "Response timed out. Canceling.";
+			else throw e;
+		}
+		return true;
+	}
+
 	bot.send = async (channel, message, file, retry = 2) => {
 		if(!channel.id) return;
 		let msg;

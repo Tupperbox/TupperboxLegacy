@@ -16,15 +16,9 @@ module.exports = {
 		} catch(e) {
 			return "Please attach a valid .json file.";
 		}
+		let confirm = await bot.confirm(msg, "Warning: This will overwrite your data. Only use this command with a recent, untampered .json file generated from the export command from either me or PluralKit. Please reply 'yes' if you wish to continue.");
+		if (confirm !== true) return confirm;
 
-		try {
-			await bot.send(msg.channel, "Warning: This will overwrite your data. Only use this command with a recent, untampered .json file generated from the export command from either me or PluralKit. Please reply 'yes' if you wish to continue.");
-			let response = await bot.waitMessage(msg);
-			if(response.content.toLowerCase() != "yes") return "Canceling operation.";
-		} catch(e) {
-			if(e == "timeout") return "Response timed out. Canceling.";
-			else throw e;
-		}
 		let uid = msg.author.id;
 		
 		if(data.tuppers) { //tupperbox file
