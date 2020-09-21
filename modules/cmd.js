@@ -13,7 +13,7 @@ module.exports = async ({msg, bot, members, cfg, dmChannel}) => {
 	let key = msg.author.id + cmdName;
 	let cd = await cache.cooldowns.get(key);
 	if (cd) return bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((cd - Date.now())/1000)} seconds`);
-	if(cmd.cooldown) cache.cooldowns.set(key, cmd.cooldown(msg));
+	if(cmd.cooldown && !process.env.DEV) cache.cooldowns.set(key, cmd.cooldown(msg));
 
 	if(cmd.groupArgs) args = bot.getMatches(content,/“(.+?)”|‘(.+?)’|"(.+?)"|'(.+?)'|(\S+)/gi).slice(1);
 

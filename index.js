@@ -40,7 +40,7 @@ const init = async () => {
 		stats: true,
 		debug: true,
 		shards: +process.env.SHARDS,
-		clusters: +process.env.CLUSTERS,
+		clusters: +process.env.CLUSTERS || process.env.DEV? 1 : undefined,
 		name: "Tupperbox",
 		clusterTimeout: 0.1
 	});
