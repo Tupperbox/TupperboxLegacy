@@ -81,6 +81,7 @@ module.exports = {
 			group = await bot.db.groups.get(msg.author.id, args[1]);
 			if(!group) return "You don't have a group with that name.";
 			if(args[2] == "*") {
+				if ((await bot.db.groups.getAll(msg.author.id)).length == 0) return "You don't have any groups to remove.";
 				await bot.db.groups.removeMembers(group.id);
 				return "All members removed from the group.";
 			}
