@@ -18,8 +18,9 @@ module.exports = {
 		if(data.tuppers.length == 0 && data.groups.length == 0) return "You don't have anything to export.";
 		try {
 			let channel = await msg.author.getDMChannel(); //get the user's DM channel
-			await bot.send(channel,"",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
-			return "Sent you a DM!";
+			let msg = await bot.send(channel,"",{name:`tuppers.json`,file:Buffer.from(JSON.stringify(data))}); //send it to them in DMs
+			await bot.send(channel, `<${msg.attachments[0].url}>`)
+			if (msg.channel.guild) return "Sent you a DM!";
 		} catch (e) {
 			return bot.send(msg.channel,"I couldn't access your DMs; sending publicly: ",{name:"tuppers.json",file:Buffer.from(JSON.stringify(data))});
 		}
