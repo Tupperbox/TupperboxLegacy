@@ -8,7 +8,6 @@ module.exports = {
 		//get target list
 		let target;
 		if(args[0]) {
-			if(msg.channel.type == 1) return "Cannot search for members in a DM.";
 			target = await bot.resolveUser(msg, args.join(" "));
 		} else target = msg.author;
 		if(!target) return "User not found.";
