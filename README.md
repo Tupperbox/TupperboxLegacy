@@ -6,7 +6,7 @@ A Discord bot written in [eris](https://github.com/abalabahaha/eris) for proxyin
 * [Click here to join our support server!](https://discord.com/invite/rHxMbt2)
 
 # Local Installation
-Tupperbox requires Node.js, PostgreSQL and Redis. You can download Node.js [here](https://nodejs.org/en/download/), PostgreSQL [here](https://www.postgresql.org/download/) and Redis [here (Linux)](https://redis.io/download) or [here (Windows)](https://www.memurai.com/).
+Tupperbox requires Node.js (must be at least v14), PostgreSQL (v11, preferably v12) and Redis (stable, currently v6.0.8). You can download Node.js [here](https://nodejs.org/en/download/), PostgreSQL [here](https://www.postgresql.org/download/) and Redis [here (Linux)](https://redis.io/download) or [here (Windows)](https://www.memurai.com/).
 
 Once Node.js is installed, run `npm install` from the bot directory to install the bot's dependencies. (Note: you may have to run `npm -g install windows-build-tools` first if on Windows)
 
