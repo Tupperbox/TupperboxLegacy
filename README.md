@@ -22,9 +22,6 @@ The bot expects a file in the same directory named `.env` with its configuration
 
 * Leave `REDISURL` alone unless you change the port Redis runs on or you host it on another machine.
 
-
-Tupperbox requires PostgreSQL and Redis. You can download PostgreSQL [here](https://www.postgresql.org/download/) and Redis [here (Linux)](https://redis.io/download) or [here (Windows)](https://www.memurai.com/).
-
 # Upgrading from JSON storage
 
 The previous version of the bot used JSON as a database. <br> If you would like to upgrade, install PostgreSQL and Redis, switch to the rewrite branch, and on startup the bot will prompt you to import your JSON databases to the Postgres server you've configured automatically. (Make a backup of these files first - it will delete them!)
