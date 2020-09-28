@@ -24,7 +24,7 @@ module.exports = {
 			let t = results[0];
 			let host = targets.find(u => u.id == t.user_id);
 			let group = null;
-			if(t.group_id) group = bot.db.groups.getById(t.group_id);
+			if(t.group_id) group = await bot.db.groups.getById(t.group_id);
 			let val = `User: ${host ? host.username + "#" + host.discriminator : "Unknown user " + t.user_id}\n`;
 			let embed = { embed: {
 				author: {
