@@ -76,7 +76,7 @@ module.exports = {
 		if (await bot.db.groups.memberCount(systemGroup.id) == 0) await bot.db.groups.delete(msg.author.id,systemGroup.id);
 		return `Import successful. Added ${added} entries and updated ${updated} entries.`;
 	},
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, members) => {
 		let file = msg.attachments[0] ?? args[0];
 		if(!file) return "Please attach or link to a .json file to import when running this command.\nYou can get a file by running the export command from me or Pluralkit.";
 
@@ -95,7 +95,7 @@ module.exports = {
 		if (confirm !== true) return confirm;
 
 		let old = {
-			tuppers: await bot.db.members.getAll(msg.author.id),
+			tuppers: members,
 			groups: await bot.db.groups.getAll(msg.author.id),
 		}
 

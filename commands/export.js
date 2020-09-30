@@ -4,13 +4,10 @@ module.exports = {
 	permitted: () => true,
 	groupArgs: true,
 	cooldown: msg => 600000,
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, members) => {
 		let data = { tuppers: [], groups: []};
-		if(!args[0]) {
-			let tups = await bot.db.members.getAll(msg.author.id);
-			let groups = await bot.db.groups.getAll(msg.author.id);
-			data = { tuppers: tups, groups };
-		} else {
+		if(!args[0]) data = { tuppers: members, groups: (await bot.db.groups.getAll(msg.author.id)) };			
+		else {
 			for (let arg of args) {
 				let tup = await bot.db.members.get(msg.author.id, arg);
 				if(!tup) return `You don't have a registered ${cfg.lang} with the name '${arg}'.`;

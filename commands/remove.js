@@ -6,12 +6,12 @@ module.exports = {
 		"remove * - Unregister ALL of your " + cfg.lang + "s (requires confirmation)"],
 	permitted: () => true,
 	groupArgs: true,
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, members) => {
 		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["remove"], cfg);
 
 		//check arguments
 		if(args[0] == "*") {
-			if ((await bot.db.members.getAll(msg.author.id)).length == 0) return "You don't have anything to remove.";
+			if (members.length == 0) return "You don't have anything to remove.";
 			let confirm = await bot.confirm(msg, `Warning: This will remove ALL of your ${cfg.lang}s. Reply 'yes' to continue or anything else to cancel.`);
 			if (confirm !== true) return confirm;
 			await bot.db.members.clear(msg.author.id);

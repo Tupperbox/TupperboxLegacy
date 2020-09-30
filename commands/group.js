@@ -12,7 +12,7 @@ module.exports = {
 		"group describe <name> <description> - Give the group a description"],
 	permitted: () => true,
 	groupArgs: true,
-	execute: async (bot, msg, args, cfg) => {
+	execute: async (bot, msg, args, cfg, members) => {
 		let name,existing,group,tup;
 		switch(args[0]) {
 		case "create":
@@ -44,8 +44,7 @@ module.exports = {
 
 			if (args.length == 1) {
 				if (args[0] == "*") {
-					let tupps = await bot.db.members.getAll(msg.author.id);
-					for (tup of tupps.filter(t => t.group_id == null)) {
+					for (tup of members.filter(t => t.group_id == null)) {
 						await bot.db.groups.addMember(group.id,tup.id);
 					} 
 					return `All groupless ${cfg.lang}s assigned to group ${group.name}.`;
@@ -110,7 +109,6 @@ module.exports = {
 		case "list":
 			let groups = await bot.db.groups.getAll(msg.author.id);
 			if(!groups[0]) return `You have no groups. Try \`${cfg.prefix}group create <name>\` to make one.`;
-			let members = await bot.db.members.getAll(msg.author.id);
 			let extra = {
 				title: `${msg.author.username}#${msg.author.discriminator}'s registered groups`,
 				author: {
