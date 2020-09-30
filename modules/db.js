@@ -224,6 +224,9 @@ module.exports = {
 		removeGroup: async (memberID) =>
 			await module.exports.query("update Members set group_id = null, group_pos = null where id = $1", [memberID]),
 
+		removeAllGroups: async (userID) =>
+			await module.exports.query("update Members set group_id = null, group_pos = null where user_id = $1", [userID]),
+
 		removeAllTags: async (userID) =>
 			await module.exports.query("update Members set tag = null where user_id = $1", [userID]),
 

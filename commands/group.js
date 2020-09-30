@@ -82,6 +82,10 @@ module.exports = {
 			args = args.slice(2);
 
 			if (args.length == 1) {
+				if (args[0] == "*") {
+					await bot.db.members.removeAllGroups(msg.author.id);
+					return `All ${cfg.lang}s set to no group.`;
+				}
 				tup = await bot.db.members.get(msg.author.id, args[0]);
 				if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
 				await bot.db.members.removeGroup(tup.id);
