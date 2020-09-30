@@ -11,7 +11,7 @@ module.exports = {
 			let groups = await bot.db.groups.getAll(msg.author.id);
 			data = { tuppers: tups, groups };
 		} else {
-			for await (let arg of args) {
+			for (let arg of args) {
 				let tup = await bot.db.members.get(msg.author.id, arg);
 				if(!tup) return `You don't have a registered ${cfg.lang} with the name '${arg}'.`;
 				data.tuppers.push(tup);

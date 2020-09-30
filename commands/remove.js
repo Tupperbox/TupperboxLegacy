@@ -27,7 +27,7 @@ module.exports = {
 			let baseLength = 2000 - (removedMessage.length + notRemovedMessage.length)
 			let rOriginalLength = { removedMessage: removedMessage.length, notRemovedMessage: notRemovedMessage.length, }
 
-			for await (let arg of args) {
+			for (let arg of args) {
 				tup = await bot.db.members.get(msg.author.id, arg);
 				if (tup) {
 					await bot.db.members.delete(msg.author.id, arg);
