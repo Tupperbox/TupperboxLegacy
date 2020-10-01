@@ -12,7 +12,7 @@ module.exports = {
 		//check arguments
 		let member = await bot.db.members.get(msg.author.id,args[0]);
 		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
-		if(!args[1]) return member.description ? "Current description: " + member.description + "\nTo remove it, try " + cfg.prefix + "describe " + member.name + " clear" : "No description currently set for " + member.name;
+		if(!args[1]) return member.description ? "Current description: " + member.description + "\nTo remove it, try " + cfg.prefix + "describe '" + member.name + "' clear" : "No description currently set for " + member.name;
 		if(["clear","remove","none","delete"].includes(args[1])) {
 			await bot.db.members.update(msg.author.id,member.name,"description",null);
 			return "Description cleared.";
