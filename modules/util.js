@@ -84,7 +84,7 @@ module.exports = bot => {
 			else throw e;
 		}
 		return true;
-	}
+	};
 
 	bot.send = async (channel, message, file, retry = 2) => {
 		if(!channel.id) return;
