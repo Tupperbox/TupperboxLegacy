@@ -83,7 +83,7 @@ module.exports = {
 
 			if (args.length == 1) {
 				if (args[0] == "*") {
-					await bot.db.members.removeAllGroups(msg.author.id);
+					await bot.db.groups.removeMembers(group.id);
 					return `All ${cfg.lang}s set to no group.`;
 				}
 				tup = await bot.db.members.get(msg.author.id, args[0]);
