@@ -13,7 +13,7 @@ module.exports = {
 
 		await client.query("BEGIN");
 
-		for await (let g of data.groups) {
+		for (let g of data.groups) {
 			let old = oldData.groups.find(gr => g.name == gr.name) || {};
 			if(!old.name) { //update existing entry
 				added++;
@@ -23,7 +23,7 @@ module.exports = {
 				[g.description || null, g.tag || null, msg.author.id, g.name]);
 		}
 
-		for await (let t of data.tuppers) {
+		for (let t of data.tuppers) {
 			let old = oldData.tuppers.find(tu => t.name == tu.name) || {};
 
 			if(!old.name) { //update existing entry
@@ -59,7 +59,7 @@ module.exports = {
 		let updated = 0;
 		await client.query("BEGIN");
 
-		for await (let t of data.members) {
+		for (let t of data.members) {
 			let old = oldData.tuppers.find(tu => t.name == tu.name) || {};
 			let newBrackets = (t.proxy_tags.length == 0) ? [`${t.name}:`,""] : t.proxy_tags.map(pt => [pt.prefix ||  "", pt.suffix || ""]).reduce((acc,val) => acc.concat(val),[]);
 
