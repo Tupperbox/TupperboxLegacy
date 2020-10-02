@@ -92,10 +92,10 @@ module.exports = {
 				return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 			}
 
-			let removedMessage = `${proper(cfg.lang)}s removed from group:`
-			let notRemovedMessage = `${proper(cfg.lang)}s not found:`
-			let rBaseLength = 2000 - (removedMessage.length + notRemovedMessage.length)
-			let rOriginalLength = { removedMessage: removedMessage.length, notRemovedMessage: notRemovedMessage.length, }
+			let removedMessage = `${proper(cfg.lang)}s removed from group:`;
+			let notRemovedMessage = `${proper(cfg.lang)}s not found:`;
+			let rBaseLength = 2000 - (removedMessage.length + notRemovedMessage.length);
+			let rOriginalLength = { removedMessage: removedMessage.length, notRemovedMessage: notRemovedMessage.length, };
 
 			for (let arg of args) {
 				tup = await bot.db.members.get(msg.author.id, arg);
@@ -105,7 +105,7 @@ module.exports = {
 				} else {
 					if ((removedMessage.length + notRemovedMessage.length + arg.length) < rBaseLength) notRemovedMessage += ` '${arg}'`; else notRemovedMessage += " (...)";
 				}
-			};
+			}
 			if (removedMessage.length == rOriginalLength.removedMessage) return `No ${cfg.lang}s found that could be removed from this group.`;
 			if (notRemovedMessage.length == rOriginalLength.notRemovedMessage) return removedMessage;
 			return `${removedMessage}\n${notRemovedMessage}`;
@@ -126,7 +126,7 @@ module.exports = {
 				let mms = members.filter(t => t.group_id == g.id).map(t => t.name).join(", ");
 				let field = {
 					name: g.name,
-					value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""} ${mms ? `Members: ${mms}` : 'No members.'}`
+					value: `${g.tag ? "Tag: " + g.tag + "\n" : ""}${g.description ? "Description: " + g.description + "\n" : ""} ${mms ? `Members: ${mms}` : "No members."}`
 				};
 				if(field.value.length > 1020) field.value = field.value.slice(0,1020) + "...";
 				return field;

@@ -97,7 +97,7 @@ module.exports = {
 		let old = {
 			tuppers: members,
 			groups: await bot.db.groups.getAll(msg.author.id),
-		}
+		};
 
 		let client = await bot.db.connect();
 		try {
