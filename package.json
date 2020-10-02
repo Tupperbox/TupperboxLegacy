@@ -26,5 +26,8 @@
     "valid-url": "^1.0.9",
     "winston": "^3.2.1",
     "zlib-sync": "^0.1.6"
+  },
+  "devDependencies": {
+    "eslint": "^7.10.0"
   }
 }
