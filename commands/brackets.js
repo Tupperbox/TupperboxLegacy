@@ -14,7 +14,7 @@ module.exports = {
 		//check arguments
 		let name = (args[0] == "add" || args[0] == "remove") ? args[1] : args[0];
 		let member = await bot.db.members.get(msg.author.id,name);
-		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!member) return `You don't have ${article(cfg)} ${cfg.lang} named '${name}' registered.`;
 		if(!args[1]) return `Brackets for ${args[0]}: ${bot.getBrackets(member)}`;
 		let brackets = msg.content.slice(msg.content.indexOf(name)+name.length+1).trim().split("text");
 		if(brackets.length < 2) return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";

@@ -10,7 +10,7 @@ module.exports = {
 		
 		//check arguments
 		let member = await bot.db.members.get(msg.author.id,args[0]);
-		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!member) return `You don't have ${article(cfg)} ${cfg.lang} named '${args[0]}' registered.`;
 		
 		//update member
 		await bot.db.members.update(msg.author.id,args[0],"show_brackets",!member.show_brackets);

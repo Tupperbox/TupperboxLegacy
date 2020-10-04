@@ -21,7 +21,7 @@ module.exports = {
 		//check arguments
 		let name = msg.attachments[0] ? args.join(" ") : args[0];
 		let member = await bot.db.members.get(msg.author.id, name);
-		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!member) return `You don't have ${article(cfg)} ${cfg.lang} named '${name}' registered.`;
 		if(!args[1] && !msg.attachments[0]) return member.avatar_url;
 
 		// check if we're clearing

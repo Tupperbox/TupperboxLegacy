@@ -18,7 +18,7 @@ module.exports = {
 			targets = await bot.findAllUsers(msg.channel.guild.id);
 		}
 		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END) LIMIT 25",[targets.map(u => u.id),search])).rows;
-		if(!results[0]) return "Couldn't find " + article(cfg) + " " + cfg.lang + " with that name.";
+		if(!results[0]) return `Couldn't find ${article(cfg)} ${cfg.lang} named '${search}'.`;
 
 		//return single match
 		if(results.length == 1) { 

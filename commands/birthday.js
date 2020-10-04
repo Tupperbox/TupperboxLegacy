@@ -17,7 +17,7 @@ module.exports = {
 
 		//check arguments
 		let member = await bot.db.members.get(msg.author.id,args[0]);
-		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!member) return `You don't have ${article(cfg)} ${cfg.lang} named '${args[0]}' registered.`;
 		if(!args[1]) return member.birthday ? "Current birthday: " + member.birthday.toDateString() + "\nTo remove it, try " + cfg.prefix + "birthday " + member.name + " clear" : "No birthday currently set for " + args[0];
 		if(["clear","remove","none","delete"].includes(args[1])) {
 			await bot.db.members.update(msg.author.id,member.name,"birthday",null);

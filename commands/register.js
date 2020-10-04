@@ -18,7 +18,7 @@ module.exports = {
 		if(name.length < 1 || name.length > 76)	return "Name must be between 1 and 76 characters.";
 		if(brackets.length < 2)	return "No 'text' found to detect brackets with. For the last part of your command, enter the word 'text' surrounded by any characters.\nThis determines how the bot detects if it should replace a message.";
 		if(!brackets[0] && !brackets[1]) return "Need something surrounding 'text'.";
-		if(member && member.name.toLowerCase() == name.toLowerCase())	return proper(cfg.lang) + " with that name under your user account already exists.";
+		if(member && member.name.toLowerCase() == name.toLowerCase())	return `${proper(cfg.lang)} named '${name}' under your user account already exists.`;
 		if(member && member.brackets[0] == brackets[0] && member.brackets[1] == brackets[1]) return proper(cfg.lang) + " with those brackets under your user account already exists.";
 		if(members.length >= 5000) return `Maximum ${cfg.lang}s reached.`;
 		let daysOld = bot.ageOf(msg.author);
