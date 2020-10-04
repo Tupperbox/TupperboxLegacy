@@ -12,7 +12,7 @@ module.exports = async (bot,msg,edit) => {
 	let permissions;
 	let dmChannel;
 
-	if (msg.guild) {
+	if (msg.channel.guild) {
 		permissions = msg.channel.permissionsOf(bot.user.id);
 		if(!permissions.has("readMessages")) return;
 		if (!permissions.has("sendMessages")) {
