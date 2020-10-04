@@ -235,6 +235,7 @@ module.exports = {
 			}
 			let perms = msg.channel.permissionsOf(bot.user.id);
 			if(perms.has("manageMessages") && perms.has("readMessages"))
+				// todo: do we want to try deleting multiple times, as previously done in the deletion queue?
 				msg.delete().catch(bot.ignoreDeletion);
 			return true;
 		} catch(e) { 
