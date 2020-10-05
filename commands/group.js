@@ -19,7 +19,7 @@ module.exports = {
 			if(!args[1]) return "No group name given.";
 			name = args.slice(1).join(" ");
 			existing = await bot.db.groups.get(msg.author.id, name);
-			if(existing) return "You already have a group with that name.";
+			if(existing) return `You already have a group named '${name}'.`;
 			await bot.db.groups.add(msg.author.id, bot.noVariation(name));
 			return `Group created. Add ${cfg.lang}s to it with "${cfg.prefix}group add ${args.length < 3 ? name : "'" + name + "'"} <name> [name...]".`;
 
@@ -31,7 +31,7 @@ module.exports = {
 			}
 			name = args.slice(1).join(" ");
 			existing = await bot.db.groups.get(msg.author.id, name);
-			if(!existing) return "You don't have a group with that name.";
+			if(!existing) return `You don't have a group named '${name}'.`;
 			await bot.db.groups.delete(existing.id);
 			return "Group deleted, members have been set to no group.";
 
@@ -39,7 +39,7 @@ module.exports = {
 			if(!args[1]) return "No group name given.";
 			if(!args[2]) return `No ${cfg.lang} name given.`;
 			group = await bot.db.groups.get(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
+			if(!group) return `You don't have a group named '${args[1]}'.`;
 			args = args.slice(2);
 
 			if (args.length == 1) {
@@ -51,7 +51,7 @@ module.exports = {
 				}
 
 				tup = await bot.db.members.get(msg.author.id, args[0]);
-				if(!tup) return `You don't have a registered ${cfg.lang} with that name.`;
+				if(!tup) return `You don't have a registered ${cfg.lang} named '${args[0]}'.`;
 				await bot.db.groups.addMember(group.id,tup.id);
 				return `${proper(cfg.lang)} '${tup.name}' group set to '${group.name}'.`;
 			}
@@ -78,7 +78,7 @@ module.exports = {
 			if(!args[1]) return "No group name given.";
 			if(!args[2]) return `No ${cfg.lang} name given.`;
 			group = await bot.db.groups.get(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
+			if(!group) return `You don't have a group named '${args[1]}'.`;
 			args = args.slice(2);
 
 			if (args.length == 1) {
@@ -87,7 +87,7 @@ module.exports = {
 					return `All ${cfg.lang}s set to no group.`;
 				}
 				tup = await bot.db.members.get(msg.author.id, args[0]);
-				if(!tup) return "You don't have a registered " + cfg.lang + " with that name.";
+				if(!tup) return `You don't have a registered ${cfg.lang} named '${args[0]}'.`;
 				await bot.db.members.removeGroup(tup.id);
 				return `${proper(cfg.lang)} '${tup.name}' group unset.`;
 			}
@@ -138,7 +138,7 @@ module.exports = {
 		case "tag":
 			if(!args[1]) return "No group name given.";
 			group = await bot.db.groups.get(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
+			if(!group) return `You don't have a group named '${args[1]}'.`;
 			if(!args[2]) return group.tag ? "Current tag: " + group.tag + "\nTo remove it, try " + cfg.prefix + "group tag " + group.name + " clear" : "No tag currently set.";
 			if(["clear","remove","none","delete"].includes(args[2])) {
 				await bot.db.groups.update(msg.author.id,group.name,"tag",null);
@@ -152,18 +152,18 @@ module.exports = {
 		case "rename":
 			if(!args[1]) return "No group name given.";
 			group = await bot.db.groups.get(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
+			if(!group) return `You don't have a group named '${args[1]}'.`;
 			if(!args[2]) return "No new name given.";
 			let newname = args.slice(2).join(" ").trim();
 			let group2 = await bot.db.groups.get(msg.author.id, newname);
-			if(group2) return "There is already a group with that name.";
+			if(group2 && group2.id != group.id) return `You already have a group named '${newname}'.`;
 			await bot.db.groups.update(msg.author.id, group.name, "name", bot.noVariation(newname));
 			return "Group renamed to '" + newname + "'.";
 
 		case "describe":
 			if(!args[1]) return "No group name given.";
 			group = await bot.db.groups.get(msg.author.id, args[1]);
-			if(!group) return "You don't have a group with that name.";
+			if(!group) return `You don't have a group named '${args[1]}'.`;
 			if(!args[2]) return group.description ? "Current description: " + group.description + "\nTo remove it, try " + cfg.prefix + "group describe " + group.name + " clear" : "No description currently set.";
 			if(["clear","remove","none","delete"].includes(args[2])) {
 				await bot.db.groups.update(msg.author.id,group.name,"description",null);

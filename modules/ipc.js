@@ -7,7 +7,7 @@ const dhm = t => {
 	return `${d}d ${h}h ${m}m ${s}s`;
 };
 
-let masterExports = (enqueue) => {
+let masterExports = () => {
 	this.postStats = (wrk,msg,shrd) => {
 		if(!msg.channelID) return;
 		let guilds = shrd.stats.stats.clusters.reduce((a,b)=>a+b.guilds,0);
@@ -17,17 +17,7 @@ let masterExports = (enqueue) => {
       +`\n\nTotal memory used: ${(shrd.stats.stats.totalRam/1000000).toFixed(1)} MB/${(os.totalmem()/1000000).toFixed(1)} MB\nTotal servers: ${guilds}\n16 shards per cluster\n\nRequest received on Shard ${msg.shard} (Cluster ${msg.cluster})` + "```"
 		);
 	},
-  
-	this.queueDelete = (wrk, msg, shrd) => {
-		if(!msg.channelID || !msg.messageID) return;
-		enqueue(msg);
-	},
-  
-	this.reloadQueue = () => {
-		delete require.cache[require.resolve("./queue")];
-		enqueue = require("./queue");
-	},
-  
+
 	this.restartCluster = (wrk,msg,shrd) => {
 		if(msg.id == null) return;
 		cluster.workers[shrd.clusters.get(msg.id).workerID].kill();
@@ -92,5 +82,5 @@ let botExports = (bot) => {
 	bot.ipc = this;
 };
 
-if (cluster.isMaster) module.exports = masterExports(require("./queue"));
+if (cluster.isMaster) module.exports = masterExports();
 else module.exports = botExports;

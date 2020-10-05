@@ -18,7 +18,7 @@ module.exports = {
 			return "Tag cleared for all " + cfg.lang + "s.";
 		}
 		let member = await bot.db.members.get(msg.author.id,args[0]);
-		if(!member) return "You don't have " + article(cfg) + " " + cfg.lang + " with that name registered.";
+		if(!member) return `You don't have ${article(cfg)} ${cfg.lang} named '${args[0]}' registered.`;
 		if(!args[1]) return member.tag ? "Current tag: " + member.tag + "\nTo remove it, try " + cfg.prefix + "tag " + member.name + " clear" : "No tag currently set for " + args[0];
 		if(["clear","remove","none","delete"].includes(args[1])) {
 			await bot.db.members.update(msg.author.id,member.name,"tag",null);

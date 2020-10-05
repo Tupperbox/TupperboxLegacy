@@ -7,12 +7,13 @@ module.exports = async ({msg, bot, members, cfg, dmChannel}) => {
 	let args = content.split(" ");
 	let cmdName = args.shift();
 	let cmd = bot.cmds[cmdName];
-
+	
+	if (cmd && !msg.channel.permissionsOf(bot.user.id).has("embedLinks") && cmdName != "dev") return bot.send(targetChannel, "I need 'Embed Links' permissions to run commands.");
 	if (!cmd || !bot.checkPermissions(bot, cmd, msg, args)) return;
 
 	let key = msg.author.id + cmdName;
 	let cd = await cache.cooldowns.get(key);
-	if (cd) return bot.send(msg.channel,`You're using that too quickly! Try again in ${Math.ceil((cd - Date.now())/1000)} seconds`);
+	if (cd) return bot.send(targetChannel,`You're using that too quickly! Try again in ${Math.ceil((cd - Date.now())/1000)} seconds`);
 	if(cmd.cooldown && !process.env.DEV) cache.cooldowns.set(key, cmd.cooldown(msg));
 
 	if(cmd.groupArgs) args = bot.getMatches(content,/“(.+?)”|‘(.+?)’|"(.+?)"|'(.+?)'|(\S+)/gi).slice(1);
