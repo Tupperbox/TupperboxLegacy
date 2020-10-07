@@ -6,9 +6,7 @@ module.exports = {
 	permitted: (msg) => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		return "This command is temporarily disabled due to recent Discord changes. We have a request in processing to obtain rights needed to re-enable it. Please check the support server for updates or try again in a day or two.";
-
-		/*if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
+		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search
 		let search = args.join(" ").toLowerCase();
@@ -16,8 +14,9 @@ module.exports = {
 		if(msg.channel.type == 1)
 			targets = [msg.author];
 		else {
-			await bot.sendChannelTyping(msg.channel.id);
-			targets = await bot.findAllUsers(msg.channel.guild.id);
+			return "Searching in servers is temporarily disabled due to recent Discord changes. We have a request in processing to obtain rights needed to re-enable it. Please check the support server for updates or try again in a day or two.";
+			/*await bot.sendChannelTyping(msg.channel.id);
+			targets = await bot.findAllUsers(msg.channel.guild.id);*/
 		}
 		let results = (await bot.db.query("SELECT * FROM Members WHERE user_id IN (select(unnest($1::text[]))) AND (CASE WHEN tag IS NULL THEN LOWER(name) LIKE '%' || $2 || '%' ELSE (LOWER(name) || LOWER(tag)) LIKE '%' || $2 || '%' END) LIMIT 25",[targets.map(u => u.id),search])).rows;
 		if(!results[0]) return `Couldn't find ${article(cfg)} ${cfg.lang} named '${search}'.`;
@@ -67,6 +66,6 @@ module.exports = {
 				embeds[i].embed.title += ` (page ${i+1}/${embeds.length} of ${results.length} results)`;
 			return bot.paginator.paginate(bot, msg, embeds);
 		}
-		return embeds[0];*/
+		return embeds[0];
 	}
 };
