@@ -8,7 +8,7 @@ module.exports = async ({msg, bot, members, cfg, dmChannel}) => {
 	let cmdName = args.shift();
 	let cmd = bot.cmds[cmdName];
 	
-	if (cmd && !msg.channel.permissionsOf(bot.user.id).has("embedLinks") && cmdName != "dev") return bot.send(targetChannel, "I need 'Embed Links' permissions to run commands.");
+	if (cmd && msg.channel.guild && !msg.channel.permissionsOf(bot.user.id).has("embedLinks") && cmdName != "dev") return bot.send(targetChannel, "I need 'Embed Links' permissions to run commands.");
 	if (!cmd || !bot.checkPermissions(bot, cmd, msg, args)) return;
 
 	let key = msg.author.id + cmdName;
