@@ -6,7 +6,9 @@ module.exports = {
 	permitted: (msg) => true,
 	groupArgs: true,
 	execute: async (bot, msg, args, cfg) => {
-		if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
+		return "This command is temporarily disabled due to recent Discord changes. We have a request in processing to obtain rights needed to re-enable it. Please check the support server for updates or try again in a day or two.";
+
+		/*if(!args[0]) return bot.cmds.help.execute(bot, msg, ["find"], cfg);
 
 		//do search
 		let search = args.join(" ").toLowerCase();
@@ -65,6 +67,6 @@ module.exports = {
 				embeds[i].embed.title += ` (page ${i+1}/${embeds.length} of ${results.length} results)`;
 			return bot.paginator.paginate(bot, msg, embeds);
 		}
-		return embeds[0];
+		return embeds[0];*/
 	}
 };
