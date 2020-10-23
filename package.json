@@ -1,33 +1,45 @@
 {
   "name": "tupperbox",
-  "version": "1.5.0",
   "description": "tupperbox bot for discord message proxying",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "homepage": "https://github.com/Keterr/Tupperbox/blob/rewrite/README.md",
-  "repository": "github:Keterr/Tupperbox",
-  "bugs": "https://github.com/Keterr/Tupperbox/issues",
-  "author": "Keter",
-  "license": "ISC",
-  "dependencies": {
-    "@sentry/node": "^5.7.1",
-    "bufferutil": "^4.0.1",
-    "dotenv": "^6.2.0",
-    "eris": "github:keterr/eris#dev",
-    "eris-sharder": "^1.10.0",
-    "got": "^9.6.0",
-    "ioredis": "^4.16.0",
-    "pako": "^1.0.10",
-    "pg": "^8.2.1",
-    "probe-image-size": "^3.2.0",
-    "string-length": "^2.0.0",
-    "valid-url": "^1.0.9",
-    "winston": "^3.2.1",
-    "zlib-sync": "^0.1.6"
-  },
-  "devDependencies": {
-    "eslint": "^7.10.0"
-  }
+  "homepage": "https://github.com/Keterr/Tupperbox/blob/master/README.md",
+  "eslintConfig":{
+	"env": {
+		"es6": true,
+		"node": true
+	},
+	"extends": "eslint:recommended",
+	"parserOptions": {
+		"sourceType": "module",
+		"ecmaVersion": 2020
+		},
+		"rules": {
+			"indent": ["error", "tab"],
+			"quotes": ["error", "double"],
+			"semi": ["error", "always"],
+			"no-console": "off",
+			"no-unused-vars": "off",
+			"no-cond-assign": "off",
+			"no-case-declarations": "off",
+			"no-empty": "off"
+		}
+	},
+	"dependencies": {
+		"@sentry/node": "^5.7.1",
+		"bufferutil": "^4.0.1",
+		"dotenv": "^6.2.0",
+		"eris": "github:keterr/eris#dev",
+		"eris-sharder": "^1.10.0",
+		"got": "^9.6.0",
+		"ioredis": "^4.16.0",
+		"pako": "^1.0.10",
+		"pg": "^8.2.1",
+		"probe-image-size": "^3.2.0",
+		"string-length": "^2.0.0",
+		"valid-url": "^1.0.9",
+		"winston": "^3.2.1",
+		"zlib-sync": "^0.1.6"
+	},
+	"devDependencies": {
+		"eslint": "^7.10.0"
+	}
 }
