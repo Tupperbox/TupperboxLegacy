@@ -21,7 +21,7 @@
 			"no-cond-assign": "off",
 			"no-case-declarations": "off",
 			"no-empty": "off"
-		},
+		}
 	},
 	"dependencies": {
 		"@sentry/node": "^5.7.1",
