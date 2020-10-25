@@ -30,6 +30,7 @@ const init = async () => {
 			ratelimiterOffset: 5,
 			intents: [
 				"guilds",
+				"guildMembers",
 				"guildMessages",
 				"guildMessageReactions",
 				"directMessages",
