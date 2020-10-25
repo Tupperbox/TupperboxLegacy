@@ -1,16 +1,16 @@
 {
-  "name": "tupperbox",
-  "description": "tupperbox bot for discord message proxying",
-  "homepage": "https://github.com/Keterr/Tupperbox/blob/master/README.md",
-  "eslintConfig":{
-	"env": {
-		"es6": true,
-		"node": true
-	},
-	"extends": "eslint:recommended",
-	"parserOptions": {
-		"sourceType": "module",
-		"ecmaVersion": 2020
+	"name": "tupperbox",
+	"description": "tupperbox bot for discord message proxying",
+	"homepage": "https://github.com/Keterr/Tupperbox/blob/master/README.md",
+	"eslintConfig": {
+		"env": {
+			"es6": true,
+			"node": true
+		},
+		"extends": "eslint:recommended",
+		"parserOptions": {
+			"sourceType": "module",
+			"ecmaVersion": 2020
 		},
 		"rules": {
 			"indent": ["error", "tab"],
@@ -21,7 +21,7 @@
 			"no-cond-assign": "off",
 			"no-case-declarations": "off",
 			"no-empty": "off"
-		}
+		},
 	},
 	"dependencies": {
 		"@sentry/node": "^5.7.1",
