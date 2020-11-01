@@ -26,6 +26,7 @@ const init = async () => {
 			},
 			messageLimit: 0,
 			guildSubscriptions: false,
+			allowedMentions: { roles: false },
 			restMode: true,
 			ratelimiterOffset: 5,
 			intents: [
